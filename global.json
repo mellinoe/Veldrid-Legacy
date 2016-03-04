@@ -1,0 +1,3 @@
+{
+    "projects": [ "./deps", "./src" ]
+}
