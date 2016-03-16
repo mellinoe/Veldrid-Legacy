@@ -8,7 +8,7 @@
     },
 
   "dependencies": {
-    "NETStandard.Library": "1.0.0-rc3-23823",
+    "Microsoft.NETCore.App": "1.0.0-rc2-23911",
     "SharpDX": "3.0.1",
     "SharpDX.D3DCompiler": "3.0.1",
     "SharpDX.Direct3D11": "3.0.1",
@@ -34,7 +34,7 @@
   ],
 
   "frameworks": {
-    "netstandardapp1.5": { 
+    "netstandard1.5": { 
       "imports": [ "dnxcore50", "portable-net45+netcore45" ]
     }
   }
