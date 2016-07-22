@@ -60,7 +60,7 @@ namespace Veldrid.Assets
         public T LoadAsset<T>(AssetID assetID) => LoadAsset<T>(assetID, true);
 
         public T LoadAsset<T>(AssetRef<T> definition, bool cache = true) => LoadAsset<T>(definition.ID, cache);
-        public T LoadAsset<T>(AssetID assetID, bool cache  = true)
+        public T LoadAsset<T>(AssetID assetID, bool cache = true)
         {
             object asset;
             if (!cache || !_loadedAssets.TryGetValue(assetID, out asset))
@@ -71,7 +71,7 @@ namespace Veldrid.Assets
                     asset = loader.Load(s);
                     if (cache)
                     {
-                        _loadedAssets.Add(assetID, asset);
+                        _loadedAssets[assetID] = asset;
                     }
                 }
             }

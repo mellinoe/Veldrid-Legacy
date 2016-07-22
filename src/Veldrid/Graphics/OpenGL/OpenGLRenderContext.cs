@@ -24,19 +24,25 @@ namespace Veldrid.Graphics.OpenGL
 #endif
             : base(window)
         {
-            _resourceFactory = new OpenGLResourceFactory();
-
+            GraphicsMode mode = GraphicsMode.Default;
             if (debugContext)
             {
-                _openGLGraphicsContext = new GraphicsContext(GraphicsMode.Default, window.OpenTKWindowInfo, 4, 3, GraphicsContextFlags.Debug);
+                _openGLGraphicsContext = new GraphicsContext(mode, window.OpenTKWindowInfo, 4, 3, GraphicsContextFlags.Debug);
             }
             else
             {
-                _openGLGraphicsContext = new GraphicsContext(GraphicsMode.Default, window.OpenTKWindowInfo);
+                _openGLGraphicsContext = new GraphicsContext(mode, window.OpenTKWindowInfo);
             }
             _openGLGraphicsContext.MakeCurrent(window.OpenTKWindowInfo);
 
             _openGLGraphicsContext.LoadAll();
+
+            int workerThreads;
+            if (!int.TryParse(Environment.GetEnvironmentVariable("GLT"), out workerThreads))
+            {
+                workerThreads = 2;
+            }
+            _resourceFactory = new OpenGLResourceFactory(mode, workerThreads, Environment.CurrentManagedThreadId);
 
             // NOTE: I am binding a single VAO globally. This may or may not be a good idea.
             _vertexArrayID = GL.GenVertexArray();

@@ -1,6 +1,12 @@
 ﻿using OpenTK.Graphics.OpenGL;
 using System;
 using System.IO;
+using System.Threading.Tasks;
+using System.Threading;
+using OpenTK;
+using OpenTK.Graphics;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace Veldrid.Graphics.OpenGL
 {
@@ -8,6 +14,13 @@ namespace Veldrid.Graphics.OpenGL
     {
         private static readonly string s_shaderDirectory = "GLSL";
         private static readonly string s_shaderFileExtension = "glsl";
+
+        private readonly OpenGLResourceTaskScheduler _taskScheduler;
+
+        public OpenGLResourceFactory(GraphicsMode mode, int numResourceThreads, int mainThreadID)
+        {
+            _taskScheduler = new OpenGLResourceTaskScheduler(mode, numResourceThreads, mainThreadID);
+        }
 
         public override ConstantBuffer CreateConstantBuffer(int sizeInBytes)
         {
@@ -111,7 +124,7 @@ namespace Veldrid.Graphics.OpenGL
                 return new OpenGLTextureBinding((OpenGLCubemapTexture)texture);
             }
         }
-        
+
         public override CubemapTexture CreateCubemapTexture(
             IntPtr pixelsFront,
             IntPtr pixelsBack,
@@ -168,6 +181,146 @@ namespace Veldrid.Graphics.OpenGL
             bool isScissorTestEnabled)
         {
             return new OpenGLRasterizerState(cullMode, fillMode, isDepthClipEnabled, isScissorTestEnabled);
+        }
+
+        public override Task<VertexBuffer> CreateVertexBufferAsync(int sizeInBytes, bool isDynamic)
+        {
+            return Task.Factory.StartNew(
+                () => CreateVertexBuffer(sizeInBytes, isDynamic),
+                CancellationToken.None,
+                TaskCreationOptions.None,
+                _taskScheduler);
+        }
+
+        public override Task<IndexBuffer> CreateIndexBufferAsync(int sizeInBytes, bool isDynamic)
+        {
+            return Task.Factory.StartNew(
+                () => CreateIndexBuffer(sizeInBytes, isDynamic),
+                CancellationToken.None,
+                TaskCreationOptions.None,
+                _taskScheduler);
+        }
+
+        public override Task<IndexBuffer> CreateIndexBufferAsync(int sizeInBytes, bool isDynamic, IndexFormat format)
+        {
+            return Task.Factory.StartNew(
+                () => CreateIndexBuffer(sizeInBytes, isDynamic, format),
+                CancellationToken.None,
+                TaskCreationOptions.None,
+                _taskScheduler);
+        }
+
+        public override Task<Material> CreateMaterialAsync(
+            RenderContext rc,
+            string vertexShaderName,
+            string pixelShaderName,
+            MaterialVertexInput vertexInputs,
+            MaterialInputs<MaterialGlobalInputElement> globalInputs,
+            MaterialInputs<MaterialPerObjectInputElement> perObjectInputs,
+            MaterialTextureInputs textureInputs)
+        {
+            return Task.Factory.StartNew(
+                () => CreateMaterial(
+                    rc,
+                    vertexShaderName,
+                    pixelShaderName,
+                    vertexInputs,
+                    globalInputs,
+                    perObjectInputs,
+                    textureInputs),
+                CancellationToken.None,
+                TaskCreationOptions.None,
+                _taskScheduler);
+        }
+
+        public override Task<ConstantBuffer> CreateConstantBufferAsync(int sizeInBytes)
+        {
+            return Task.Factory.StartNew(
+                () => CreateConstantBuffer(sizeInBytes),
+                CancellationToken.None,
+                TaskCreationOptions.None,
+                _taskScheduler);
+        }
+
+        public override Task<DeviceTexture2D> CreateTextureAsync<T>(
+            T[] pixelData,
+            int width,
+            int height,
+            int pixelSizeInBytes,
+            PixelFormat format)
+        {
+            return Task.Factory.StartNew(
+                () => CreateTexture(pixelData, width, height, pixelSizeInBytes, format),
+                CancellationToken.None,
+                TaskCreationOptions.None,
+                _taskScheduler);
+        }
+
+        public override Task<DeviceTexture2D> CreateTextureAsync(IntPtr pixelData, int width, int height, int pixelSizeInBytes, PixelFormat format)
+        {
+            return Task.Factory.StartNew(
+                () => CreateTexture(pixelData, width, height, pixelSizeInBytes, format),
+                CancellationToken.None,
+                TaskCreationOptions.None,
+                _taskScheduler);
+        }
+
+        public override Task<T> RunAsync<T>(Func<T> func)
+        {
+            return Task.Factory.StartNew(
+                func,
+                CancellationToken.None,
+                TaskCreationOptions.None,
+                _taskScheduler);
+        }
+
+        private class OpenGLResourceTaskScheduler : TaskScheduler
+        {
+            private readonly BlockingCollection<Task> _tasks = new BlockingCollection<Task>();
+            private readonly int _mainThreadID;
+
+            public OpenGLResourceTaskScheduler(GraphicsMode mode, int numThreads, int mainThreadID)
+            {
+                _mainThreadID = mainThreadID;
+
+                for (int i = 0; i < numThreads; i++)
+                {
+                    new Thread(() =>
+                    {
+                        NativeWindow window = new NativeWindow();
+                        GraphicsContext context = new GraphicsContext(mode, window.WindowInfo);
+                        context.MakeCurrent(window.WindowInfo);
+                        context.LoadAll();
+
+                        foreach (Task t in _tasks.GetConsumingEnumerable())
+                        {
+                            TryExecuteTask(t);
+                        }
+
+                        context.Dispose();
+                    }).Start();
+                }
+            }
+
+            protected override IEnumerable<Task> GetScheduledTasks()
+            {
+                return _tasks.ToArray();
+            }
+
+            protected override void QueueTask(Task task)
+            {
+                _tasks.Add(task);
+            }
+
+            protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
+            {
+                return Environment.CurrentManagedThreadId == _mainThreadID && TryExecuteTask(task);
+            }
+
+            public void Shutdown()
+            {
+                _tasks.CompleteAdding();
+            }
         }
     }
 }

@@ -2,6 +2,7 @@
 using SharpDX.Direct3D11;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace Veldrid.Graphics.Direct3D
 {
@@ -207,6 +208,60 @@ namespace Veldrid.Graphics.Direct3D
             bool isScissorTestEnabled)
         {
             return new D3DRasterizerState(_device, cullMode, fillMode, isDepthClipEnabled, isScissorTestEnabled);
+        }
+
+        public override Task<VertexBuffer> CreateVertexBufferAsync(int sizeInBytes, bool isDynamic)
+        {
+            return Task.Run(() => CreateVertexBuffer(sizeInBytes, isDynamic));
+        }
+
+        public override Task<IndexBuffer> CreateIndexBufferAsync(int sizeInBytes, bool isDynamic)
+        {
+            return Task.Run(() => CreateIndexBuffer(sizeInBytes, isDynamic));
+        }
+
+        public override Task<IndexBuffer> CreateIndexBufferAsync(int sizeInBytes, bool isDynamic, IndexFormat format)
+        {
+            return Task.Run(() => CreateIndexBuffer(sizeInBytes, isDynamic, format));
+        }
+
+        public override Task<Material> CreateMaterialAsync(
+            RenderContext rc,
+            string vertexShaderName,
+            string pixelShaderName,
+            MaterialVertexInput vertexInputs,
+            MaterialInputs<MaterialGlobalInputElement> globalInputs,
+            MaterialInputs<MaterialPerObjectInputElement> perObjectInputs,
+            MaterialTextureInputs textureInputs)
+        {
+            return Task.Run(() => CreateMaterial(
+                rc,
+                vertexShaderName,
+                pixelShaderName,
+                vertexInputs,
+                globalInputs,
+                perObjectInputs,
+                textureInputs));
+        }
+
+        public override Task<ConstantBuffer> CreateConstantBufferAsync(int sizeInBytes)
+        {
+            return Task.Run(() => CreateConstantBuffer(sizeInBytes));
+        }
+
+        public override Task<DeviceTexture2D> CreateTextureAsync<T>(T[] pixelData, int width, int height, int pixelSizeInBytes, PixelFormat format)
+        {
+            return Task.Run(() => CreateTextureAsync(pixelData, width, height, pixelSizeInBytes, format));
+        }
+
+        public override Task<DeviceTexture2D> CreateTextureAsync(IntPtr pixelData, int width, int height, int pixelSizeInBytes, PixelFormat format)
+        {
+            return Task.Run(() => CreateTextureAsync(pixelData, width, height, pixelSizeInBytes, format));
+        }
+
+        public override Task<T> RunAsync<T>(Func<T> func)
+        {
+            return Task.Run(func);
         }
     }
 }

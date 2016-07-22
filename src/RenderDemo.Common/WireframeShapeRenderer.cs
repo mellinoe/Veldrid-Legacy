@@ -100,10 +100,6 @@ namespace Veldrid.RenderDemo
             _indices.Clear();
             AddVerticesAndIndices();
 
-            _vb.Dispose();
-            _ib.Dispose();
-
-            _vb = factory.CreateVertexBuffer(_vertices.Count * VertexPositionNormalTexture.SizeInBytes, false);
             _vb.SetVertexData(
                 _vertices.ToArray(),
                 new VertexDescriptor(
@@ -111,7 +107,6 @@ namespace Veldrid.RenderDemo
                     VertexPositionNormalTexture.ElementCount,
                     0,
                     IntPtr.Zero));
-            _ib = factory.CreateIndexBuffer(sizeof(int) * _indices.Count, false);
             _ib.SetIndices(_indices.ToArray());
         }
 

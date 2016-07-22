@@ -333,6 +333,7 @@ namespace Veldrid.RenderDemo
         {
             if (_sponzaAtrium == null)
             {
+                Stopwatch sw = Stopwatch.StartNew();
                 _sponzaAtrium = new OctreeVisibilityManager();
 
                 ObjFile atriumFile = _ad.LoadAsset<ObjFile>("Models/SponzaAtrium/sponza.obj", cache: false);
@@ -345,50 +346,70 @@ namespace Veldrid.RenderDemo
                 var sphere = _ad.LoadAsset<ObjFile>(new AssetID("Models/Sphere.obj")).GetFirstMesh();
                 var pink = new RawTextureDataArray<RgbaFloat>(
                     new RgbaFloat[] { RgbaFloat.Pink }, 1, 1, RgbaFloat.SizeInBytes, PixelFormat.R32_G32_B32_A32_Float);
+
+
+#if !LOADASYNC
+                var tasks = new Task<MtlShadowCaster>[atriumFile.MeshGroups.Length];
+                int index = 0;
+#endif
                 foreach (var group in atriumFile.MeshGroups)
                 {
-                    ConstructedMeshInfo mesh = atriumFile.GetMesh(group);
-                    MaterialDefinition materialDef = atriumMtls.Definitions[mesh.MaterialName];
-                    MaterialAsset matAsset = GetMtlMaterialAssetTemplate();
-                    TextureData overrideTextureData = null;
-                    if (materialDef.DiffuseTexture != null)
+#if !LOADASYNC
+                    tasks[index++] = _rc.ResourceFactory.RunAsync(() =>
                     {
-                        string texturePath = "Models/SponzaAtrium/" + materialDef.DiffuseTexture;
-                        overrideTextureData = _ad.LoadAsset<ImageProcessorTexture>(texturePath);
-                    }
-                    else
-                    {
-                        overrideTextureData = pink;
-                    }
+#endif
+                        ConstructedMeshInfo mesh = atriumFile.GetMesh(group);
+                        MaterialDefinition materialDef = atriumMtls.Definitions[mesh.MaterialName];
+                        MaterialAsset matAsset = GetMtlMaterialAssetTemplate();
+                        TextureData overrideTextureData = null;
+                        if (materialDef.DiffuseTexture != null)
+                        {
+                            string texturePath = "Models/SponzaAtrium/" + materialDef.DiffuseTexture;
+                            overrideTextureData = _ad.LoadAsset<ImageProcessorTexture>(texturePath);
+                        }
+                        else
+                        {
+                            overrideTextureData = pink;
+                        }
 
-                    MtlShadowCaster sc = new MtlShadowCaster(_rc, _ad, mesh.Vertices, mesh.Indices, matAsset, overrideTextureData);
-                    sc.Scale = new Vector3(0.1f);
-                    sc.Name = group.Name + ":" + group.Material;
-                    Vector3 specularIntensity = Vector3.Zero;
-                    if (materialDef.Name.Contains("vase"))
-                    {
-                        specularIntensity = new Vector3(1.0f);
-                    }
-                    else
-                    {
-                        specularIntensity = new Vector3(0.2f);
-                    }
+                        MtlShadowCaster sc = new MtlShadowCaster(_rc, _ad, mesh.Vertices, mesh.Indices, matAsset, overrideTextureData);
+                        sc.Scale = new Vector3(0.1f);
+                        sc.Name = group.Name + ":" + group.Material;
+                        Vector3 specularIntensity = Vector3.Zero;
+                        if (materialDef.Name.Contains("vase"))
+                        {
+                            specularIntensity = new Vector3(1.0f);
+                        }
+                        else
+                        {
+                            specularIntensity = new Vector3(0.2f);
+                        }
 
-                    sc.MaterialProperties = new MtlMaterialProperties(specularIntensity, materialDef.SpecularExponent);
+                        sc.MaterialProperties = new MtlMaterialProperties(specularIntensity, materialDef.SpecularExponent);
+#if !LOADASYNC
+                        return sc;
+                    });
+                }
 
+                Task.WaitAll(tasks);
+                foreach (var task in tasks)
+                {
+                    MtlShadowCaster sc = task.Result;
+#endif
                     _sponzaAtrium.AddRenderItem(sc.BoundingBox, sc);
 
                     // This renders the bounding boxes of the atrium meshes.
                     //BoundingBoxWireframeRenderer boundsRenderer = new BoundingBoxWireframeRenderer(sc.BoundingBox, _ad, _rc);
                     //_sponzaAtrium.AddRenderItem(sc.BoundingBox, boundsRenderer);
+
+                    //_sponzaAtrium.AddRenderItem(new OctreeRenderer<RenderItem>(_sponzaAtrium.Octree, _ad, _rc));
                 }
-
-                //_sponzaAtrium.AddRenderItem(new OctreeRenderer<RenderItem>(_sponzaAtrium.Octree, _ad, _rc));
-
                 var skybox = new Skybox(_rc, _ad);
                 _sponzaAtrium.AddRenderItem(skybox);
 
                 _sponzaAtrium.AddRenderItem(_imguiRenderer);
+
+                Console.WriteLine("Elapsed Loading Time: " + sw.Elapsed);
             }
 
             return _sponzaAtrium;
