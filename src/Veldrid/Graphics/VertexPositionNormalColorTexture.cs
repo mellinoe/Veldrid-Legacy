@@ -10,10 +10,10 @@ namespace Veldrid.Graphics
         public const byte TextureCoordinatesOffset = 40;
         public const byte ElementCount = 4;
 
-        public readonly Vector3 Position;
-        public readonly Vector3 Normal;
-        public readonly RgbaFloat Color;
-        public readonly Vector2 TextureCoordinates;
+        public Vector3 Position;
+        public Vector3 Normal;
+        public RgbaFloat Color;
+        public Vector2 TextureCoordinates;
 
         public VertexPositionNormalColorTexture(Vector3 position, Vector3 normal, RgbaFloat color, Vector2 texCoords)
         {

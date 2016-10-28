@@ -7,7 +7,7 @@ namespace Veldrid.Graphics
 {
     public struct RgbaFloat : IEquatable<RgbaFloat>
     {
-        private readonly Vector4 _channels;
+        private Vector4 _channels;
 
         public float R => _channels.X;
         public float G => _channels.Y;

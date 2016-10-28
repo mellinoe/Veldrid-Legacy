@@ -13,14 +13,9 @@ namespace Veldrid.Assets
     public class LooseFileDatabase : EditableAssetDatabase
     {
         private string _rootPath;
-        private Dictionary<Type, AssetLoader> _assetLoaders = new Dictionary<Type, AssetLoader>()
-        {
-            { typeof(ImageProcessorTexture), new PngLoader() },
-            { typeof(TextureData), new PngLoader() },
-            { typeof(ObjFile), new ObjFileLoader() },
-            { typeof(ConstructedMeshInfo), new FirstMeshObjLoader() },
-            { typeof(MeshData), new FirstMeshObjLoader() }
-        };
+        private StreamLoaderSet _assetLoaders;
+
+        public StreamLoaderSet AssetLoaders => _assetLoaders;
 
         // Used for untyped loads on an asset
         // i.e.: object LoadAsset(AssetID);
@@ -39,9 +34,14 @@ namespace Veldrid.Assets
 
         public string RootPath { get { return _rootPath; } set { _rootPath = value; } }
 
-        public LooseFileDatabase(string rootPath)
+        public LooseFileDatabase(string rootPath) : this(rootPath, GetDefaultLoaderSet())
+        {
+        }
+
+        public LooseFileDatabase(string rootPath, StreamLoaderSet loaderSet)
         {
             _rootPath = rootPath;
+            _assetLoaders = loaderSet;
         }
 
         public static void AddExtensionTypeMapping(string extension, Type type)
@@ -218,7 +218,7 @@ namespace Veldrid.Assets
         private AssetLoader GetLoader(Type t)
         {
             AssetLoader loader;
-            if (!_assetLoaders.TryGetValue(t, out loader))
+            if (!_assetLoaders.TryGetLoader(t, out loader))
             {
                 loader = new TextAssetLoader<object>(_serializer);
                 _assetLoaders.Add(t, loader);
@@ -239,6 +239,18 @@ namespace Veldrid.Assets
                 asset = default(T);
                 return false;
             }
+        }
+
+        public static StreamLoaderSet GetDefaultLoaderSet()
+        {
+            return new StreamLoaderSet()
+            {
+                { typeof(ImageProcessorTexture), new PngLoader() },
+                { typeof(TextureData), new PngLoader() },
+                { typeof(ObjFile), new ObjFileLoader() },
+                { typeof(ConstructedMeshInfo), new FirstMeshObjLoader() },
+                { typeof(MeshData), new FirstMeshObjLoader() }
+            };
         }
     }
 

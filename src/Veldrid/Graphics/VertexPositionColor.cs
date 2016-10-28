@@ -8,8 +8,8 @@ namespace Veldrid.Graphics
         public const byte ColorOffset = 12;
         public const byte ElementCount = 2;
 
-        public readonly Vector3 Position;
-        public readonly RgbaFloat Color;
+        public Vector3 Position;
+        public RgbaFloat Color;
 
         public VertexPositionColor(Vector3 position, RgbaFloat color)
         {

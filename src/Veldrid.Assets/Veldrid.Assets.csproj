@@ -24,6 +24,7 @@
     <Compile Include="MaterialAsset.cs" />
     <Compile Include="ModelLoader.cs" />
     <Compile Include="PngLoader.cs" />
+    <Compile Include="StreamLoaderSet.cs" />
     <Compile Include="TextAssetLoader.cs" />
     <Compile Include="TextureAsset.cs" />
   </ItemGroup>
