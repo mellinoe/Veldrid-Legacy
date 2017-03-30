@@ -7,6 +7,7 @@ using Veldrid.Graphics.Direct3D;
 using Veldrid.Graphics.OpenGL;
 using Veldrid.Graphics.OpenGLES;
 using Veldrid.Platform;
+using Veldrid.Sdl2;
 
 namespace Veldrid.RenderDemo
 {
@@ -15,7 +16,7 @@ namespace Veldrid.RenderDemo
         public static void Main()
         {
             bool onWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-            OpenTKWindow window = new SameThreadWindow();
+            Sdl2Window window = new Sdl2Window("Veldrid", 100, 100, 1280, 720, SDL_WindowFlags.Resizable | SDL_WindowFlags.OpenGL, onWindows);
             RenderContext rc;
             bool sdl2OnWindows = false;
 #if SDL2_ON_WINDOWS

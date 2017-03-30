@@ -25,6 +25,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <Import Project="..\..\ext\veldrid.sdl2\src\Veldrid.Sdl2\Veldrid.Sdl2.Imports.msbuild" />
   <ItemGroup>
     <ProjectReference Include="..\RenderDemo.Common\RenderDemo.Common.csproj" />
     <ProjectReference Include="..\Veldrid.Assets\Veldrid.Assets.csproj" />
