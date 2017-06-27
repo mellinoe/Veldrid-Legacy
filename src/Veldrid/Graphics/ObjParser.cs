@@ -381,7 +381,7 @@ namespace Veldrid.Graphics
             // TODO: Remove this when System.Text.Primitives supports this.
             private float ParseFloat(ReadOnlySpan<char> text)
             {
-                return float.Parse(GetString(text));
+                return FormatProvider.ParseSingle(text, NumberStyles.Float, FormatProvider.InvariantCulture);
             }
 
             private uint ParseUInt32(ReadOnlySpan<char> text)
