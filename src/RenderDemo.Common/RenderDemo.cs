@@ -1057,10 +1057,6 @@ https://github.com/mellinoe/veldrid.");
                 CreatedResourceCache.ClearCache();
                 ImGuiImageHelper.InvalidateCache();
                 SharedDataProviders.ChangeRenderContext(newContext);
-                foreach (var kvp in _rc.TextureProviders)
-                {
-                    newContext.TextureProviders[kvp.Key] = kvp.Value;
-                }
 
                 _renderer.SetRenderContext(newContext);
 

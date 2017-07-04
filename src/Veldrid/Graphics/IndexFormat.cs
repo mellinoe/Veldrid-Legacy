@@ -3,7 +3,7 @@
     /// <summary>
     /// The format of index data.
     /// </summary>
-    public enum IndexFormat
+    public enum IndexFormat : byte
     {
         /// <summary>
         /// An unsigned, 32-bit integer format.
