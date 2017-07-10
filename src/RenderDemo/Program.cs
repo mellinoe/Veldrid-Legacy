@@ -6,6 +6,7 @@ using Veldrid.Graphics;
 using Veldrid.Graphics.Direct3D;
 using Veldrid.Graphics.OpenGL;
 using Veldrid.Graphics.OpenGLES;
+using Veldrid.Graphics.Vulkan;
 using Veldrid.Platform;
 using Veldrid.Sdl2;
 
@@ -15,24 +16,32 @@ namespace Veldrid.RenderDemo
     {
         public static void Main()
         {
+            bool useVulkan = true;
             bool onWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             var window = new Sdl2Window("Veldrid Render Demo", 100, 100, 960, 540, SDL_WindowFlags.Resizable | SDL_WindowFlags.OpenGL, RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
             RenderContext rc;
-            bool preferOpenGL = Preferences.Instance.PreferOpenGL;
-            if (!preferOpenGL && onWindows)
+            if (useVulkan)
             {
-                rc = CreateDefaultD3dRenderContext(window);
+                rc = CreateVulkanRenderContext(window);
             }
             else
             {
-                bool useGLES = false;
-                if (useGLES)
+                bool preferOpenGL = Preferences.Instance.PreferOpenGL;
+                if (!preferOpenGL && onWindows)
                 {
-                    rc = CreateDefaultOpenGLESRenderContext(window);
+                    rc = CreateDefaultD3dRenderContext(window);
                 }
                 else
                 {
-                    rc = CreateDefaultOpenGLRenderContext(window);
+                    bool useGLES = false;
+                    if (useGLES)
+                    {
+                        rc = CreateDefaultOpenGLESRenderContext(window);
+                    }
+                    else
+                    {
+                        rc = CreateDefaultOpenGLRenderContext(window);
+                    }
                 }
             }
 
@@ -70,6 +79,11 @@ namespace Veldrid.RenderDemo
             }
 
             RenderDemo.RunDemo(rc, window, options.ToArray());
+        }
+
+        private static RenderContext CreateVulkanRenderContext(Sdl2Window window)
+        {
+            return new VkRenderContext();
         }
 
         private static OpenGLESRenderContext CreateDefaultOpenGLESRenderContext(Sdl2Window window)
