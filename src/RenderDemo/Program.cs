@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Veldrid.Graphics;
 using Veldrid.Graphics.Direct3D;
@@ -81,9 +82,14 @@ namespace Veldrid.RenderDemo
             RenderDemo.RunDemo(rc, window, options.ToArray());
         }
 
-        private static RenderContext CreateVulkanRenderContext(Sdl2Window window)
+        private static unsafe RenderContext CreateVulkanRenderContext(Sdl2Window window)
         {
-            return new VkRenderContext();
+            IntPtr sdlHandle = window.SdlWindowHandle;
+            SDL_SysWMinfo sysWmInfo;
+            Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
+            Sdl2Native.SDL_GetWMWindowInfo(sdlHandle, &sysWmInfo);
+            Win32WindowInfo w32Info = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info);
+            return new VkRenderContext(w32Info.hinstance, w32Info.window, window.Width, window.Height);
         }
 
         private static OpenGLESRenderContext CreateDefaultOpenGLESRenderContext(Sdl2Window window)

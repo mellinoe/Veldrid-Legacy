@@ -13,20 +13,41 @@ namespace Veldrid.Graphics.Vulkan
         private static readonly int s_sizeofT = Unsafe.SizeOf<T>();
 
         private fixed byte _storage[CapacityInBytes];
+        private uint _count;
 
-        public uint Count { get; private set; }
+        public uint Count => _count;
         public void* Data => Unsafe.AsPointer(ref this);
 
         public void Add(T item)
         {
             byte* basePtr = (byte*)Data;
-            int offset = (int)(Count * s_sizeofT);
+            int offset = (int)(_count * s_sizeofT);
 #if DEBUG
             Debug.Assert((offset + s_sizeofT) <= CapacityInBytes);
 #endif
             Unsafe.Write(basePtr + offset, item);
 
-            Count += 1;
+            _count += 1;
+        }
+
+        public ref T this[uint index]
+        {
+            get
+            {
+                byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
+                int offset = (int)(index * s_sizeofT);
+                return ref Unsafe.AsRef<T>(basePtr + offset);
+            }
+        }
+
+        public ref T this[int index]
+        {
+            get
+            {
+                byte* basePtr = (byte*)Unsafe.AsPointer(ref this);
+                int offset = index * s_sizeofT;
+                return ref Unsafe.AsRef<T>(basePtr + offset);
+            }
         }
     }
 
@@ -44,17 +65,17 @@ namespace Veldrid.Graphics.Vulkan
 #pragma warning restore 0169
         private uint _count;
 
-        public uint Count { get; private set; }
+        public uint Count => _count;
         public void* Data => Unsafe.AsPointer(ref this);
 
         public void Add(T item)
         {
-            byte* basePtr = (byte*)Data;
-            int offset = (int)(_count * s_sizeofT);
+            ref T dest = ref Unsafe.Add(ref Unsafe.As<TSize, T>(ref _storage), (int)_count);
 #if DEBUG
+            int offset = (int)(_count * s_sizeofT);
             Debug.Assert((offset + s_sizeofT) <= Unsafe.SizeOf<TSize>());
 #endif
-            Unsafe.Write(basePtr + offset, item);
+            dest = item;
 
             _count += 1;
         }
