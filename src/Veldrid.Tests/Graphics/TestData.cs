@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Veldrid.Graphics.Direct3D;
 using Veldrid.Graphics.OpenGL;
+using Veldrid.Graphics.Vulkan;
 using Veldrid.Platform;
 using Veldrid.Sdl2;
 
@@ -76,6 +78,18 @@ namespace Veldrid.Graphics
             }
             return rc;
         }
+
+        public static unsafe VkRenderContext CreateVulkanContext()
+        {
+            Sdl2Window window = TestData.CreateTestWindow();
+            IntPtr sdlHandle = window.SdlWindowHandle;
+            SDL_SysWMinfo sysWmInfo;
+            Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
+            Sdl2Native.SDL_GetWMWindowInfo(sdlHandle, &sysWmInfo);
+            Win32WindowInfo w32Info = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info);
+            return new VkRenderContext(w32Info.hinstance, w32Info.window, window.Width, window.Height);
+        }
+
 
         internal static IEnumerable<object> DataValueArrays()
         {

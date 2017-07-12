@@ -40,6 +40,7 @@ namespace Veldrid.Graphics.Vulkan
             CreateSurface(hinstance, hwnd);
             CreatePhysicalDevice();
             CreateLogicalDevice();
+            ResourceFactory = new VkResourceFactory(_device, _physicalDevice);
             CreateSwapchain(width, height);
             CreateImageViews();
         }
@@ -320,7 +321,7 @@ namespace Veldrid.Graphics.Vulkan
             vkCreateImageView(_device, ref imageViewCI, null, out imageView);
         }
 
-        public override ResourceFactory ResourceFactory => throw new NotImplementedException();
+        public override ResourceFactory ResourceFactory { get; }
 
         public override RenderCapabilities RenderCapabilities => throw new NotImplementedException();
 

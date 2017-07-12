@@ -198,6 +198,7 @@ namespace Veldrid.Graphics
         /// <returns></returns>
         public abstract Framebuffer CreateFramebuffer(int width, int height);
 
+        // TODO: pixelSizeInBytes parameter is redundant -- it is a function of the PixelFormat.
         /// <summary>
         /// Creates a new <see cref="DeviceTexture2D"/>.
         /// </summary>
@@ -217,6 +218,7 @@ namespace Veldrid.Graphics
             return tex;
         }
 
+        // TODO: pixelSizeInBytes parameter is redundant -- it is a function of the PixelFormat.
         /// <summary>
         /// Creates a new <see cref="DeviceTexture2D"/>.
         /// </summary>
@@ -233,6 +235,7 @@ namespace Veldrid.Graphics
             return tex;
         }
 
+        // TODO: pixelSizeInBytes parameter is redundant -- it is a function of the PixelFormat.
         /// <summary>
         /// Creates a new 2D device texture with the given properties.
         /// </summary>
