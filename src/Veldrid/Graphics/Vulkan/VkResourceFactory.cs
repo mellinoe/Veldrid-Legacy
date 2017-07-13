@@ -30,17 +30,30 @@ namespace Veldrid.Graphics.Vulkan
 
         public override DeviceTexture2D CreateDepthTexture(int width, int height, int pixelSizeInBytes, PixelFormat format)
         {
-            throw new NotImplementedException();
+            return new VkTexture2D(
+                _device,
+                _physicalDevice,
+                1,
+                width,
+                height,
+                format,
+                isDepthTexture: true);
         }
 
         public override Framebuffer CreateFramebuffer()
         {
-            throw new NotImplementedException();
+            return new VkFramebufferInfo(_device, _physicalDevice);
         }
 
         public override Framebuffer CreateFramebuffer(int width, int height)
         {
-            throw new NotImplementedException();
+            // TODO: This is how all CreateFramebuffer(int, int) implementations should work.
+            VkFramebufferInfo framebuffer = new VkFramebufferInfo(_device, _physicalDevice);
+            DeviceTexture2D colorTexture = CreateTexture(1, width, height, 4, PixelFormat.R8_G8_B8_A8_UInt);
+            DeviceTexture2D depthTexture = CreateDepthTexture(width, height, 2, PixelFormat.R16_UInt);
+            framebuffer.ColorTexture = (VkTexture2D)colorTexture;
+            framebuffer.DepthTexture = (VkTexture2D)depthTexture;
+            return framebuffer;
         }
 
         public override IndexBuffer CreateIndexBuffer(int sizeInBytes, bool isDynamic, IndexFormat format)
@@ -54,42 +67,42 @@ namespace Veldrid.Graphics.Vulkan
 
         public override VertexInputLayout CreateInputLayout(params VertexInputDescription[] vertexInputs)
         {
-            throw new NotImplementedException();
+            return new VKInputLayout(vertexInputs);
         }
 
         public override Shader CreateShader(ShaderType type, CompiledShaderCode compiledShaderCode)
         {
-            throw new NotImplementedException();
+            return new VkShader(_device, type, (VkShaderBytecode)compiledShaderCode);
         }
 
         public override ShaderConstantBindingSlots CreateShaderConstantBindingSlots(ShaderSet shaderSet, params ShaderConstantDescription[] constants)
         {
-            throw new NotImplementedException();
+            return new VkShaderConstantBindingSlots((VkShaderSet)shaderSet, constants);
         }
 
         public override ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader fragmentShader)
         {
-            throw new NotImplementedException();
+            return new VkShaderSet((VKInputLayout)inputLayout, (VkShader)vertexShader, null, (VkShader)fragmentShader);
         }
 
         public override ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader geometryShader, Shader fragmentShader)
         {
-            throw new NotImplementedException();
+            return new VkShaderSet((VKInputLayout)inputLayout, (VkShader)vertexShader, (VkShader)geometryShader, (VkShader)fragmentShader);
         }
 
         public override ShaderTextureBinding CreateShaderTextureBinding(DeviceTexture texture)
         {
-            return new VkShaderTextureBinding(_device, (VkDeviceTexture2D)texture);
+            return new VkShaderTextureBinding(_device, (VkTexture2D)texture);
         }
 
         public override ShaderTextureBindingSlots CreateShaderTextureBindingSlots(ShaderSet shaderSet, params ShaderTextureInput[] textureInputs)
         {
-            throw new NotImplementedException();
+            return new VkShaderTextureBindingSlots((VkShaderSet)shaderSet, textureInputs);
         }
 
         public override DeviceTexture2D CreateTexture(int mipLevels, int width, int height, int pixelSizeInBytes, PixelFormat format)
         {
-            return new VkDeviceTexture2D(_device, _physicalDevice, mipLevels, width, height, format);
+            return new VkTexture2D(_device, _physicalDevice, mipLevels, width, height, format);
         }
 
         public override VertexBuffer CreateVertexBuffer(int sizeInBytes, bool isDynamic)
@@ -99,12 +112,12 @@ namespace Veldrid.Graphics.Vulkan
 
         public override CompiledShaderCode LoadProcessedShader(byte[] data)
         {
-            throw new NotImplementedException();
+            return new VkShaderBytecode(data);
         }
 
         public override CompiledShaderCode ProcessShaderCode(ShaderType type, string shaderCode)
         {
-            throw new NotImplementedException();
+            return new VkShaderBytecode(type, shaderCode);
         }
 
         protected override BlendState CreateCustomBlendStateCore(bool isBlendEnabled, Blend srcAlpha, Blend destAlpha, BlendFunction alphaBlendFunc, Blend srcColor, Blend destColor, BlendFunction colorBlendFunc, RgbaFloat blendFactor)

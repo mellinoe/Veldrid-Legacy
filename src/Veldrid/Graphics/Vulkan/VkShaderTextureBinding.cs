@@ -9,7 +9,7 @@ namespace Veldrid.Graphics.Vulkan
         private readonly VkDevice _device;
         private VkImageView _imageView;
 
-        public VkShaderTextureBinding(VkDevice device, VkDeviceTexture2D tex2D)
+        public VkShaderTextureBinding(VkDevice device, VkTexture2D tex2D)
         {
             _device = device;
             BoundTexture = tex2D;
@@ -24,7 +24,7 @@ namespace Veldrid.Graphics.Vulkan
             CheckResult(result);
         }
 
-        public VkDeviceTexture2D BoundTexture { get; }
+        public VkTexture2D BoundTexture { get; }
         DeviceTexture ShaderTextureBinding.BoundTexture => BoundTexture;
 
         public void Dispose()

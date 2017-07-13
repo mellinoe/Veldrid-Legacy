@@ -7,7 +7,7 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrid.Graphics.Vulkan
 {
-    public unsafe class VkDeviceTexture2D : DeviceTexture2D
+    public unsafe class VkTexture2D : DeviceTexture2D
     {
         private VkImage _image;
         private VkDeviceMemory _memory;
@@ -15,7 +15,7 @@ namespace Veldrid.Graphics.Vulkan
         private VkPhysicalDevice _physicalDevice;
         private PixelFormat _veldridFormat;
 
-        public VkDeviceTexture2D(VkDevice device, VkPhysicalDevice physicalDevice, int mipLevels, int width, int height, PixelFormat veldridFormat)
+        public VkTexture2D(VkDevice device, VkPhysicalDevice physicalDevice, int mipLevels, int width, int height, PixelFormat veldridFormat, bool isDepthTexture = false)
         {
             _device = device;
             _physicalDevice = physicalDevice;
@@ -34,6 +34,10 @@ namespace Veldrid.Graphics.Vulkan
             imageCI.extent.depth = 1;
             imageCI.initialLayout = VkImageLayout.General; // TODO: Use proper VkImageLayout values and transitions.
             imageCI.usage = VkImageUsageFlags.Sampled;
+            if (isDepthTexture)
+            {
+                imageCI.usage |= VkImageUsageFlags.DepthStencilAttachment;
+            }
             imageCI.tiling = VkImageTiling.Linear;
             imageCI.format = VkFormats.VeldridToVkPixelFormat(veldridFormat);
             imageCI.samples = VkSampleCountFlags._1;
