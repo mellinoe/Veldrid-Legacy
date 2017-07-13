@@ -7,6 +7,9 @@
     <DocumentationFile Condition="'$(Configuration)' == 'Release'">$(BinDir)\Veldrid.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="Graphics\Vulkan\VkShaderBytecode.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="ImageSharp" Version="1.0.0-alpha9-00140" />
     <PackageReference Include="OpenTK.NETCore" Version="1.1.2737.6432" />
     <PackageReference Include="SharpDX" Version="4.0.1" />
