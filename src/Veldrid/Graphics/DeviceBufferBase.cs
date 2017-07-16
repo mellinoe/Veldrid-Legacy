@@ -47,6 +47,16 @@ namespace Veldrid.Graphics
             gcHandle.Free();
         }
 
+        public unsafe void SetData<T>(ref T data) where T : struct
+        {
+            int dataSizeInBytes = Unsafe.SizeOf<T>();
+            ref byte byteRef = ref Unsafe.As<T, byte>(ref data);
+            fixed (byte* dataPtr = &byteRef)
+            {
+                SetData((IntPtr)dataPtr, dataSizeInBytes, 0);
+            }
+        }
+
         public unsafe void SetData<T>(ref T data, int dataSizeInBytes) where T : struct
         {
             ref byte byteRef = ref Unsafe.As<T, byte>(ref data);
@@ -65,6 +75,10 @@ namespace Veldrid.Graphics
         {
             SetData(data, dataSizeInBytes, 0);
         }
+
+        public void SetData<T>(T data) where T : struct => SetData(ref data);
+
+        public void SetData<T>(T data, int destinationOffsetInBytes) where T : struct => SetData(ref data, Unsafe.SizeOf<T>(), destinationOffsetInBytes);
 
         public abstract void SetData(IntPtr data, int dataSizeInBytes, int destinationOffsetInBytes);
         public abstract void GetData(IntPtr storageLocation, int storageSizeInBytes);

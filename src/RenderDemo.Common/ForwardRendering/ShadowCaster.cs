@@ -145,7 +145,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
             rc.SetSamplerState(1, rc.PointSampler);
         }
 
-        private static Material CreateShadowPassMaterial(ResourceFactory factory)
+        public static Material CreateShadowPassMaterial(ResourceFactory factory)
         {
             Shader vs = factory.CreateShader(ShaderType.Vertex, ShaderHelper.LoadShaderCode("shadowmap-vertex", ShaderType.Vertex, factory));
             Shader fs = factory.CreateShader(ShaderType.Fragment, ShaderHelper.LoadShaderCode("shadowmap-frag", ShaderType.Fragment, factory));
@@ -169,7 +169,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
             return new Material(shaderSet, constantSlots, textureSlots);
         }
 
-        private static Material CreateRegularPassMaterial(ResourceFactory factory)
+        public static Material CreateRegularPassMaterial(ResourceFactory factory)
         {
             Shader vs = factory.CreateShader(ShaderType.Vertex, ShaderHelper.LoadShaderCode("shadow-vertex", ShaderType.Vertex, factory));
             Shader fs = factory.CreateShader(ShaderType.Fragment, ShaderHelper.LoadShaderCode("shadow-frag", ShaderType.Fragment, factory));

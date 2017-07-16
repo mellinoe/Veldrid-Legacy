@@ -37,6 +37,14 @@ namespace Veldrid.Graphics
         /// Transfers the given data into the <see cref="DeviceBuffer"/>.
         /// </summary>
         /// <typeparam name="T">The type of data; must be a value type.</typeparam>
+        /// <param name="data">A reference to the singular element to transfer.
+        /// The size of data copied is equal to the size of T.</param>
+        void SetData<T>(ref T data) where T : struct;
+
+        /// <summary>
+        /// Transfers the given data into the <see cref="DeviceBuffer"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of data; must be a value type.</typeparam>
         /// <param name="data">A reference to the first element of the starting location of the data to transfer.</param>
         /// <param name="dataSizeInBytes">The total size in bytes to transfer.</param>
         void SetData<T>(ref T data, int dataSizeInBytes) where T : struct;
@@ -49,6 +57,21 @@ namespace Veldrid.Graphics
         /// <param name="dataSizeInBytes">The total size of the data to transfer, in bytes.</param>
         /// <param name="destinationOffsetInBytes">An offset into the <see cref="DeviceBuffer"/> at which data is stored.</param>
         void SetData<T>(ref T data, int dataSizeInBytes, int destinationOffsetInBytes) where T : struct;
+
+        /// <summary>
+        /// Transfers the given item into the <see cref="DeviceBuffer"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of item.</typeparam>
+        /// <param name="data">The item to transfer.</param>
+        void SetData<T>(T data) where T : struct;
+
+        /// <summary>
+        /// Transfers the given item into the <see cref="DeviceBuffer"/>.
+        /// </summary>
+        /// <typeparam name="T">The type of item.</typeparam>
+        /// <param name="data">The item to transfer.</param>
+        /// <param name="destinationOffsetInBytes">An offset into the <see cref="DeviceBuffer"/> at which data is stored.</param>
+        void SetData<T>(T data, int destinationOffsetInBytes) where T : struct;
 
         /// <summary>
         /// Transfers the given data into the <see cref="DeviceBuffer"/>. 

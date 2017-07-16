@@ -69,14 +69,14 @@ namespace Veldrid.RenderDemo.Drawers
             private readonly PreviewModel _previewItem;
             private readonly PreviewModel _floor;
 
-            private readonly DynamicDataProvider<Matrix4x4> _projection;
-            private readonly DynamicDataProvider<Matrix4x4> _view;
+            private readonly ConstantBuffer _projection;
+            private readonly ConstantBuffer _view;
 
-            private readonly DynamicDataProvider<Matrix4x4> _lightProjection;
-            private readonly DynamicDataProvider<Matrix4x4> _lightView;
-            private readonly DynamicDataProvider<Vector4> _lightInfo;
+            private readonly ConstantBuffer _lightProjection;
+            private readonly ConstantBuffer _lightView;
+            private readonly ConstantBuffer _lightInfo;
 
-            private readonly Dictionary<string, ConstantBufferDataProvider> _sceneProviders = new Dictionary<string, ConstantBufferDataProvider>();
+            private readonly Dictionary<string, ConstantBuffer> SceneBuffers = new Dictionary<string, ConstantBuffer>();
 
             private readonly PipelineStage[] _stages;
             private readonly FlatListVisibilityManager _visiblityManager;
@@ -84,6 +84,7 @@ namespace Veldrid.RenderDemo.Drawers
             private Vector3 _cameraPosition;
             private double _circleWidth = 10.0f;
             private readonly StandardPipelineStage _standardPipelineStage;
+            private readonly ShadowMapStage _shadowMapStage;
 
             public PreviewScene(RenderContext rc, ConstructedMeshInfo previewItem)
             {
@@ -91,26 +92,33 @@ namespace Veldrid.RenderDemo.Drawers
                 ResourceFactory factory = rc.ResourceFactory;
                 _fb = factory.CreateFramebuffer(Width, Height);
 
-                _projection = new DynamicDataProvider<Matrix4x4>();
+                _projection = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
                 UpdateProjectionData();
-                _view = new DynamicDataProvider<Matrix4x4>(Matrix4x4.CreateLookAt(Vector3.UnitZ * 7f + Vector3.UnitY * 1.5f, Vector3.Zero, Vector3.UnitY));
+                _view = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
+                _view.SetData(Matrix4x4.CreateLookAt(Vector3.UnitZ * 7f + Vector3.UnitY * 1.5f, Vector3.Zero, Vector3.UnitY));
 
-                _lightProjection = new DynamicDataProvider<Matrix4x4>(Matrix4x4.CreateOrthographicOffCenter(-18, 18, -18, 18, -10, 60f));
-                _lightView = new DynamicDataProvider<Matrix4x4>(Matrix4x4.CreateLookAt(-_lightDirection * 20f, Vector3.Zero, Vector3.UnitY));
-                _lightInfo = new DynamicDataProvider<Vector4>(new Vector4(_lightDirection, 1));
+                _lightProjection = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
+                _lightProjection.SetData(Matrix4x4.CreateOrthographicOffCenter(-18, 18, -18, 18, -10, 60f));
+
+                _lightView = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
+                _lightView.SetData(Matrix4x4.CreateLookAt(-_lightDirection * 20f, Vector3.Zero, Vector3.UnitY));
+
+                _lightInfo = factory.CreateConstantBuffer(ShaderConstantType.Float4);
+                _lightInfo.SetData(new Vector4(_lightDirection, 1));
 
                 _standardPipelineStage = new StandardPipelineStage(rc, "Standard", _fb);
+                _shadowMapStage = new ShadowMapStage(rc, "ShadowMap_Preview");
                 _stages = new PipelineStage[]
                 {
-                    new ShadowMapStage(rc, "ShadowMap_Preview"),
+                    _shadowMapStage,
                     _standardPipelineStage,
                 };
 
-                _sceneProviders.Add("ProjectionMatrix", _projection);
-                _sceneProviders.Add("ViewMatrix", _view);
-                _sceneProviders.Add("LightProjMatrix", _lightProjection);
-                _sceneProviders.Add("LightViewMatrix", _lightView);
-                _sceneProviders.Add("LightInfo", _lightInfo);
+                SceneBuffers.Add("ProjectionMatrix", _projection);
+                SceneBuffers.Add("ViewMatrix", _view);
+                SceneBuffers.Add("LightProjMatrix", _lightProjection);
+                SceneBuffers.Add("LightViewMatrix", _lightView);
+                SceneBuffers.Add("LightInfo", _lightInfo);
 
                 _floor = CreatePreviewModel(PlaneModel.Vertices, PlaneModel.Indices);
                 _floor.WorldMatrix.Data = Matrix4x4.CreateScale(10f, 1f, 10f);
@@ -125,7 +133,7 @@ namespace Veldrid.RenderDemo.Drawers
 
             public DeviceTexture RenderedScene => _fb.ColorTexture;
 
-            private PreviewModel CreatePreviewModel(VertexPositionNormalTexture[] vertices, ushort[] indices, ShaderTextureBinding textureBinding = null)
+            private PreviewModel CreatePreviewModel(VertexPositionNormalTexture[] vertices, ushort[] indices)
             {
                 AssetDatabase lfd = new LooseFileDatabase(Path.Combine(AppContext.BaseDirectory, "Assets"));
                 VertexBuffer vb = _rc.ResourceFactory.CreateVertexBuffer(vertices.Length * VertexPositionNormalTexture.SizeInBytes, false);
@@ -136,8 +144,11 @@ namespace Veldrid.RenderDemo.Drawers
                 IndexBuffer ib = _rc.ResourceFactory.CreateIndexBuffer(indices.Length * sizeof(ushort), false);
                 ib.SetIndices(indices);
 
-                Material shadowmapMaterial = null; // TODO
-                Material regularMaterial = null; // TODO
+                Material shadowmapMaterial = ShadowCaster.CreateShadowPassMaterial(_rc.ResourceFactory);
+                Material regularMaterial = ShadowCaster.CreateRegularPassMaterial(_rc.ResourceFactory);
+
+                var deviceTexture = lfd.LoadAsset<ImageSharpMipmapChain>("Textures/CubeTexture.png").CreateDeviceTexture(_rc.ResourceFactory);
+                var textureBinding = _rc.ResourceFactory.CreateShaderTextureBinding(deviceTexture);
 
                 return new PreviewModel(
                     vb,
@@ -145,7 +156,10 @@ namespace Veldrid.RenderDemo.Drawers
                     indices.Length,
                     regularMaterial,
                     shadowmapMaterial,
+                    _rc.ResourceFactory.CreateConstantBuffer(ShaderConstantType.Matrix4x4),
                     new DynamicDataProvider<Matrix4x4>(Matrix4x4.Identity),
+                    _rc.ResourceFactory.CreateConstantBuffer(ShaderConstantType.Matrix4x4),
+                    SceneBuffers,
                     textureBinding);
             }
 
@@ -170,13 +184,13 @@ namespace Veldrid.RenderDemo.Drawers
                         (float)(Math.Cos(timeFactor) * _circleWidth),
                         6 + (float)Math.Sin(timeFactor) * 2,
                         (float)(Math.Sin(timeFactor) * _circleWidth));
-                    _view.Data = Matrix4x4.CreateLookAt(_cameraPosition, -_cameraPosition, Vector3.UnitY);
+                    _view.SetData(Matrix4x4.CreateLookAt(_cameraPosition, -_cameraPosition, Vector3.UnitY));
                 }
             }
 
             private void UpdateProjectionData()
             {
-                _projection.Data = Matrix4x4.CreatePerspectiveFieldOfView(Fov, (float)Width / Height, 0.1f, 100f);
+                _projection.SetData(Matrix4x4.CreatePerspectiveFieldOfView(Fov, (float)Width / Height, 0.1f, 100f));
             }
 
             private void OnSizeChanged()
@@ -195,10 +209,12 @@ namespace Veldrid.RenderDemo.Drawers
             private readonly int _elementCount;
             private readonly Material _shadowmapMaterial;
             private readonly Material _regularMaterial;
+            private readonly ConstantBuffer _worldBuffer;
             private readonly DynamicDataProvider<Matrix4x4> _worldProvider;
+            private readonly ConstantBuffer _inverseTransposeWorldBuffer;
             private readonly ConstantBufferDataProvider _inverseWorldProvider;
-            private readonly ConstantBufferDataProvider[] _perObjectInputs;
             private readonly ShaderTextureBinding _textureBinding;
+            private readonly Dictionary<string, ConstantBuffer> _buffersDict = new Dictionary<string, ConstantBuffer>();
 
             private static readonly string[] s_stages = new string[] { "ShadowMap", "Standard" };
 
@@ -210,8 +226,12 @@ namespace Veldrid.RenderDemo.Drawers
                 int elementCount,
                 Material regularMaterial,
                 Material shadowmapMaterial,
+                ConstantBuffer worldBuffer,
                 DynamicDataProvider<Matrix4x4> worldProvider,
-                ShaderTextureBinding surfaceTextureBinding = null)
+                ConstantBuffer inverseTransposeWorldBuffer,
+                Dictionary<string, ConstantBuffer> buffersDict,
+                ShaderTextureBinding surfaceTextureBinding
+                )
             {
                 _vb = vb;
                 _ib = ib;
@@ -220,25 +240,41 @@ namespace Veldrid.RenderDemo.Drawers
                 _shadowmapMaterial = shadowmapMaterial;
                 _worldProvider = worldProvider;
                 _inverseWorldProvider = new DependantDataProvider<Matrix4x4>(worldProvider, Utilities.CalculateInverseTranspose);
-                _perObjectInputs = new ConstantBufferDataProvider[] { _worldProvider, _inverseWorldProvider };
                 _textureBinding = surfaceTextureBinding;
+
+                _worldBuffer = worldBuffer;
+                _inverseTransposeWorldBuffer = inverseTransposeWorldBuffer;
+                _buffersDict = buffersDict;
             }
 
             public void Render(RenderContext rc, string stage)
             {
                 rc.VertexBuffer = _vb;
-                rc.IndexBuffer =_ib;
+                rc.IndexBuffer = _ib;
                 if (stage == "ShadowMap")
                 {
                     _shadowmapMaterial.Apply(rc);
+                    rc.SetConstantBuffer(0, _buffersDict["LightProjMatrix"]);
+                    rc.SetConstantBuffer(1, _buffersDict["LightViewMatrix"]);
+                    _worldProvider.SetData(_worldBuffer);
+                    rc.SetConstantBuffer(2, _worldBuffer);
                 }
                 else
                 {
                     _regularMaterial.Apply(rc);
-                    if (_textureBinding != null)
-                    {
-                        rc.SetTexture(1, _textureBinding);
-                    }
+
+                    rc.SetConstantBuffer(0, _buffersDict["ProjectionMatrix"]);
+                    rc.SetConstantBuffer(1, _buffersDict["ViewMatrix"]);
+                    rc.SetConstantBuffer(2, _buffersDict["LightProjMatrix"]);
+                    rc.SetConstantBuffer(3, _buffersDict["LightViewMatrix"]);
+                    rc.SetConstantBuffer(4, _buffersDict["LightInfo"]);
+                    _worldProvider.SetData(_worldBuffer);
+                    rc.SetConstantBuffer(5, _worldBuffer);
+                    _inverseWorldProvider.SetData(_inverseTransposeWorldBuffer);
+                    rc.SetConstantBuffer(6, _inverseTransposeWorldBuffer);
+
+                    rc.SetTexture(0, _textureBinding);
+                    rc.SetTexture(1, SharedTextures.GetTextureBinding("ShadowMap_Preview"));
                 }
 
                 rc.DrawIndexedPrimitives(_elementCount, 0);

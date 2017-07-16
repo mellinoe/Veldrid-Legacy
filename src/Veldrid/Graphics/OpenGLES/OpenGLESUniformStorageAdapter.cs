@@ -180,5 +180,20 @@ namespace Veldrid.Graphics.OpenGLES
         {
             throw new NotImplementedException();
         }
+
+        public void SetData<T>(ref T data) where T : struct
+        {
+            SetData(ref data, Unsafe.SizeOf<T>());
+        }
+
+        public void SetData<T>(T data) where T : struct
+        {
+            SetData(ref data);
+        }
+
+        public void SetData<T>(T data, int destinationOffsetInBytes) where T : struct
+        {
+            SetData(ref data, Unsafe.SizeOf<T>(), destinationOffsetInBytes);
+        }
     }
 }
