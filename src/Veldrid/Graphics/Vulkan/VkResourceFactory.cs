@@ -109,7 +109,7 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override RasterizerState CreateRasterizerStateCore(FaceCullingMode cullMode, TriangleFillMode fillMode, bool isDepthClipEnabled, bool isScissorTestEnabled)
         {
-            throw new NotImplementedException();
+            return new VkRasterizerState(cullMode, fillMode, isDepthClipEnabled, isScissorTestEnabled);
         }
 
         protected override SamplerState CreateSamplerStateCore(SamplerAddressMode addressU, SamplerAddressMode addressV, SamplerAddressMode addressW, SamplerFilter filter, int maxAnisotropy, RgbaFloat borderColor, DepthComparison comparison, int minimumLod, int maximumLod, int lodBias)

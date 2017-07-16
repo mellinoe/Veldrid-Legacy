@@ -1,4 +1,5 @@
-﻿using Vulkan;
+﻿using System;
+using Vulkan;
 
 namespace Veldrid.Graphics.Vulkan
 {
@@ -18,6 +19,34 @@ namespace Veldrid.Graphics.Vulkan
                     return VkFormat.R8g8b8a8Uint;
                 default:
                     throw Illegal.Value<PixelFormat>();
+            }
+        }
+
+        internal static VkCullModeFlags VeldridToVkCullMode(FaceCullingMode cullMode)
+        {
+            switch (cullMode)
+            {
+                case FaceCullingMode.Back:
+                    return VkCullModeFlags.Back;
+                case FaceCullingMode.Front:
+                    return VkCullModeFlags.Front;
+                case FaceCullingMode.None:
+                    return VkCullModeFlags.None;
+                default:
+                    throw Illegal.Value<FaceCullingMode>();
+            }
+        }
+
+        internal static VkPolygonMode VeldridToVkFillMode(TriangleFillMode fillMode)
+        {
+            switch (fillMode)
+            {
+                case TriangleFillMode.Solid:
+                    return VkPolygonMode.Fill;
+                case TriangleFillMode.Wireframe:
+                    return VkPolygonMode.Line;
+                default:
+                    throw Illegal.Value<TriangleFillMode>();
             }
         }
     }

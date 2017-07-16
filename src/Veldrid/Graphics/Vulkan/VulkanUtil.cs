@@ -38,5 +38,4 @@ namespace Veldrid.Graphics.Vulkan
             return (&memoryProperties.memoryTypes_0)[index];
         }
     }
-
 }
