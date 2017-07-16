@@ -179,17 +179,13 @@ namespace Veldrid.RenderDemo.ForwardRendering
                     new VertexInputElement("in_normal", VertexSemanticType.Normal, VertexElementFormat.Float3),
                     new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            ShaderConstantBindingSlots constantSlots = factory.CreateShaderConstantBindingSlots(
+            ShaderResourceBindingSlots constantSlots = factory.CreateShaderConstantBindingSlots(
                 shaderSet,
-                new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4), // Light Projection
-                new ShaderConstantDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4), // Light View
-                new ShaderConstantDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4));
+                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4), // Light Projection
+                new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4), // Light View
+                new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4));
 
-            ShaderTextureBindingSlots textureSlots = factory.CreateShaderTextureBindingSlots(
-                shaderSet,
-                Array.Empty<ShaderTextureInput>());
-
-            s_shadowPassMaterial = new Material(shaderSet, constantSlots, textureSlots);
+            s_shadowPassMaterial = new Material(shaderSet, constantSlots);
         }
 
         private static void CreateRegularPassMaterial(ResourceFactory factory)
@@ -203,26 +199,23 @@ namespace Veldrid.RenderDemo.ForwardRendering
                     new VertexInputElement("in_normal", VertexSemanticType.Normal, VertexElementFormat.Float3),
                     new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            ShaderConstantBindingSlots constantSlots = factory.CreateShaderConstantBindingSlots(
+            ShaderResourceBindingSlots constantSlots = factory.CreateShaderConstantBindingSlots(
                 shaderSet,
-                new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("LightProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("LightViewMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("LightInfoBuffer", ShaderConstantType.Float4),
-                new ShaderConstantDescription("CameraInfoBuffer", Unsafe.SizeOf<Camera.Info>()),
-                new ShaderConstantDescription("PointLightsBuffer", Unsafe.SizeOf<PointLightsBuffer>()),
-                new ShaderConstantDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("MaterialPropertiesBuffer", ShaderConstantType.Float4));
+                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("LightProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("LightViewMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("LightInfoBuffer", ShaderConstantType.Float4),
+                new ShaderResourceDescription("CameraInfoBuffer", Unsafe.SizeOf<Camera.Info>()),
+                new ShaderResourceDescription("PointLightsBuffer", Unsafe.SizeOf<PointLightsBuffer>()),
+                new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("MaterialPropertiesBuffer", ShaderConstantType.Float4),
+                new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture),
+                new ShaderResourceDescription("AlphaMap", ShaderResourceType.Texture),
+                new ShaderResourceDescription("ShadowMap", ShaderResourceType.Texture));
 
-            ShaderTextureBindingSlots textureSlots = factory.CreateShaderTextureBindingSlots(
-                shaderSet,
-                new ShaderTextureInput(0, "SurfaceTexture"),
-                new ShaderTextureInput(1, "AlphaMap"),
-                new ShaderTextureInput(2, "ShadowMap"));
-
-            s_regularPassMaterial = new Material(shaderSet, constantSlots, textureSlots);
+            s_regularPassMaterial = new Material(shaderSet, constantSlots);
         }
 
         private void RecreateAlphaMapTextureResources(RenderContext rc)

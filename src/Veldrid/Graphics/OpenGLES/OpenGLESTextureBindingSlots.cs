@@ -3,16 +3,12 @@ using System;
 
 namespace Veldrid.Graphics.OpenGLES
 {
-    public class OpenGLESTextureBindingSlots : ShaderTextureBindingSlots
+    public class OpenGLESTextureBindingSlots
     {
-        public ShaderTextureInput[] TextureInputs { get; }
-
         private readonly OpenGLESProgramTextureBinding[] _textureBindings;
 
-        public OpenGLESTextureBindingSlots(ShaderSet shaderSet, ShaderTextureInput[] textureInputs)
+        public OpenGLESTextureBindingSlots(ShaderSet shaderSet, ShaderResourceDescription[] textureInputs)
         {
-            TextureInputs = textureInputs;
-
             _textureBindings = new OpenGLESProgramTextureBinding[textureInputs.Length];
             for (int i = 0; i < textureInputs.Length; i++)
             {

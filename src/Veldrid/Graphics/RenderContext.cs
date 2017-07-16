@@ -25,8 +25,7 @@ namespace Veldrid.Graphics
         private DepthStencilState _depthStencilState;
         private RasterizerState _rasterizerState;
         private ShaderSet _shaderSet;
-        private ShaderConstantBindingSlots _constantBindings;
-        private ShaderTextureBindingSlots _textureBindingSlots;
+        private ShaderResourceBindingSlots _resourceBindingSlots;
 
         protected readonly Dictionary<int, DeviceTexture> _boundTexturesBySlot = new Dictionary<int, DeviceTexture>();
         protected readonly Dictionary<int, BoundSamplerStateInfo> _boundSamplersBySlot = new Dictionary<int, BoundSamplerStateInfo>();
@@ -136,46 +135,33 @@ namespace Veldrid.Graphics
             }
         }
 
-        public ShaderConstantBindingSlots ShaderConstantBindingSlots
+        public ShaderResourceBindingSlots ShaderResourceBindingSlots
         {
-            get { return _constantBindings; }
+            get { return _resourceBindingSlots; }
             set
             {
-                if (_constantBindings != value)
+                if (_resourceBindingSlots != value)
                 {
-                    PlatformSetShaderConstantBindings(value);
-                    _constantBindings = value;
+                    PlatformSetShaderResourceBindingSlots(value);
+                    _resourceBindingSlots = value;
                 }
             }
         }
 
         public void SetConstantBuffer(int slot, ConstantBuffer cb)
         {
-            if (_constantBindings == null)
+            if (_resourceBindingSlots == null)
             {
                 throw new VeldridException(
-                    "Cannot call SetConstantBuffer when ShaderConstantBindingSlots has not been set.");
+                    "Cannot call SetConstantBuffer when ShaderResourceBindingSlots has not been set.");
             }
 
             PlatformSetConstantBuffer(slot, cb);
         }
 
-        public ShaderTextureBindingSlots ShaderTextureBindingSlots
-        {
-            get { return _textureBindingSlots; }
-            set
-            {
-                if (_textureBindingSlots != value)
-                {
-                    PlatformSetShaderTextureBindingSlots(value);
-                    _textureBindingSlots = value;
-                }
-            }
-        }
-
         public void SetTexture(int slot, ShaderTextureBinding textureBinding)
         {
-            if (_textureBindingSlots == null)
+            if (_resourceBindingSlots == null)
             {
                 throw new VeldridException("Cannot call SetTexture when TextureBindingSlots has not been set.");
             }
@@ -482,11 +468,9 @@ namespace Veldrid.Graphics
 
         protected abstract void PlatformSetShaderSet(ShaderSet shaderSet);
 
-        protected abstract void PlatformSetShaderConstantBindings(ShaderConstantBindingSlots shaderConstantBindings);
+        protected abstract void PlatformSetShaderResourceBindingSlots(ShaderResourceBindingSlots shaderConstantBindings);
 
         protected abstract void PlatformSetConstantBuffer(int slot, ConstantBuffer cb);
-
-        protected abstract void PlatformSetShaderTextureBindingSlots(ShaderTextureBindingSlots bindingSlots);
 
         protected abstract void PlatformSetTexture(int slot, ShaderTextureBinding textureBinding);
 
@@ -517,7 +501,7 @@ namespace Veldrid.Graphics
             }
 
             _indexBuffer = null;
-            _constantBindings = null;
+            _resourceBindingSlots = null;
         }
 
         protected struct BoundSamplerStateInfo

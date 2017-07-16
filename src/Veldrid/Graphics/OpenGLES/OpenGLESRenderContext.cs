@@ -222,18 +222,14 @@ namespace Veldrid.Graphics.OpenGLES
             _vertexLayoutChanged = true;
         }
 
-        protected override void PlatformSetShaderConstantBindings(ShaderConstantBindingSlots shaderConstantBindings)
+        protected override void PlatformSetShaderResourceBindingSlots(ShaderResourceBindingSlots shaderConstantBindings)
         {
         }
 
         protected override void PlatformSetConstantBuffer(int slot, ConstantBuffer cb)
         {
-            var binding = ShaderConstantBindingSlots.GetBindingForSlot(slot);
+            var binding = ConstantSlots.GetBindingForSlot(slot);
             binding.Bind((OpenGLESConstantBuffer)cb);
-        }
-
-        protected override void PlatformSetShaderTextureBindingSlots(ShaderTextureBindingSlots bindingSlots)
-        {
         }
 
         protected override void PlatformSetTexture(int slot, ShaderTextureBinding textureBinding)
@@ -242,7 +238,7 @@ namespace Veldrid.Graphics.OpenGLES
             Utilities.CheckLastGLES3Error();
             OpenGLESTexture boundTexture = ((OpenGLESTexture)textureBinding.BoundTexture);
             boundTexture.Bind();
-            int uniformLocation = ShaderTextureBindingSlots.GetUniformLocation(slot);
+            int uniformLocation = TextureSlots.GetUniformLocation(slot);
             GL.Uniform1(uniformLocation, slot);
             Utilities.CheckLastGLES3Error();
 
@@ -338,8 +334,10 @@ namespace Veldrid.Graphics.OpenGLES
             }
         }
 
-        private new OpenGLESTextureBindingSlots ShaderTextureBindingSlots => (OpenGLESTextureBindingSlots)base.ShaderTextureBindingSlots;
+        private new OpenGLESShaderResourceBindingSlots ShaderResourceBindingSlots
+            => (OpenGLESShaderResourceBindingSlots)base.ShaderResourceBindingSlots;
 
-        private new OpenGLESShaderConstantBindingSlots ShaderConstantBindingSlots => (OpenGLESShaderConstantBindingSlots)base.ShaderConstantBindingSlots;
+        private OpenGLESTextureBindingSlots TextureSlots => ShaderResourceBindingSlots.TextureSlots;
+        private OpenGLESShaderConstantBindingSlots ConstantSlots => ShaderResourceBindingSlots.ConstantBufferSlots;
     }
 }

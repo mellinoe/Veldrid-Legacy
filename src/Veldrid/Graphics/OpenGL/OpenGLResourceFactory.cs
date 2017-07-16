@@ -74,21 +74,16 @@ namespace Veldrid.Graphics.OpenGL
             return new OpenGLShaderSet((OpenGLVertexInputLayout)inputLayout, (OpenGLShader)vertexShader, (OpenGLShader)geometryShader, (OpenGLShader)fragmentShader);
         }
 
-        public override ShaderConstantBindingSlots CreateShaderConstantBindingSlots(
+        public override ShaderResourceBindingSlots CreateShaderConstantBindingSlots(
             ShaderSet shaderSet,
-            ShaderConstantDescription[] constants)
+            ShaderResourceDescription[] resources)
         {
-            return new OpenGLShaderConstantBindingSlots(shaderSet, constants);
+            return new OpenGLShaderResourceBindingSlots((OpenGLShaderSet)shaderSet, resources);
         }
 
         public override VertexInputLayout CreateInputLayout(VertexInputDescription[] vertexInputs)
         {
             return new OpenGLVertexInputLayout(vertexInputs);
-        }
-
-        public override ShaderTextureBindingSlots CreateShaderTextureBindingSlots(ShaderSet shaderSet, ShaderTextureInput[] textureInputs)
-        {
-            return new OpenGLTextureBindingSlots(shaderSet, textureInputs);
         }
 
         public override ShaderTextureBinding CreateShaderTextureBinding(DeviceTexture texture)

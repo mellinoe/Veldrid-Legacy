@@ -64,16 +64,13 @@ namespace Veldrid.RenderDemo
                     12,
                     new VertexInputElement("in_position", VertexSemanticType.Position, VertexElementFormat.Float3)));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            ShaderConstantBindingSlots constantSlots = factory.CreateShaderConstantBindingSlots(
+            ShaderResourceBindingSlots constantSlots = factory.CreateShaderConstantBindingSlots(
                 shaderSet,
-                new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4));
+                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("Skybox", ShaderResourceType.Texture));
 
-            ShaderTextureBindingSlots textureSlots = factory.CreateShaderTextureBindingSlots(
-                shaderSet,
-                new ShaderTextureInput(0, "Skybox"));
-
-            _material = new Material(shaderSet, constantSlots, textureSlots);
+            _material = new Material(shaderSet, constantSlots);
             _viewMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
 
             fixed (Rgba32* frontPin = &_front.Pixels.DangerousGetPinnableReference())

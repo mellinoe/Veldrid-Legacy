@@ -8,15 +8,15 @@ namespace Veldrid.Graphics.OpenGL
     // If the value is stored in a uniform location, rather than a uniform block,
     // then data needs to be loaded into the buffer at the time it is bound 
     // (RenderContext.SetConstantBuffer), rather than the time it is used.
-    public class OpenGLShaderConstantBindingSlots : ShaderConstantBindingSlots
+    public class OpenGLShaderConstantBindingSlots
     {
         private readonly UniformBinding[] _bindings;
 
-        public ShaderConstantDescription[] Constants { get; }
+        public ShaderResourceDescription[] Constants { get; }
 
         public OpenGLShaderConstantBindingSlots(
             ShaderSet shaderSet,
-            ShaderConstantDescription[] constants)
+            ShaderResourceDescription[] constants)
         {
             Constants = constants;
             var programID = ((OpenGLShaderSet)shaderSet).ProgramID;
@@ -24,7 +24,7 @@ namespace Veldrid.Graphics.OpenGL
             _bindings = new UniformBinding[constantsCount];
             for (int i = 0; i < constantsCount; i++)
             {
-                ShaderConstantDescription description = Constants[i];
+                ShaderResourceDescription description = Constants[i];
 
                 int blockIndex = GL.GetUniformBlockIndex(programID, description.Name);
                 if (blockIndex != -1)

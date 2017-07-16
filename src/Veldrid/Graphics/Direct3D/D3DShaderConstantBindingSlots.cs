@@ -4,17 +4,17 @@ using System;
 
 namespace Veldrid.Graphics.Direct3D
 {
-    public class D3DShaderConstantBindingSlots : ShaderConstantBindingSlots
+    public class D3DShaderConstantBindingSlots
     {
         private readonly Device _device;
         private readonly ShaderStageApplicabilityFlags[] _applicabilityFlagsBySlot;
         
-        public ShaderConstantDescription[] Constants { get; }
+        public ShaderResourceDescription[] Constants { get; }
 
         public D3DShaderConstantBindingSlots(
             Device device,
             ShaderSet shaderSet,
-            ShaderConstantDescription[] constants)
+            ShaderResourceDescription[] constants)
         {
             _device = device;
             Constants = constants;

@@ -74,21 +74,16 @@ namespace Veldrid.Graphics.OpenGLES
             throw new NotSupportedException();
         }
 
-        public override ShaderConstantBindingSlots CreateShaderConstantBindingSlots(
+        public override ShaderResourceBindingSlots CreateShaderConstantBindingSlots(
             ShaderSet shaderSet,
-            ShaderConstantDescription[] constants)
+            ShaderResourceDescription[] resources)
         {
-            return new OpenGLESShaderConstantBindingSlots(shaderSet, constants);
+            return new OpenGLESShaderResourceBindingSlots((OpenGLESShaderSet)shaderSet, resources);
         }
 
         public override VertexInputLayout CreateInputLayout(VertexInputDescription[] vertexInputs)
         {
             return new OpenGLESVertexInputLayout(vertexInputs);
-        }
-
-        public override ShaderTextureBindingSlots CreateShaderTextureBindingSlots(ShaderSet shaderSet, ShaderTextureInput[] textureInputs)
-        {
-            return new OpenGLESTextureBindingSlots(shaderSet, textureInputs);
         }
 
         public override ShaderTextureBinding CreateShaderTextureBinding(DeviceTexture texture)
@@ -104,10 +99,10 @@ namespace Veldrid.Graphics.OpenGLES
         }
 
         public override DeviceTexture2D CreateTexture(
-            int mipLevels, 
-            int width, 
-            int height, 
-            PixelFormat format, 
+            int mipLevels,
+            int width,
+            int height,
+            PixelFormat format,
             DeviceTextureCreateOptions createOptions)
         {
             int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(format);

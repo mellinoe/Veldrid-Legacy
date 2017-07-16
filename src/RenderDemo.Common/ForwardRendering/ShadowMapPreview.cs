@@ -50,10 +50,10 @@ namespace Veldrid.RenderDemo.ForwardRendering
                     new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)),
                 new[]
                 {
-                    new ShaderConstantDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
-                    new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                },
-                new[] { new ShaderTextureInput(0, "SurfaceTexture") });
+                    new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                    new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                    new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture)
+                });
 
             _worldMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _projectionMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);

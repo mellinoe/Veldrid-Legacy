@@ -3,20 +3,16 @@ using System;
 
 namespace Veldrid.Graphics.OpenGL
 {
-    public class OpenGLTextureBindingSlots : ShaderTextureBindingSlots
+    public class OpenGLTextureBindingSlots
     {
-        public ShaderTextureInput[] TextureInputs { get; }
-
         private readonly OpenGLProgramTextureBinding[] _textureBindings;
 
-        public OpenGLTextureBindingSlots(ShaderSet shaderSet, ShaderTextureInput[] textureInputs)
+        public OpenGLTextureBindingSlots(ShaderSet shaderSet, ShaderResourceDescription[] textureInputs)
         {
-            TextureInputs = textureInputs;
-
             _textureBindings = new OpenGLProgramTextureBinding[textureInputs.Length];
             for (int i = 0; i < textureInputs.Length; i++)
             {
-                ShaderTextureInput element = textureInputs[i];
+                ShaderResourceDescription element = textureInputs[i];
                 int location = GL.GetUniformLocation(((OpenGLShaderSet)shaderSet).ProgramID, element.Name);
                 if (location == -1)
                 {

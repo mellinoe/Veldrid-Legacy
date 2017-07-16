@@ -52,9 +52,9 @@ namespace Veldrid.Graphics.Vulkan
             return new VkShader(_device, type, (VkShaderBytecode)compiledShaderCode);
         }
 
-        public override ShaderConstantBindingSlots CreateShaderConstantBindingSlots(ShaderSet shaderSet, params ShaderConstantDescription[] constants)
+        public override ShaderResourceBindingSlots CreateShaderConstantBindingSlots(ShaderSet shaderSet, params ShaderResourceDescription[] resources)
         {
-            return new VkShaderConstantBindingSlots((VkShaderSet)shaderSet, constants);
+            throw new NotImplementedException();
         }
 
         public override ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader fragmentShader)
@@ -70,11 +70,6 @@ namespace Veldrid.Graphics.Vulkan
         public override ShaderTextureBinding CreateShaderTextureBinding(DeviceTexture texture)
         {
             return new VkShaderTextureBinding(_device, (VkTexture2D)texture);
-        }
-
-        public override ShaderTextureBindingSlots CreateShaderTextureBindingSlots(ShaderSet shaderSet, params ShaderTextureInput[] textureInputs)
-        {
-            return new VkShaderTextureBindingSlots((VkShaderSet)shaderSet, textureInputs);
         }
 
         public override DeviceTexture2D CreateTexture(

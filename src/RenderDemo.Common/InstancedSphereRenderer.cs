@@ -76,13 +76,12 @@ namespace Veldrid.RenderDemo
                     new VertexInputElement("in_offset", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float3, VertexElementInputClass.PerInstance, 1),
                     new VertexInputElement("in_color", VertexSemanticType.Color, VertexElementFormat.Float4, VertexElementInputClass.PerInstance, 1)));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            ShaderConstantBindingSlots constantBindings = factory.CreateShaderConstantBindingSlots(
+            ShaderResourceBindingSlots constantBindings = factory.CreateShaderConstantBindingSlots(
                 shaderSet,
-                new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4));
-            ShaderTextureBindingSlots textureSlots = factory.CreateShaderTextureBindingSlots(shaderSet, Array.Empty<ShaderTextureInput>());
-            _material = new Material(shaderSet, constantBindings, textureSlots);
+                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4));
+            _material = new Material(shaderSet, constantBindings);
             _worldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             Matrix4x4 identity = Matrix4x4.Identity;
             _worldBuffer.SetData(ref identity, 64);
