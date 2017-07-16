@@ -66,7 +66,7 @@ namespace Veldrid.RenderDemo
                     new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)
                 });
 
-            ShaderResourceDescription[] constants = new[]
+            ShaderResourceDescription[] resources = new[]
             {
                 new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
@@ -81,7 +81,7 @@ namespace Veldrid.RenderDemo
                 "textured-vertex",
                 "lit-frag",
                 materialInputs,
-                constants);
+                resources);
 
             _worldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _inverseTransposeWorldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);

@@ -72,7 +72,7 @@ namespace Veldrid.RenderDemo
                     new VertexInputElement("in_color", VertexSemanticType.Color, VertexElementFormat.Float4)
                 });
 
-            ShaderResourceDescription[] constants = new[]
+            ShaderResourceDescription[] resources = new[]
             {
                 new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("ModelViewMatrixBuffer", ShaderConstantType.Matrix4x4)
@@ -84,7 +84,7 @@ namespace Veldrid.RenderDemo
                 FragmentShaderSource,
                 materialInputs0,
                 materialInputs1,
-                constants);
+                resources);
 
             s_modelViewBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
         }
