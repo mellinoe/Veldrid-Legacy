@@ -9,9 +9,8 @@ namespace Veldrid
             return new IllegalValueException<T>();
         }
 
-        internal class IllegalValueException<T> : Exception
+        internal class IllegalValueException<T> : VeldridException
         {
         }
     }
-
 }

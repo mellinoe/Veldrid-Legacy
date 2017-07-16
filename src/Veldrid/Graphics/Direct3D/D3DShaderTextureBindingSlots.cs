@@ -6,7 +6,7 @@ namespace Veldrid.Graphics.Direct3D
 {
     public class D3DShaderTextureBindingSlots
     {
-        private readonly ShaderStageApplicabilityFlags[] _applicabilities;
+        private readonly ShaderStages[] _applicabilities;
 
         public ShaderResourceDescription[] TextureInputs { get; }
 
@@ -16,18 +16,18 @@ namespace Veldrid.Graphics.Direct3D
             _applicabilities = ComputeStageApplicabilities(shaderSet, textureInputs);
         }
 
-        public ShaderStageApplicabilityFlags GetApplicabilityForSlot(int slot)
+        public ShaderStages GetApplicabilityForSlot(int slot)
         {
             return _applicabilities[slot];
         }
 
-        private ShaderStageApplicabilityFlags[] ComputeStageApplicabilities(D3DShaderSet shaderSet, ShaderResourceDescription[] textureInputs)
+        private ShaderStages[] ComputeStageApplicabilities(D3DShaderSet shaderSet, ShaderResourceDescription[] textureInputs)
         {
-            ShaderStageApplicabilityFlags[] stageFlagsBySlot = new ShaderStageApplicabilityFlags[textureInputs.Length];
+            ShaderStages[] stageFlagsBySlot = new ShaderStages[textureInputs.Length];
             for (int i = 0; i < stageFlagsBySlot.Length; i++)
             {
                 ShaderResourceDescription element = textureInputs[i];
-                ShaderStageApplicabilityFlags flags = ShaderStageApplicabilityFlags.None;
+                ShaderStages flags = ShaderStages.None;
 
                 if (IsTextureSlotUsedInShader(shaderSet.VertexShader, i
 #if DEBUG
@@ -35,7 +35,7 @@ namespace Veldrid.Graphics.Direct3D
 #endif
                 ))
                 {
-                    flags |= ShaderStageApplicabilityFlags.Vertex;
+                    flags |= ShaderStages.Vertex;
                 }
 
                 if (IsTextureSlotUsedInShader(shaderSet.FragmentShader, i
@@ -44,7 +44,7 @@ namespace Veldrid.Graphics.Direct3D
 #endif
                 ))
                 {
-                    flags |= ShaderStageApplicabilityFlags.Fragment;
+                    flags |= ShaderStages.Fragment;
                 }
 
 
@@ -54,7 +54,7 @@ namespace Veldrid.Graphics.Direct3D
 #endif
                 ))
                 {
-                    flags |= ShaderStageApplicabilityFlags.Geometry;
+                    flags |= ShaderStages.Geometry;
                 }
 
                 stageFlagsBySlot[i] = flags;
@@ -90,14 +90,5 @@ namespace Veldrid.Graphics.Direct3D
 
             return false;
         }
-    }
-
-    [Flags]
-    public enum ShaderStageApplicabilityFlags : byte
-    {
-        None = 0,
-        Vertex = 1 << 0,
-        Geometry = 1 << 1,
-        Fragment = 1 << 2
     }
 }

@@ -92,7 +92,7 @@ namespace Veldrid.Graphics
         /// <returns>A new <see cref="IndexBuffer"/></returns>
         public abstract IndexBuffer CreateIndexBuffer(int sizeInBytes, bool isDynamic, IndexFormat format);
 
-        public abstract CompiledShaderCode ProcessShaderCode(ShaderType type, string shaderCode);
+        public abstract CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode);
 
         public abstract CompiledShaderCode LoadProcessedShader(byte[] data);
 
@@ -103,12 +103,12 @@ namespace Veldrid.Graphics
         /// <param name="shaderCode">The raw text source of the <see cref="Shader"/></param>
         /// <param name="name">The name of the <see cref="Shader"/>, generally used for debugging.</param>
         /// <returns>A new Shader object.</returns>
-        public Shader CreateShader(ShaderType type, string shaderCode)
+        public Shader CreateShader(ShaderStages type, string shaderCode)
         {
             return CreateShader(type, ProcessShaderCode(type, shaderCode));
         }
 
-        public abstract Shader CreateShader(ShaderType type, CompiledShaderCode compiledShaderCode);
+        public abstract Shader CreateShader(ShaderStages type, CompiledShaderCode compiledShaderCode);
 
         /// <summary>
         /// Creates a <see cref="ShaderSet"/> from the given vertex inputs and shaders.

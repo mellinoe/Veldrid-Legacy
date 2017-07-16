@@ -42,37 +42,37 @@ namespace Veldrid.Graphics.Direct3D
             return new D3DIndexBuffer(_device, sizeInBytes, isDynamic, D3DFormats.VeldridToD3DIndexFormat(format));
         }
 
-        public override CompiledShaderCode ProcessShaderCode(ShaderType type, string shaderCode)
+        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode)
         {
             string entryPoint;
             switch (type)
             {
-                case ShaderType.Vertex:
+                case ShaderStages.Vertex:
                     entryPoint = "VS";
                     break;
-                case ShaderType.Geometry:
+                case ShaderStages.Geometry:
                     entryPoint = "GS";
                     break;
-                case ShaderType.Fragment:
+                case ShaderStages.Fragment:
                     entryPoint = "PS";
                     break;
                 default:
-                    throw Illegal.Value<ShaderType>();
+                    throw Illegal.Value<ShaderStages>();
             }
 
             string profile;
             switch (type)
             {
-                case ShaderType.Vertex:
+                case ShaderStages.Vertex:
                     profile = "vs_5_0";
                     break;
-                case ShaderType.Geometry:
+                case ShaderStages.Geometry:
                     profile = "gs_5_0";
                     break;
-                case ShaderType.Fragment:
+                case ShaderStages.Fragment:
                     profile = "ps_5_0";
                     break;
-                default: throw Illegal.Value<ShaderType>();
+                default: throw Illegal.Value<ShaderStages>();
             }
 
             return new D3DShaderBytecode(shaderCode, entryPoint, profile, DefaultShaderFlags);
@@ -83,19 +83,19 @@ namespace Veldrid.Graphics.Direct3D
             return new D3DShaderBytecode(data);
         }
 
-        public override Shader CreateShader(ShaderType type, CompiledShaderCode compiledShaderCode)
+        public override Shader CreateShader(ShaderStages type, CompiledShaderCode compiledShaderCode)
         {
             D3DShaderBytecode d3dBytecode = (D3DShaderBytecode)compiledShaderCode;
 
             switch (type)
             {
-                case ShaderType.Vertex:
+                case ShaderStages.Vertex:
                     return new D3DVertexShader(_device, d3dBytecode.Bytecode);
-                case ShaderType.Geometry:
+                case ShaderStages.Geometry:
                     return new D3DGeometryShader(_device, d3dBytecode.Bytecode);
-                case ShaderType.Fragment:
+                case ShaderStages.Fragment:
                     return new D3DFragmentShader(_device, d3dBytecode.Bytecode);
-                default: throw Illegal.Value<ShaderType>();
+                default: throw Illegal.Value<ShaderStages>();
             }
         }
 

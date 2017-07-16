@@ -10,7 +10,7 @@ namespace Veldrid.Graphics.Vulkan
         private readonly VkDevice _device;
         private readonly VkShaderModule _shaderModule;
 
-        public unsafe VkShader(VkDevice device, ShaderType type, VkShaderBytecode bytecode)
+        public unsafe VkShader(VkDevice device, ShaderStages type, VkShaderBytecode bytecode)
         {
             _device = device;
             Type = type;
@@ -25,7 +25,7 @@ namespace Veldrid.Graphics.Vulkan
             }
         }
 
-        public ShaderType Type { get; }
+        public ShaderStages Type { get; }
         public VkShaderModule ShaderModule => _shaderModule;
 
         public unsafe void Dispose()

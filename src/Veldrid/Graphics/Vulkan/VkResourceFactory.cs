@@ -47,7 +47,7 @@ namespace Veldrid.Graphics.Vulkan
             return new VKInputLayout(vertexInputs);
         }
 
-        public override Shader CreateShader(ShaderType type, CompiledShaderCode compiledShaderCode)
+        public override Shader CreateShader(ShaderStages type, CompiledShaderCode compiledShaderCode)
         {
             return new VkShader(_device, type, (VkShaderBytecode)compiledShaderCode);
         }
@@ -92,7 +92,7 @@ namespace Veldrid.Graphics.Vulkan
             return new VkShaderBytecode(data);
         }
 
-        public override CompiledShaderCode ProcessShaderCode(ShaderType type, string shaderCode)
+        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode)
         {
             return new VkShaderBytecode(type, shaderCode);
         }

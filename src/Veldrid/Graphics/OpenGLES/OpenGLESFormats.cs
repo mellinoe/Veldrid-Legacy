@@ -53,18 +53,18 @@ namespace Veldrid.Graphics.OpenGLES
             }
         }
 
-        public static OpenTK.Graphics.ES30.ShaderType VeldridToGLShaderType(ShaderType type)
+        public static OpenTK.Graphics.ES30.ShaderType VeldridToGLShaderType(ShaderStages type)
         {
             switch (type)
             {
-                case ShaderType.Vertex:
+                case ShaderStages.Vertex:
                     return OpenTK.Graphics.ES30.ShaderType.VertexShader;
-                case ShaderType.Fragment:
+                case ShaderStages.Fragment:
                     return OpenTK.Graphics.ES30.ShaderType.FragmentShader;
-                case ShaderType.Geometry:
+                case ShaderStages.Geometry:
                     throw new NotSupportedException($"Shaders of type {type} are not supported in OpenGL ES.");
                 default:
-                    throw Illegal.Value<ShaderType>();
+                    throw Illegal.Value<ShaderStages>();
             }
         }
 
@@ -142,14 +142,14 @@ namespace Veldrid.Graphics.OpenGLES
         }
 
 
-        public static ShaderType GLToVeldridShaderType(OpenTK.Graphics.ES30.ShaderType type)
+        public static ShaderStages GLToVeldridShaderType(OpenTK.Graphics.ES30.ShaderType type)
         {
             switch (type)
             {
                 case OpenTK.Graphics.ES30.ShaderType.FragmentShader:
-                    return ShaderType.Fragment;
+                    return ShaderStages.Fragment;
                 case OpenTK.Graphics.ES30.ShaderType.VertexShader:
-                    return ShaderType.Vertex;
+                    return ShaderStages.Vertex;
                     throw new NotSupportedException($"The shader type {type} is not supported.");
                 default:
                     throw Illegal.Value<OpenTK.Graphics.ES30.ShaderType>();

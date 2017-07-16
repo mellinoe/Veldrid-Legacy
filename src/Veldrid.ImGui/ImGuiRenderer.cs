@@ -81,8 +81,8 @@ namespace Veldrid
 
             string vertexShaderCode = LoadEmbeddedShaderCode("imgui-vertex", rc.BackendType);
             string fragmentShaderCode = LoadEmbeddedShaderCode("imgui-frag", rc.BackendType);
-            Shader vertexShader = factory.CreateShader(ShaderType.Vertex, vertexShaderCode);
-            Shader fragmentShader = factory.CreateShader(ShaderType.Fragment, fragmentShaderCode);
+            Shader vertexShader = factory.CreateShader(ShaderStages.Vertex, vertexShaderCode);
+            Shader fragmentShader = factory.CreateShader(ShaderStages.Fragment, fragmentShaderCode);
 
             VertexInputLayout inputLayout = factory.CreateInputLayout(
                 new VertexInputDescription(20, new VertexInputElement[]

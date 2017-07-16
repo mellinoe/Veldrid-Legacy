@@ -10,6 +10,6 @@ namespace Veldrid.Graphics
         /// <summary>
         /// The shader stage which this Shader applies to.
         /// </summary>
-        ShaderType Type { get; }
+        ShaderStages Type { get; }
     }
 }

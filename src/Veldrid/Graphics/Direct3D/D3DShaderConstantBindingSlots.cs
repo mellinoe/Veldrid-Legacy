@@ -7,7 +7,7 @@ namespace Veldrid.Graphics.Direct3D
     public class D3DShaderConstantBindingSlots
     {
         private readonly Device _device;
-        private readonly ShaderStageApplicabilityFlags[] _applicabilityFlagsBySlot;
+        private readonly ShaderStages[] _applicabilityFlagsBySlot;
         
         public ShaderResourceDescription[] Constants { get; }
 
@@ -30,7 +30,7 @@ namespace Veldrid.Graphics.Direct3D
             }
 
             int numConstants = constants.Length;
-            _applicabilityFlagsBySlot = new ShaderStageApplicabilityFlags[numConstants];
+            _applicabilityFlagsBySlot = new ShaderStages[numConstants];
             for (int i = 0; i < numConstants; i++)
             {
                 var genericElement = constants[i];
@@ -42,25 +42,25 @@ namespace Veldrid.Graphics.Direct3D
                     isGsBuffer = DoesConstantBufferExist(gsReflection, i, genericElement.Name);
                 }
 
-                ShaderStageApplicabilityFlags applicabilityFlags = ShaderStageApplicabilityFlags.None;
+                ShaderStages applicabilityFlags = ShaderStages.None;
                 if (isVsBuffer)
                 {
-                    applicabilityFlags |= ShaderStageApplicabilityFlags.Vertex;
+                    applicabilityFlags |= ShaderStages.Vertex;
                 }
                 if (isPsBuffer)
                 {
-                    applicabilityFlags |= ShaderStageApplicabilityFlags.Fragment;
+                    applicabilityFlags |= ShaderStages.Fragment;
                 }
                 if (isGsBuffer)
                 {
-                    applicabilityFlags |= ShaderStageApplicabilityFlags.Geometry;
+                    applicabilityFlags |= ShaderStages.Geometry;
                 }
 
                 _applicabilityFlagsBySlot[i] = applicabilityFlags;
             }
         }
 
-        public ShaderStageApplicabilityFlags GetApplicability(int slot)
+        public ShaderStages GetApplicability(int slot)
         {
             if (slot >= _applicabilityFlagsBySlot.Length)
             {

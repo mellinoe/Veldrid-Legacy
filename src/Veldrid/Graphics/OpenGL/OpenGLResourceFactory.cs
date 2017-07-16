@@ -31,7 +31,7 @@ namespace Veldrid.Graphics.OpenGL
             return new OpenGLIndexBuffer(isDynamic, OpenGLFormats.MapIndexFormat(format));
         }
 
-        public override CompiledShaderCode ProcessShaderCode(ShaderType type, string shaderCode)
+        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode)
         {
             return new OpenGLCompiledShaderCode(shaderCode);
         }
@@ -58,7 +58,7 @@ namespace Veldrid.Graphics.OpenGL
             return new OpenGLCompiledShaderCode(shaderCode);
         }
 
-        public override Shader CreateShader(ShaderType type, CompiledShaderCode compiledShaderCode)
+        public override Shader CreateShader(ShaderStages type, CompiledShaderCode compiledShaderCode)
         {
             OpenGLCompiledShaderCode glShaderSource = (OpenGLCompiledShaderCode)compiledShaderCode;
             return new OpenGLShader(glShaderSource.ShaderCode, OpenGLFormats.VeldridToGLShaderType(type));

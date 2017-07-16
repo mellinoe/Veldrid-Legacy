@@ -9,7 +9,7 @@ namespace Veldrid.Graphics.Vulkan
             ShaderBytes = shaderBytes;
         }
 
-        public VkShaderBytecode(ShaderType type, string shaderCode)
+        public VkShaderBytecode(ShaderStages type, string shaderCode)
         {
             // TODO: Try to use glslangvalidator if it exists.
             // glslangValidator -H -V -o <tempfile> <inputfile>

@@ -7,7 +7,7 @@ namespace Veldrid.RenderDemo
     public static class ShaderHelper
     {
 
-        public static CompiledShaderCode LoadShaderCode(string shaderName, ShaderType type, ResourceFactory factory)
+        public static CompiledShaderCode LoadShaderCode(string shaderName, ShaderStages type, ResourceFactory factory)
         {
             GraphicsBackend backend = factory.BackendType;
             string searchPath = Path.Combine(AppContext.BaseDirectory, backend == GraphicsBackend.Direct3D11 ? "HLSL" : "GLSL");

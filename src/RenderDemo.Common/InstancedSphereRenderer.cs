@@ -67,8 +67,8 @@ namespace Veldrid.RenderDemo
             _instanceVB = factory.CreateVertexBuffer(instanceData.Length * InstanceData.SizeInBytes, false);
             _instanceVB.SetVertexData(instanceData, new VertexDescriptor(InstanceData.SizeInBytes, 2, 0, IntPtr.Zero));
 
-            Shader vs = factory.CreateShader(ShaderType.Vertex, ShaderHelper.LoadShaderCode("instanced-simple-vertex", ShaderType.Vertex, rc.ResourceFactory));
-            Shader fs = factory.CreateShader(ShaderType.Fragment, ShaderHelper.LoadShaderCode("instanced-simple-frag", ShaderType.Fragment, rc.ResourceFactory));
+            Shader vs = factory.CreateShader(ShaderStages.Vertex, ShaderHelper.LoadShaderCode("instanced-simple-vertex", ShaderStages.Vertex, rc.ResourceFactory));
+            Shader fs = factory.CreateShader(ShaderStages.Fragment, ShaderHelper.LoadShaderCode("instanced-simple-frag", ShaderStages.Fragment, rc.ResourceFactory));
             VertexInputLayout inputLayout = factory.CreateInputLayout(
                 new VertexInputDescription(VertexPosition.SizeInBytes, new VertexInputElement("in_position", VertexSemanticType.Position, VertexElementFormat.Float3)),
                 new VertexInputDescription(
