@@ -28,32 +28,9 @@ namespace Veldrid.Graphics.Vulkan
             throw new NotImplementedException();
         }
 
-        public override DeviceTexture2D CreateDepthTexture(int width, int height, int pixelSizeInBytes, PixelFormat format)
-        {
-            return new VkTexture2D(
-                _device,
-                _physicalDevice,
-                1,
-                width,
-                height,
-                format,
-                isDepthTexture: true);
-        }
-
         public override Framebuffer CreateFramebuffer()
         {
             return new VkFramebufferInfo(_device, _physicalDevice);
-        }
-
-        public override Framebuffer CreateFramebuffer(int width, int height)
-        {
-            // TODO: This is how all CreateFramebuffer(int, int) implementations should work.
-            VkFramebufferInfo framebuffer = new VkFramebufferInfo(_device, _physicalDevice);
-            DeviceTexture2D colorTexture = CreateTexture(1, width, height, 4, PixelFormat.R8_G8_B8_A8_UInt);
-            DeviceTexture2D depthTexture = CreateDepthTexture(width, height, 2, PixelFormat.R16_UInt);
-            framebuffer.ColorTexture = (VkTexture2D)colorTexture;
-            framebuffer.DepthTexture = (VkTexture2D)depthTexture;
-            return framebuffer;
         }
 
         public override IndexBuffer CreateIndexBuffer(int sizeInBytes, bool isDynamic, IndexFormat format)
@@ -100,9 +77,14 @@ namespace Veldrid.Graphics.Vulkan
             return new VkShaderTextureBindingSlots((VkShaderSet)shaderSet, textureInputs);
         }
 
-        public override DeviceTexture2D CreateTexture(int mipLevels, int width, int height, int pixelSizeInBytes, PixelFormat format)
+        public override DeviceTexture2D CreateTexture(
+            int mipLevels,
+            int width,
+            int height,
+            PixelFormat format,
+            DeviceTextureCreateOptions createOptions)
         {
-            return new VkTexture2D(_device, _physicalDevice, mipLevels, width, height, format);
+            return new VkTexture2D(_device, _physicalDevice, mipLevels, width, height, format, createOptions);
         }
 
         public override VertexBuffer CreateVertexBuffer(int sizeInBytes, bool isDynamic)

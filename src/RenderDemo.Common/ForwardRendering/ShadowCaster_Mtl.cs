@@ -163,7 +163,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
                     int.MaxValue,
                     0);
 
-                s_blankAlphaMapTexture = factory.CreateTexture(new RgbaByte[] { RgbaByte.White }, 1, 1, 4, PixelFormat.R8_G8_B8_A8_UInt);
+                s_blankAlphaMapTexture = factory.CreateTexture(new RgbaByte[] { RgbaByte.White }, 1, 1, PixelFormat.R8_G8_B8_A8_UInt);
                 s_blankAlphaMapTextureBinding = factory.CreateShaderTextureBinding(s_blankAlphaMapTexture);
             }
         }

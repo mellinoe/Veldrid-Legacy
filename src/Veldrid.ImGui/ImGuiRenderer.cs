@@ -129,7 +129,7 @@ namespace Veldrid
             // Store our identifier
             io.FontAtlas.SetTexID(_fontAtlasID);
 
-            var deviceTexture = rc.ResourceFactory.CreateTexture(1, textureData.Width, textureData.Height, textureData.BytesPerPixel, PixelFormat.R8_G8_B8_A8_UInt);
+            var deviceTexture = rc.ResourceFactory.CreateTexture(1, textureData.Width, textureData.Height, PixelFormat.R8_G8_B8_A8_UInt);
             deviceTexture.SetTextureData(
                 0,
                 0, 0,

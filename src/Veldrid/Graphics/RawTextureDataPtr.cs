@@ -8,7 +8,7 @@ namespace Veldrid.Graphics
 
         public override DeviceTexture2D CreateDeviceTexture(ResourceFactory factory)
         {
-            return factory.CreateTexture(PixelData, Width, Height, PixelSizeInBytes, Format);
+            return factory.CreateTexture(PixelData, Width, Height, Format);
         }
 
         public RawTextureDataPtr(IntPtr pixelData, int width, int height, int pixelSizeInBytes, PixelFormat format)

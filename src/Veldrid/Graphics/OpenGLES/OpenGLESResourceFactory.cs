@@ -26,25 +26,6 @@ namespace Veldrid.Graphics.OpenGLES
             return new OpenGLESFramebuffer();
         }
 
-        public override Framebuffer CreateFramebuffer(int width, int height)
-        {
-            OpenGLESTexture2D colorTexture = new OpenGLESTexture2D(
-                1,
-                width, height,
-                PixelFormat.R8_G8_B8_A8_UInt,
-                OpenTK.Graphics.ES30.PixelFormat.Rgba,
-                PixelType.UnsignedByte);
-            OpenGLESTexture2D depthTexture = new OpenGLESTexture2D(
-                1,
-                width,
-                height,
-                PixelFormat.R16_UInt,
-                OpenTK.Graphics.ES30.PixelFormat.DepthComponent,
-                PixelType.UnsignedShort);
-
-            return new OpenGLESFramebuffer(colorTexture, depthTexture);
-        }
-
         public override IndexBuffer CreateIndexBuffer(int sizeInBytes, bool isDynamic, IndexFormat format)
         {
             return new OpenGLESIndexBuffer(isDynamic, OpenGLESFormats.MapIndexFormat(format));
@@ -122,9 +103,27 @@ namespace Veldrid.Graphics.OpenGLES
             }
         }
 
-        public override DeviceTexture2D CreateTexture(int mipLevels, int width, int height, int pixelSizeInBytes, PixelFormat format)
+        public override DeviceTexture2D CreateTexture(
+            int mipLevels, 
+            int width, 
+            int height, 
+            PixelFormat format, 
+            DeviceTextureCreateOptions createOptions)
         {
-            return new OpenGLESTexture2D(mipLevels, width, height, format, OpenGLESFormats.MapPixelFormat(format), OpenGLESFormats.MapPixelType(format));
+            int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(format);
+            OpenTK.Graphics.ES30.PixelFormat pixelFormat = OpenGLESFormats.MapPixelFormat(format);
+
+            if (createOptions == DeviceTextureCreateOptions.DepthStencil)
+            {
+                if (format != PixelFormat.R16_UInt)
+                {
+                    throw new NotImplementedException("R16_UInt is the only supported depth texture format.");
+                }
+
+                pixelFormat = OpenTK.Graphics.ES30.PixelFormat.DepthComponent;
+            }
+
+            return new OpenGLESTexture2D(mipLevels, width, height, format, pixelFormat, OpenGLESFormats.MapPixelType(format));
         }
 
         protected override SamplerState CreateSamplerStateCore(
@@ -140,22 +139,6 @@ namespace Veldrid.Graphics.OpenGLES
             int lodBias)
         {
             return new OpenGLESSamplerState(addressU, addressV, addressW, filter, maxAnisotropy, borderColor, comparison, minimumLod, maximumLod, lodBias);
-        }
-
-        public override DeviceTexture2D CreateDepthTexture(int width, int height, int pixelSizeInBytes, PixelFormat format)
-        {
-            if (format != PixelFormat.R16_UInt)
-            {
-                throw new NotImplementedException("R16_UInt is the only supported depth texture format.");
-            }
-
-            return new OpenGLESTexture2D(
-                1,
-                width,
-                height,
-                PixelFormat.R16_UInt,
-                OpenTK.Graphics.ES30.PixelFormat.DepthComponent,
-                PixelType.UnsignedShort);
         }
 
         public override CubemapTexture CreateCubemapTexture(

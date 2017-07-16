@@ -15,7 +15,14 @@ namespace Veldrid.Graphics.Vulkan
         private VkPhysicalDevice _physicalDevice;
         private PixelFormat _veldridFormat;
 
-        public VkTexture2D(VkDevice device, VkPhysicalDevice physicalDevice, int mipLevels, int width, int height, PixelFormat veldridFormat, bool isDepthTexture = false)
+        public VkTexture2D(
+            VkDevice device,
+            VkPhysicalDevice physicalDevice,
+            int mipLevels,
+            int width,
+            int height,
+            PixelFormat veldridFormat,
+            DeviceTextureCreateOptions createOptions)
         {
             _device = device;
             _physicalDevice = physicalDevice;
@@ -34,7 +41,11 @@ namespace Veldrid.Graphics.Vulkan
             imageCI.extent.depth = 1;
             imageCI.initialLayout = VkImageLayout.General; // TODO: Use proper VkImageLayout values and transitions.
             imageCI.usage = VkImageUsageFlags.Sampled;
-            if (isDepthTexture)
+            if (createOptions == DeviceTextureCreateOptions.RenderTarget)
+            {
+                imageCI.usage |= VkImageUsageFlags.ColorAttachment;
+            }
+            else if (createOptions == DeviceTextureCreateOptions.DepthStencil)
             {
                 imageCI.usage |= VkImageUsageFlags.DepthStencilAttachment;
             }
@@ -98,7 +109,7 @@ namespace Veldrid.Graphics.Vulkan
             }
             else
             {
-                int pixelSizeInBytes = FormatHelpers.GetPixelSize(_veldridFormat);
+                int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(_veldridFormat);
                 for (uint y = 0; y < height; y++)
                 {
                     byte* dstRowStart = ((byte*)mappedPtr) + (rowPitch * y);

@@ -196,9 +196,27 @@ namespace Veldrid.Graphics
         /// <param name="width">The width of the color and depth textures.</param>
         /// <param name="height">The height of the color and depth textures.</param>
         /// <returns></returns>
-        public abstract Framebuffer CreateFramebuffer(int width, int height);
+        public Framebuffer CreateFramebuffer(int width, int height)
+        {
+            Framebuffer fb = CreateFramebuffer();
+            DeviceTexture2D colorTexture = CreateTexture(
+                1,
+                width,
+                height,
+                PixelFormat.R8_G8_B8_A8_UInt,
+                DeviceTextureCreateOptions.RenderTarget);
+            DeviceTexture2D depthTexture = CreateTexture(
+                1,
+                width,
+                height,
+                PixelFormat.R16_UInt,
+                DeviceTextureCreateOptions.DepthStencil);
+            fb.ColorTexture = colorTexture;
+            fb.DepthTexture = depthTexture;
 
-        // TODO: pixelSizeInBytes parameter is redundant -- it is a function of the PixelFormat.
+            return fb;
+        }
+
         /// <summary>
         /// Creates a new <see cref="DeviceTexture2D"/>.
         /// </summary>
@@ -209,16 +227,16 @@ namespace Veldrid.Graphics
         /// <param name="pixelSizeInBytes">The total size in bytes of the pixel data.</param>
         /// <param name="format">The format of pixel information.</param>
         /// <returns>A new <see cref="DeviceTexture2D"/> containing the given pixel data.</returns>
-        public DeviceTexture2D CreateTexture<T>(T[] pixelData, int width, int height, int pixelSizeInBytes, PixelFormat format) where T : struct
+        public DeviceTexture2D CreateTexture<T>(T[] pixelData, int width, int height, PixelFormat format) where T : struct
         {
-            DeviceTexture2D tex = CreateTexture(1, width, height, pixelSizeInBytes, format);
+            int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(format);
+            DeviceTexture2D tex = CreateTexture(1, width, height, format);
             GCHandle handle = GCHandle.Alloc(pixelData, GCHandleType.Pinned);
             tex.SetTextureData(0, 0, 0, width, height, handle.AddrOfPinnedObject(), pixelSizeInBytes * width * height);
             handle.Free();
             return tex;
         }
 
-        // TODO: pixelSizeInBytes parameter is redundant -- it is a function of the PixelFormat.
         /// <summary>
         /// Creates a new <see cref="DeviceTexture2D"/>.
         /// </summary>
@@ -228,14 +246,14 @@ namespace Veldrid.Graphics
         /// <param name="pixelSizeInBytes">The total size in bytes of the pixel data.</param>
         /// <param name="format">The format of pixel information.</param>
         /// <returns>A new <see cref="DeviceTexture2D"/> containing the given pixel data.</returns>
-        public DeviceTexture2D CreateTexture(IntPtr pixelData, int width, int height, int pixelSizeInBytes, PixelFormat format)
+        public DeviceTexture2D CreateTexture(IntPtr pixelData, int width, int height, PixelFormat format)
         {
-            DeviceTexture2D tex = CreateTexture(1, width, height, pixelSizeInBytes, format);
+            int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(format);
+            DeviceTexture2D tex = CreateTexture(1, width, height, format);
             tex.SetTextureData(0, 0, 0, width, height, pixelData, pixelSizeInBytes * width * height);
             return tex;
         }
 
-        // TODO: pixelSizeInBytes parameter is redundant -- it is a function of the PixelFormat.
         /// <summary>
         /// Creates a new 2D device texture with the given properties.
         /// </summary>
@@ -244,8 +262,30 @@ namespace Veldrid.Graphics
         /// <param name="height">The height of the largest mipmap level.</param>
         /// <param name="pixelSizeInBytes">The size of individual pixels, in bytes.</param>
         /// <param name="format">The pixel format of the texture.</param>
+        /// <param name="createOptions">Specifies how the texture will be used.</param>
         /// <returns></returns>
-        public abstract DeviceTexture2D CreateTexture(int mipLevels, int width, int height, int pixelSizeInBytes, PixelFormat format);
+        public DeviceTexture2D CreateTexture(
+            int mipLevels,
+            int width,
+            int height,
+            PixelFormat format) => CreateTexture(mipLevels, width, height, format, DeviceTextureCreateOptions.Default);
+
+        /// <summary>
+        /// Creates a new 2D device texture with the given properties.
+        /// </summary>
+        /// <param name="mipLevels">The number of mipmap levels contained in the texture.</param>
+        /// <param name="width">The width of the largest mipmap level.</param>
+        /// <param name="height">The height of the largest mipmap level.</param>
+        /// <param name="pixelSizeInBytes">The size of individual pixels, in bytes.</param>
+        /// <param name="format">The pixel format of the texture.</param>
+        /// <param name="createOptions">Specifies how the texture will be used.</param>
+        /// <returns></returns>
+        public abstract DeviceTexture2D CreateTexture(
+            int mipLevels,
+            int width,
+            int height,
+            PixelFormat format,
+            DeviceTextureCreateOptions createOptions);
 
         /// <summary>
         /// Creates a new <see cref="SamplerState"/> with the given properties.
@@ -305,16 +345,6 @@ namespace Veldrid.Graphics
         /// <param name="texture">The <see cref="DeviceTexture"/> to associate with the binding.</param>
         /// <returns>A new <see cref="ShaderTextureBinding"/>.</returns>
         public abstract ShaderTextureBinding CreateShaderTextureBinding(DeviceTexture texture);
-
-        /// <summary>
-        /// Creates a new <see cref="DeviceTexture2D"/> which can be bound as a depth texture in a <see cref="Framebuffer"/>.
-        /// </summary>
-        /// <param name="width">The width of the texture.</param>
-        /// <param name="height">The height of the texture.</param>
-        /// <param name="pixelSizeInBytes">The total size in bytes of the depth data.</param>
-        /// <param name="format">The format of the depth data.</param>
-        /// <returns></returns>
-        public abstract DeviceTexture2D CreateDepthTexture(int width, int height, int pixelSizeInBytes, PixelFormat format);
 
         /// <summary>
         /// Creates a new <see cref="CubemapTexture"/> from six pointers containing each cube face's texture data.

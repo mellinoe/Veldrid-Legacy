@@ -67,7 +67,7 @@ namespace Veldrid.Graphics
         /// <returns>A mpimapped 2D device texture.</returns>
         public unsafe DeviceTexture2D CreateDeviceTexture(ResourceFactory factory)
         {
-            DeviceTexture2D tex = factory.CreateTexture(MipLevels, Width, Height, PixelSizeInBytes, Format);
+            DeviceTexture2D tex = factory.CreateTexture(MipLevels, Width, Height, Format);
             for (int level = 0; level < MipLevels; level++)
             {
                 Image<Rgba32> image = Images[level];

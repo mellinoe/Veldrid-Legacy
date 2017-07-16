@@ -16,7 +16,7 @@ namespace Veldrid.Graphics.OpenGLES
         public OpenGLESTexture2D(int width, int height, PixelFormat format, IntPtr pixelData)
             : this(1, width, height, format, OpenGLESFormats.MapPixelFormat(format), OpenGLESFormats.MapPixelType(format))
         {
-            SetTextureData(1, 0, 0, width, height, pixelData, FormatHelpers.GetPixelSize(format) * width * height);
+            SetTextureData(1, 0, 0, width, height, pixelData, FormatHelpers.GetPixelSizeInBytes(format) * width * height);
         }
 
         public OpenGLESTexture2D(
@@ -57,7 +57,7 @@ namespace Veldrid.Graphics.OpenGLES
         public void SetTextureData(int mipLevel, int x, int y, int width, int height, IntPtr data, int dataSizeInBytes)
         {
             Bind();
-            int pixelSize = FormatHelpers.GetPixelSize(_veldridFormat);
+            int pixelSize = FormatHelpers.GetPixelSizeInBytes(_veldridFormat);
             if (pixelSize < 4)
             {
                 GL.PixelStore(PixelStoreParameter.UnpackAlignment, pixelSize);
