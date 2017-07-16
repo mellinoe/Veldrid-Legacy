@@ -130,22 +130,14 @@ namespace Veldrid.Graphics
         public abstract ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader geometryShader, Shader fragmentShader);
 
         /// <summary>
-        /// Creates a device-specific representation of the constant buffer slots available to a set of shaders.
+        /// Creates a device-specific representation of the resource slots available to a set of shaders.
         /// </summary>
-        /// <param name="shaderSet">The shader set for which the <see cref="ShaderConstantBindingSlots"/> will be applicable.</param>
-        /// <param name="constants">A description of the constant buffer inputs.</param>
+        /// <param name="shaderSet">The shader set for which the <see cref="ShaderResourceBindingSlots"/> will be applicable.</param>
+        /// <param name="resources">A description of the resources.</param>
         /// <returns></returns>
-        public abstract ShaderConstantBindingSlots CreateShaderConstantBindingSlots(
+        public abstract ShaderResourceBindingSlots CreateShaderConstantBindingSlots(
             ShaderSet shaderSet,
-            params ShaderConstantDescription[] constants);
-
-        /// <summary>
-        /// Creates a new <see cref="ShaderTextureBindingSlots"/> for the given shader set and a device-agnostic description.
-        /// </summary>
-        /// <param name="shaderSet">The <see cref="ShaderSet"/> which the slots will be valid for.</param>
-        /// <param name="textureInputs">The texture slot descriptions.</param>
-        /// <returns>A new <see cref="ShaderTextureBindingSlots"/>.</returns>
-        public abstract ShaderTextureBindingSlots CreateShaderTextureBindingSlots(ShaderSet shaderSet, params ShaderTextureInput[] textureInputs);
+            params ShaderResourceDescription[] resources);
 
         public VertexInputLayout CreateInputLayout(params VertexInputElement[] inputElements)
         {

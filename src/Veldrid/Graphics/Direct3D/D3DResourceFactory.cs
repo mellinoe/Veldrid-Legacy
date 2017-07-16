@@ -114,16 +114,11 @@ namespace Veldrid.Graphics.Direct3D
             return new D3DShaderSet(inputLayout, vertexShader, geometryShader, fragmentShader);
         }
 
-        public override ShaderConstantBindingSlots CreateShaderConstantBindingSlots(
+        public override ShaderResourceBindingSlots CreateShaderConstantBindingSlots(
             ShaderSet shaderSet,
-            ShaderConstantDescription[] constants)
+            ShaderResourceDescription[] constants)
         {
-            return new D3DShaderConstantBindingSlots(_device, shaderSet, constants);
-        }
-
-        public override ShaderTextureBindingSlots CreateShaderTextureBindingSlots(ShaderSet shaderSet, ShaderTextureInput[] textureInputs)
-        {
-            return new D3DShaderTextureBindingSlots((D3DShaderSet)shaderSet, textureInputs);
+            return new D3DShaderResourceBindingSlots(_device, (D3DShaderSet)shaderSet, constants);
         }
 
         public override VertexBuffer CreateVertexBuffer(int sizeInBytes, bool isDynamic)

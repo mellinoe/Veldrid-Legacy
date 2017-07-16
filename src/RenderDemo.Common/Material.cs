@@ -7,17 +7,14 @@ namespace Veldrid.Graphics
     {
         public Material(
             ShaderSet shaderSet,
-            ShaderConstantBindingSlots constantBindings,
-            ShaderTextureBindingSlots textureBindingSlots)
+            ShaderResourceBindingSlots resourceBindings)
         {
             ShaderSet = shaderSet;
-            ConstantBindings = constantBindings;
-            TextureBindingSlots = textureBindingSlots;
+            ResourceBindings = resourceBindings;
         }
 
         public ShaderSet ShaderSet { get; }
-        public ShaderConstantBindingSlots ConstantBindings { get; }
-        public ShaderTextureBindingSlots TextureBindingSlots { get; }
+        public ShaderResourceBindingSlots ResourceBindings { get; }
 
         public void Dispose()
         {
@@ -27,8 +24,7 @@ namespace Veldrid.Graphics
         internal void Apply(RenderContext rc)
         {
             rc.ShaderSet = ShaderSet;
-            rc.ShaderConstantBindingSlots = ConstantBindings;
-            rc.ShaderTextureBindingSlots = TextureBindingSlots;
+            rc.ShaderResourceBindingSlots = ResourceBindings;
         }
     }
 }

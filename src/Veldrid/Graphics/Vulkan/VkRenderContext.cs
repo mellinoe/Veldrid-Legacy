@@ -430,17 +430,12 @@ namespace Veldrid.Graphics.Vulkan
             throw new NotImplementedException();
         }
 
-        protected override void PlatformSetShaderConstantBindings(ShaderConstantBindingSlots shaderConstantBindings)
+        protected override void PlatformSetShaderResourceBindingSlots(ShaderResourceBindingSlots shaderConstantBindings)
         {
             throw new NotImplementedException();
         }
 
         protected override void PlatformSetShaderSet(ShaderSet shaderSet)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void PlatformSetShaderTextureBindingSlots(ShaderTextureBindingSlots bindingSlots)
         {
             throw new NotImplementedException();
         }

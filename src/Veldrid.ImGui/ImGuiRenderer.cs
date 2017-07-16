@@ -31,9 +31,8 @@ namespace Veldrid
 
         // Material replacements
         private ShaderSet _shaderSet;
-        private ShaderConstantBindingSlots _constantBindings;
+        private ShaderResourceBindingSlots _resourceBindings;
         private ConstantBuffer _projMatrixBuffer;
-        private ShaderTextureBindingSlots _textureSlots;
 
         private int _fontAtlasID = 1;
         private RenderContext _rc;
@@ -95,12 +94,11 @@ namespace Veldrid
 
             _shaderSet = factory.CreateShaderSet(inputLayout, vertexShader, fragmentShader);
 
-            _constantBindings = factory.CreateShaderConstantBindingSlots(
+            _resourceBindings = factory.CreateShaderConstantBindingSlots(
                 _shaderSet,
-                new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4));
+                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Texture));
             _projMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
-
-            _textureSlots = factory.CreateShaderTextureBindingSlots(_shaderSet, new[] { new ShaderTextureInput(0, "surfaceTexture") });
         }
 
         private string LoadEmbeddedShaderCode(string name, GraphicsBackend backend)
@@ -313,9 +311,8 @@ namespace Veldrid
             rc.IndexBuffer = _indexBuffer;
 
             rc.ShaderSet = _shaderSet;
-            rc.ShaderConstantBindingSlots = _constantBindings;
+            rc.ShaderResourceBindingSlots = _resourceBindings;
             rc.SetConstantBuffer(0, _projMatrixBuffer);
-            rc.ShaderTextureBindingSlots = _textureSlots;
 
             ImGui.ScaleClipRects(draw_data, ImGui.GetIO().DisplayFramebufferScale);
 

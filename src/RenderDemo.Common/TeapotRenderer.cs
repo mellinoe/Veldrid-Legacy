@@ -66,24 +66,22 @@ namespace Veldrid.RenderDemo
                     new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)
                 });
 
-            ShaderConstantDescription[] constants = new[]
+            ShaderResourceDescription[] constants = new[]
             {
-                new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("LightBuffer", Unsafe.SizeOf<DirectionalLightBuffer>()),
-                new ShaderConstantDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("LightBuffer", Unsafe.SizeOf<DirectionalLightBuffer>()),
+                new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Texture)
             };
-
-            ShaderTextureInput[] textureInputs = new[] { new ShaderTextureInput(0, "surfaceTexture") };
 
             _material = factory.CreateMaterial(
                 rc,
                 "textured-vertex",
                 "lit-frag",
                 materialInputs,
-                constants,
-                textureInputs);
+                constants);
 
             _worldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _inverseTransposeWorldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);

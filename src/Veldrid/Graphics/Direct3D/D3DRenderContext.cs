@@ -300,13 +300,13 @@ namespace Veldrid.Graphics.Direct3D
             }
         }
 
-        protected override void PlatformSetShaderConstantBindings(ShaderConstantBindingSlots shaderConstantBindings)
+        protected override void PlatformSetShaderResourceBindingSlots(ShaderResourceBindingSlots shaderConstantBindings)
         {
         }
 
         protected override void PlatformSetConstantBuffer(int slot, ConstantBuffer cb)
         {
-            ShaderStageApplicabilityFlags applicability = ShaderConstantBindingSlots.GetApplicability(slot);
+            ShaderStageApplicabilityFlags applicability = ConstantBufferSlots.GetApplicability(slot);
 
             if ((applicability & ShaderStageApplicabilityFlags.Vertex) == ShaderStageApplicabilityFlags.Vertex
                 && _vertexConstantBindings[slot] != cb)
@@ -330,13 +330,9 @@ namespace Veldrid.Graphics.Direct3D
             }
         }
 
-        protected override void PlatformSetShaderTextureBindingSlots(ShaderTextureBindingSlots bindingSlots)
-        {
-        }
-
         protected override void PlatformSetTexture(int slot, ShaderTextureBinding binding)
         {
-            ShaderStageApplicabilityFlags applicability = ShaderTextureBindingSlots.GetApplicabilityForSlot(slot);
+            ShaderStageApplicabilityFlags applicability = TextureSlots.GetApplicabilityForSlot(slot);
             if ((applicability & ShaderStageApplicabilityFlags.Vertex) == ShaderStageApplicabilityFlags.Vertex)
             {
                 SetTextureBinding(ShaderType.Vertex, slot, binding);
@@ -486,8 +482,7 @@ namespace Veldrid.Graphics.Direct3D
 
         private new D3DFramebuffer CurrentFramebuffer => (D3DFramebuffer)base.CurrentFramebuffer;
 
-        private new D3DShaderTextureBindingSlots ShaderTextureBindingSlots => (D3DShaderTextureBindingSlots)base.ShaderTextureBindingSlots;
-
-        private new D3DShaderConstantBindingSlots ShaderConstantBindingSlots => (D3DShaderConstantBindingSlots)base.ShaderConstantBindingSlots;
+        private D3DShaderConstantBindingSlots ConstantBufferSlots => ((D3DShaderResourceBindingSlots)ShaderResourceBindingSlots).ConstantBufferSlots;
+        private D3DShaderTextureBindingSlots TextureSlots => ((D3DShaderResourceBindingSlots)ShaderResourceBindingSlots).TextureSlots;
     }
 }

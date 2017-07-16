@@ -228,13 +228,13 @@ namespace Veldrid.Graphics.OpenGL
             _vertexLayoutChanged = true;
         }
 
-        protected override void PlatformSetShaderConstantBindings(ShaderConstantBindingSlots shaderConstantBindings)
+        protected override void PlatformSetShaderResourceBindingSlots(ShaderResourceBindingSlots shaderConstantBindings)
         {
         }
 
         protected override void PlatformSetConstantBuffer(int slot, ConstantBuffer cb)
         {
-            OpenGLShaderConstantBindingSlots.UniformBinding binding = ShaderConstantBindingSlots.GetUniformBindingForSlot(slot);
+            OpenGLShaderConstantBindingSlots.UniformBinding binding = ConstantBufferSlots.GetUniformBindingForSlot(slot);
             if (binding.BlockLocation != -1)
             {
                 BindUniformBlock(ShaderSet, slot, binding.BlockLocation, (OpenGLConstantBuffer)cb);
@@ -379,10 +379,6 @@ namespace Veldrid.Graphics.OpenGL
             storageAdapter.SetData((IntPtr)data, dataSizeInBytes);
         }
 
-        protected override void PlatformSetShaderTextureBindingSlots(ShaderTextureBindingSlots bindingSlots)
-        {
-        }
-
         protected override void PlatformSetTexture(int slot, ShaderTextureBinding textureBinding)
         {
             OpenGLTexture boundTexture = (OpenGLTexture)textureBinding.BoundTexture;
@@ -400,7 +396,7 @@ namespace Veldrid.Graphics.OpenGL
                 _boundTexturesBySlot[slot] = boundTexture;
             }
 
-            int uniformLocation = ShaderTextureBindingSlots.GetUniformLocation(slot);
+            int uniformLocation = TextureSlots.GetUniformLocation(slot);
             ShaderSet.UpdateTextureUniform(uniformLocation, slot); // Performs internal caching.
 
             EnsureSamplerMipmapState(slot, boundTexture.MipLevels != 1);
@@ -529,10 +525,9 @@ namespace Veldrid.Graphics.OpenGL
             _vertexAttributesBound = totalSlotsBound;
         }
 
-        private new OpenGLTextureBindingSlots ShaderTextureBindingSlots => (OpenGLTextureBindingSlots)base.ShaderTextureBindingSlots;
-
-        private new OpenGLShaderConstantBindingSlots ShaderConstantBindingSlots => (OpenGLShaderConstantBindingSlots)base.ShaderConstantBindingSlots;
-
         private new OpenGLShaderSet ShaderSet => (OpenGLShaderSet)base.ShaderSet;
+
+        private OpenGLTextureBindingSlots TextureSlots => ((OpenGLShaderResourceBindingSlots)base.ShaderResourceBindingSlots).TextureSlots;
+        private OpenGLShaderConstantBindingSlots ConstantBufferSlots => ((OpenGLShaderResourceBindingSlots)base.ShaderResourceBindingSlots).ConstantSlots;
     }
 }
