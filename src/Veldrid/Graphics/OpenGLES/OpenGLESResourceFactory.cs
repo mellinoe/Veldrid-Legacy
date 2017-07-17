@@ -74,7 +74,7 @@ namespace Veldrid.Graphics.OpenGLES
             throw new NotSupportedException();
         }
 
-        public override ShaderResourceBindingSlots CreateShaderConstantBindingSlots(
+        public override ShaderResourceBindingSlots CreateShaderResourceBindingSlots(
             ShaderSet shaderSet,
             ShaderResourceDescription[] resources)
         {

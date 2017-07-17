@@ -135,7 +135,7 @@ namespace Veldrid.Graphics
         /// <param name="shaderSet">The shader set for which the <see cref="ShaderResourceBindingSlots"/> will be applicable.</param>
         /// <param name="resources">A description of the resources.</param>
         /// <returns></returns>
-        public abstract ShaderResourceBindingSlots CreateShaderConstantBindingSlots(
+        public abstract ShaderResourceBindingSlots CreateShaderResourceBindingSlots(
             ShaderSet shaderSet,
             params ShaderResourceDescription[] resources);
 

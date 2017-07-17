@@ -76,7 +76,7 @@ namespace Veldrid.RenderDemo
                     new VertexInputElement("in_offset", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float3, VertexElementInputClass.PerInstance, 1),
                     new VertexInputElement("in_color", VertexSemanticType.Color, VertexElementFormat.Float4, VertexElementInputClass.PerInstance, 1)));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            ShaderResourceBindingSlots constantBindings = factory.CreateShaderConstantBindingSlots(
+            ShaderResourceBindingSlots constantBindings = factory.CreateShaderResourceBindingSlots(
                 shaderSet,
                 new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),

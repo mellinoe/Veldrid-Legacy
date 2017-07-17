@@ -114,7 +114,7 @@ namespace Veldrid.Graphics.Direct3D
             return new D3DShaderSet(inputLayout, vertexShader, geometryShader, fragmentShader);
         }
 
-        public override ShaderResourceBindingSlots CreateShaderConstantBindingSlots(
+        public override ShaderResourceBindingSlots CreateShaderResourceBindingSlots(
             ShaderSet shaderSet,
             ShaderResourceDescription[] constants)
         {

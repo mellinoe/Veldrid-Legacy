@@ -52,7 +52,7 @@ namespace Veldrid.Graphics.Vulkan
             return new VkShader(_device, type, (VkShaderBytecode)compiledShaderCode);
         }
 
-        public override ShaderResourceBindingSlots CreateShaderConstantBindingSlots(ShaderSet shaderSet, params ShaderResourceDescription[] resources)
+        public override ShaderResourceBindingSlots CreateShaderResourceBindingSlots(ShaderSet shaderSet, params ShaderResourceDescription[] resources)
         {
             throw new NotImplementedException();
         }

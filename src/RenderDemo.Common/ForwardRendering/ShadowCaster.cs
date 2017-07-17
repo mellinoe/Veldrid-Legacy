@@ -156,7 +156,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
                     new VertexInputElement("in_normal", VertexSemanticType.Normal, VertexElementFormat.Float3),
                     new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            ShaderResourceBindingSlots constantSlots = factory.CreateShaderConstantBindingSlots(
+            ShaderResourceBindingSlots constantSlots = factory.CreateShaderResourceBindingSlots(
                 shaderSet,
                 new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4), // Light Projection
                 new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4), // Light View
@@ -176,7 +176,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
                     new VertexInputElement("in_normal", VertexSemanticType.Normal, VertexElementFormat.Float3),
                     new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            ShaderResourceBindingSlots constantSlots = factory.CreateShaderConstantBindingSlots(
+            ShaderResourceBindingSlots constantSlots = factory.CreateShaderResourceBindingSlots(
                 shaderSet,
                 new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),

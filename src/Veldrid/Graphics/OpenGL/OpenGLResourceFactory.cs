@@ -74,7 +74,7 @@ namespace Veldrid.Graphics.OpenGL
             return new OpenGLShaderSet((OpenGLVertexInputLayout)inputLayout, (OpenGLShader)vertexShader, (OpenGLShader)geometryShader, (OpenGLShader)fragmentShader);
         }
 
-        public override ShaderResourceBindingSlots CreateShaderConstantBindingSlots(
+        public override ShaderResourceBindingSlots CreateShaderResourceBindingSlots(
             ShaderSet shaderSet,
             ShaderResourceDescription[] resources)
         {

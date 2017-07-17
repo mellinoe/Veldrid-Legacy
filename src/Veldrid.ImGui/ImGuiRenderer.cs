@@ -94,7 +94,7 @@ namespace Veldrid
 
             _shaderSet = factory.CreateShaderSet(inputLayout, vertexShader, fragmentShader);
 
-            _resourceBindings = factory.CreateShaderConstantBindingSlots(
+            _resourceBindings = factory.CreateShaderResourceBindingSlots(
                 _shaderSet,
                 new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Texture));
