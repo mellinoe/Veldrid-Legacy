@@ -1,15 +1,10 @@
-﻿using OpenTK.Graphics.ES30;
-using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System;
 using System.Text;
 
 namespace Veldrid.Graphics.OpenGLES
 {
     public class OpenGLESResourceFactory : ResourceFactory
     {
-        protected override string GetShaderFileExtension() => "glsl";
-
         public OpenGLESResourceFactory()
         {
         }

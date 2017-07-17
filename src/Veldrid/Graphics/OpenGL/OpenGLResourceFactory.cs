@@ -8,8 +8,6 @@ namespace Veldrid.Graphics.OpenGL
 {
     public class OpenGLResourceFactory : ResourceFactory
     {
-        protected override string GetShaderFileExtension() => "glsl";
-
         public OpenGLResourceFactory()
         {
         }

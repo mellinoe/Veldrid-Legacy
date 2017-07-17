@@ -14,6 +14,8 @@ namespace Veldrid.Graphics.Vulkan
             _physicalDevice = physicalDevice;
         }
 
+        protected override GraphicsBackend PlatformGetGraphicsBackend() => GraphicsBackend.Vulkan;
+
         public override ConstantBuffer CreateConstantBuffer(int sizeInBytes)
         {
             return new VkConstantBuffer(
@@ -54,7 +56,7 @@ namespace Veldrid.Graphics.Vulkan
 
         public override ShaderResourceBindingSlots CreateShaderResourceBindingSlots(ShaderSet shaderSet, params ShaderResourceDescription[] resources)
         {
-            throw new NotImplementedException();
+            return new VkShaderResourceBindingSlots(_device, resources);
         }
 
         public override ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader fragmentShader)
@@ -97,14 +99,22 @@ namespace Veldrid.Graphics.Vulkan
             return new VkShaderBytecode(type, shaderCode);
         }
 
-        protected override BlendState CreateCustomBlendStateCore(bool isBlendEnabled, Blend srcAlpha, Blend destAlpha, BlendFunction alphaBlendFunc, Blend srcColor, Blend destColor, BlendFunction colorBlendFunc, RgbaFloat blendFactor)
+        protected override BlendState CreateCustomBlendStateCore(
+            bool isBlendEnabled,
+            Blend srcAlpha,
+            Blend destAlpha,
+            BlendFunction alphaBlendFunc,
+            Blend srcColor,
+            Blend destColor,
+            BlendFunction colorBlendFunc,
+            RgbaFloat blendFactor)
         {
-            throw new NotImplementedException();
+            return new VkBlendState(isBlendEnabled, srcAlpha, destAlpha, alphaBlendFunc, srcColor, destColor, colorBlendFunc, blendFactor);
         }
 
         protected override DepthStencilState CreateDepthStencilStateCore(bool isDepthEnabled, DepthComparison comparison, bool isDepthWriteEnabled)
         {
-            throw new NotImplementedException();
+            return new VkDepthStencilState(isDepthEnabled, comparison, isDepthWriteEnabled);
         }
 
         protected override RasterizerState CreateRasterizerStateCore(FaceCullingMode cullMode, TriangleFillMode fillMode, bool isDepthClipEnabled, bool isScissorTestEnabled)
@@ -112,19 +122,29 @@ namespace Veldrid.Graphics.Vulkan
             return new VkRasterizerState(cullMode, fillMode, isDepthClipEnabled, isScissorTestEnabled);
         }
 
-        protected override SamplerState CreateSamplerStateCore(SamplerAddressMode addressU, SamplerAddressMode addressV, SamplerAddressMode addressW, SamplerFilter filter, int maxAnisotropy, RgbaFloat borderColor, DepthComparison comparison, int minimumLod, int maximumLod, int lodBias)
+        protected override SamplerState CreateSamplerStateCore(
+            SamplerAddressMode addressU,
+            SamplerAddressMode addressV,
+            SamplerAddressMode addressW,
+            SamplerFilter filter,
+            int maxAnisotropy,
+            RgbaFloat borderColor,
+            DepthComparison comparison,
+            int minimumLod,
+            int maximumLod,
+            int lodBias)
         {
-            throw new NotImplementedException();
-        }
-
-        protected override string GetShaderFileExtension()
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override GraphicsBackend PlatformGetGraphicsBackend()
-        {
-            throw new NotImplementedException();
+            return new VkSamplerState(
+                addressU,
+                addressV,
+                addressW,
+                filter,
+                maxAnisotropy,
+                borderColor,
+                comparison,
+                minimumLod,
+                maximumLod,
+                lodBias);
         }
     }
 }

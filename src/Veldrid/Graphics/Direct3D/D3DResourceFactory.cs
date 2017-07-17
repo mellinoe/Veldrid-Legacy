@@ -16,8 +16,6 @@ namespace Veldrid.Graphics.Direct3D
             = ShaderFlags.OptimizationLevel3;
 #endif
 
-        protected override string GetShaderFileExtension() => "hlsl";
-
         protected override GraphicsBackend PlatformGetGraphicsBackend() => GraphicsBackend.Direct3D11;
 
         private readonly Device _device;

@@ -483,8 +483,6 @@ namespace Veldrid.Graphics
             bool isDepthClipEnabled,
             bool isScissorTestEnabled);
 
-        protected abstract string GetShaderFileExtension();
-
         protected abstract GraphicsBackend PlatformGetGraphicsBackend();
     }
 }

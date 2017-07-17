@@ -255,7 +255,7 @@ namespace Veldrid.Graphics.Vulkan
             sci.presentMode = presentMode;
             sci.imageFormat = surfaceFormat.format;
             sci.imageColorSpace = surfaceFormat.colorSpace;
-            sci.imageExtent = new VkExtent2D { width = (uint)width, height = (uint)height};
+            sci.imageExtent = new VkExtent2D { width = (uint)width, height = (uint)height };
             sci.minImageCount = imageCount;
             sci.imageArrayLayers = 1;
             sci.imageUsage = VkImageUsageFlags.ColorAttachment;
@@ -325,20 +325,14 @@ namespace Veldrid.Graphics.Vulkan
 
         public override RenderCapabilities RenderCapabilities => throw new NotImplementedException();
 
-        public override void DrawIndexedPrimitives(int count, int startingIndex)
-        {
-            throw new NotImplementedException();
-        }
-
+        public override void DrawIndexedPrimitives(int count, int startingIndex) => DrawIndexedPrimitives(count, startingIndex, 0);
         public override void DrawIndexedPrimitives(int count, int startingIndex, int startingVertex)
         {
             throw new NotImplementedException();
         }
 
         public override void DrawInstancedPrimitives(int indexCount, int instanceCount, int startingIndex)
-        {
-            throw new NotImplementedException();
-        }
+            => DrawInstancedPrimitives(indexCount, instanceCount, startingIndex, 0);
 
         public override void DrawInstancedPrimitives(int indexCount, int instanceCount, int startingIndex, int startingVertex)
         {
