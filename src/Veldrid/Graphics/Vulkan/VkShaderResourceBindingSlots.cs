@@ -6,7 +6,7 @@ namespace Veldrid.Graphics.Vulkan
 {
     public unsafe class VkShaderResourceBindingSlots : ShaderResourceBindingSlots
     {
-        private readonly VkDescriptorSetLayout _descriptorSetLayout;
+        public VkDescriptorSetLayout DescriptorSetLayout { get; }
 
         public ShaderResourceDescription[] Resources { get; }
 
@@ -25,7 +25,8 @@ namespace Veldrid.Graphics.Vulkan
             }
             descriptorSetLayoutCI.pBindings = bindings;
 
-            vkCreateDescriptorSetLayout(device, ref descriptorSetLayoutCI, null, out _descriptorSetLayout);
+            vkCreateDescriptorSetLayout(device, ref descriptorSetLayoutCI, null, out VkDescriptorSetLayout descriptorSetLayout);
+            DescriptorSetLayout = descriptorSetLayout;
         }
 
         private VkDescriptorType MapDescriptorType(ShaderResourceType type)

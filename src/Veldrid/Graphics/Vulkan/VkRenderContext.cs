@@ -25,14 +25,17 @@ namespace Veldrid.Graphics.Vulkan
         private VkDevice _device;
         private VkQueue _graphicsQueue;
         private VkQueue _presentQueue;
+        private VkCommandPool _commandPool;
+        private VkSemaphore _imageAvailableSemaphore;
+        private VkSemaphore _renderCompleteSemaphore;
 
-        // Swapchain stuff
-        private VkSwapchainKHR _swapchain;
-        private RawList<VkImage> _scImages = new RawList<VkImage>();
-        private RawList<VkImageView> _scImageViews = new RawList<VkImageView>();
-        private RawList<VkFramebuffer> _scFramebuffers = new RawList<VkFramebuffer>();
-        private VkFormat _scImageFormat;
-        private VkExtent2D _scExtent;
+        private VkSwapchainInfo _scInfo;
+
+        // Draw call tracking
+        private List<RenderPassState> _renderPassStates = new List<RenderPassState>();
+        private RenderPassState _currentRenderPassState;
+        private bool _needsNewRenderPass = true;
+        private bool _clearBuffer;
 
         public VkRenderContext(IntPtr hinstance, IntPtr hwnd, int width, int height)
         {
@@ -41,8 +44,11 @@ namespace Veldrid.Graphics.Vulkan
             CreatePhysicalDevice();
             CreateLogicalDevice();
             ResourceFactory = new VkResourceFactory(_device, _physicalDevice);
-            CreateSwapchain(width, height);
-            CreateImageViews();
+            _scInfo = new VkSwapchainInfo();
+            _scInfo.CreateSwapchain(_device, _physicalDevice, _surface, _graphicsQueueIndex, _presentQueueIndex, width, height);
+            _scInfo.CreateImageViews(_device);
+            CreateCommandPool();
+            CreateSemaphores();
         }
 
         private void CreateInstance()
@@ -204,121 +210,19 @@ namespace Veldrid.Graphics.Vulkan
             }
         }
 
-        private void CreateSwapchain(int width, int height)
+        private void CreateCommandPool()
         {
-            uint surfaceFormatCount = 0;
-            vkGetPhysicalDeviceSurfaceFormatsKHR(_physicalDevice, _surface, ref surfaceFormatCount, null);
-            VkSurfaceFormatKHR[] formats = new VkSurfaceFormatKHR[surfaceFormatCount];
-            vkGetPhysicalDeviceSurfaceFormatsKHR(_physicalDevice, _surface, ref surfaceFormatCount, out formats[0]);
-
-            VkSurfaceFormatKHR surfaceFormat = new VkSurfaceFormatKHR();
-            if (formats.Length == 1 && formats[0].format == VkFormat.Undefined)
-            {
-                surfaceFormat = new VkSurfaceFormatKHR { colorSpace = VkColorSpaceKHR.SrgbNonlinear, format = VkFormat.B8g8r8a8Unorm };
-            }
-            else
-            {
-                foreach (VkSurfaceFormatKHR format in formats)
-                {
-                    if (format.colorSpace == VkColorSpaceKHR.SrgbNonlinear && format.format == VkFormat.B8g8r8a8Unorm)
-                    {
-                        surfaceFormat = format;
-                        break;
-                    }
-                }
-                if (surfaceFormat.format == VkFormat.Undefined)
-                {
-                    surfaceFormat = formats[0];
-                }
-            }
-
-            uint presentModeCount = 0;
-            vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, ref presentModeCount, null);
-            VkPresentModeKHR[] presentModes = new VkPresentModeKHR[presentModeCount];
-            vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, ref presentModeCount, out presentModes[0]);
-
-            VkPresentModeKHR presentMode = VkPresentModeKHR.Fifo;
-            if (presentModes.Contains(VkPresentModeKHR.Mailbox))
-            {
-                presentMode = VkPresentModeKHR.Mailbox;
-            }
-            else if (presentModes.Contains(VkPresentModeKHR.Immediate))
-            {
-                presentMode = VkPresentModeKHR.Immediate;
-            }
-
-            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_physicalDevice, _surface, out VkSurfaceCapabilitiesKHR surfaceCapabilities);
-            uint imageCount = surfaceCapabilities.minImageCount + 1;
-
-            VkSwapchainCreateInfoKHR sci = VkSwapchainCreateInfoKHR.New();
-            sci.surface = _surface;
-            sci.presentMode = presentMode;
-            sci.imageFormat = surfaceFormat.format;
-            sci.imageColorSpace = surfaceFormat.colorSpace;
-            sci.imageExtent = new VkExtent2D { width = (uint)width, height = (uint)height };
-            sci.minImageCount = imageCount;
-            sci.imageArrayLayers = 1;
-            sci.imageUsage = VkImageUsageFlags.ColorAttachment;
-
-            FixedArray2<uint> queueFamilyIndices = new FixedArray2<uint>(_graphicsQueueIndex, _presentQueueIndex);
-
-            if (_graphicsQueueIndex != _presentQueueIndex)
-            {
-                sci.imageSharingMode = VkSharingMode.Concurrent;
-                sci.queueFamilyIndexCount = 2;
-                sci.pQueueFamilyIndices = &queueFamilyIndices.First;
-            }
-            else
-            {
-                sci.imageSharingMode = VkSharingMode.Exclusive;
-                sci.queueFamilyIndexCount = 0;
-            }
-
-            sci.preTransform = surfaceCapabilities.currentTransform;
-            sci.compositeAlpha = VkCompositeAlphaFlagsKHR.Opaque;
-            sci.clipped = true;
-
-            VkSwapchainKHR oldSwapchain = _swapchain;
-            sci.oldSwapchain = oldSwapchain;
-
-            vkCreateSwapchainKHR(_device, ref sci, null, out _swapchain);
-            if (oldSwapchain != NullHandle)
-            {
-                vkDestroySwapchainKHR(_device, oldSwapchain, null);
-            }
-
-            // Get the images
-            uint scImageCount = 0;
-            vkGetSwapchainImagesKHR(_device, _swapchain, ref scImageCount, null);
-            _scImages.Count = scImageCount;
-            vkGetSwapchainImagesKHR(_device, _swapchain, ref scImageCount, out _scImages.Items[0]);
-
-            _scImageFormat = surfaceFormat.format;
-            _scExtent = sci.imageExtent;
+            VkCommandPoolCreateInfo commandPoolCI = VkCommandPoolCreateInfo.New();
+            commandPoolCI.flags = VkCommandPoolCreateFlags.ResetCommandBuffer;
+            commandPoolCI.queueFamilyIndex = _graphicsQueueIndex;
+            vkCreateCommandPool(_device, ref commandPoolCI, null, out _commandPool);
         }
 
-        private void CreateImageViews()
+        private void CreateSemaphores()
         {
-            _scImageViews.Resize(_scImages.Count);
-            for (int i = 0; i < _scImages.Count; i++)
-            {
-                CreateImageView(_scImages[i], _scImageFormat, out _scImageViews[i]);
-            }
-        }
-
-        private void CreateImageView(VkImage image, VkFormat format, out VkImageView imageView)
-        {
-            VkImageViewCreateInfo imageViewCI = VkImageViewCreateInfo.New();
-            imageViewCI.image = image;
-            imageViewCI.viewType = VkImageViewType._2d;
-            imageViewCI.format = format;
-            imageViewCI.subresourceRange.aspectMask = VkImageAspectFlags.Color;
-            imageViewCI.subresourceRange.baseMipLevel = 0;
-            imageViewCI.subresourceRange.levelCount = 1;
-            imageViewCI.subresourceRange.baseArrayLayer = 0;
-            imageViewCI.subresourceRange.layerCount = 1;
-
-            vkCreateImageView(_device, ref imageViewCI, null, out imageView);
+            VkSemaphoreCreateInfo semaphoreCI = VkSemaphoreCreateInfo.New();
+            vkCreateSemaphore(_device, ref semaphoreCI, null, out _imageAvailableSemaphore);
+            vkCreateSemaphore(_device, ref semaphoreCI, null, out _renderCompleteSemaphore);
         }
 
         public override ResourceFactory ResourceFactory { get; }
@@ -328,7 +232,32 @@ namespace Veldrid.Graphics.Vulkan
         public override void DrawIndexedPrimitives(int count, int startingIndex) => DrawIndexedPrimitives(count, startingIndex, 0);
         public override void DrawIndexedPrimitives(int count, int startingIndex, int startingVertex)
         {
-            throw new NotImplementedException();
+            RenderPassState renderPassState = GetCurrentRenderPass();
+            VkPipeline graphicsPipeline = GetCurrentGraphicsPipeline(out VkPipelineLayout layout);
+            VkDescriptorSet descriptorSet = GetCurrentDescriptorSet();
+
+            VkCommandBuffer cb = GetCommandBuffer();
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.New();
+            beginInfo.flags = VkCommandBufferUsageFlags.OneTimeSubmit;
+            vkBeginCommandBuffer(cb, ref beginInfo);
+
+            vkCmdBindPipeline(cb, VkPipelineBindPoint.Graphics, graphicsPipeline);
+            vkCmdBindDescriptorSets(
+                cb,
+                VkPipelineBindPoint.Graphics,
+                layout,
+                0,
+                1,
+                ref descriptorSet,
+                0,
+                IntPtr.Zero);
+            VkBuffer vb = VertexBuffer.DeviceBuffer;
+            vkCmdBindVertexBuffers(cb, 0, 1, ref vb, null);
+            vkCmdBindIndexBuffer(cb, IndexBuffer.DeviceBuffer, 0, IndexBuffer.IndexType);
+            vkCmdDrawIndexed(cb, (uint)count, 0, (uint)startingIndex, startingVertex, 0);
+            vkEndCommandBuffer(cb);
+
+            renderPassState.SecondaryCommandBuffers.Add(cb);
         }
 
         public override void DrawInstancedPrimitives(int indexCount, int instanceCount, int startingIndex)
@@ -351,107 +280,305 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override void PlatformClearBuffer()
         {
-            throw new NotImplementedException();
+            _clearBuffer = true;
         }
 
         protected override void PlatformClearMaterialResourceBindings()
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformDispose()
         {
-            throw new NotImplementedException();
         }
 
-        protected override GraphicsBackend PlatformGetGraphicsBackend()
-        {
-            throw new NotImplementedException();
-        }
+        protected override GraphicsBackend PlatformGetGraphicsBackend() => GraphicsBackend.Vulkan;
 
         protected override void PlatformResize(int width, int height)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetBlendstate(BlendState blendState)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetConstantBuffer(int slot, ConstantBuffer cb)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetDefaultFramebuffer()
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetDepthStencilState(DepthStencilState depthStencilState)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetFramebuffer(Framebuffer framebuffer)
         {
-            throw new NotImplementedException();
+            _needsNewRenderPass = true;
         }
 
         protected override void PlatformSetIndexBuffer(IndexBuffer ib)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetPrimitiveTopology(PrimitiveTopology primitiveTopology)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetRasterizerState(RasterizerState rasterizerState)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetSamplerState(int slot, SamplerState samplerState, bool mipmapped)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetScissorRectangle(Rectangle rectangle)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetShaderResourceBindingSlots(ShaderResourceBindingSlots shaderConstantBindings)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetShaderSet(ShaderSet shaderSet)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetTexture(int slot, ShaderTextureBinding textureBinding)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetVertexBuffer(int slot, VertexBuffer vb)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSetViewport(int x, int y, int width, int height)
         {
-            throw new NotImplementedException();
         }
 
         protected override void PlatformSwapBuffers()
         {
+            // Submit command buffers and present.
+            uint imageIndex = _scInfo.AcquireNextImage(_device, _imageAvailableSemaphore);
+
+            EnsureRenderPassCreated();
+            if (_renderPassStates.Count > 1)
+            {
+                throw new NotImplementedException();
+            }
+
+            VkCommandBuffer primaryCommandBuffer = GetPrimaryCommandBuffer(imageIndex);
+            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.New();
+            beginInfo.flags = VkCommandBufferUsageFlags.OneTimeSubmit;
+            vkBeginCommandBuffer(primaryCommandBuffer, ref beginInfo);
+            VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.New();
+            renderPassBeginInfo.framebuffer = _scInfo.GetFramebuffer(imageIndex);
+            renderPassBeginInfo.renderPass = _renderPassStates[0].RenderPass;
+            if (_clearBuffer)
+            {
+                _clearBuffer = false;
+                renderPassBeginInfo.clearValueCount = 1;
+                VkClearColorValue colorClear = new VkClearColorValue
+                {
+                    float32_0 = ClearColor.R,
+                    float32_1 = ClearColor.G,
+                    float32_2 = ClearColor.B,
+                    float32_3 = ClearColor.A
+                };
+                VkClearDepthStencilValue depthClear = new VkClearDepthStencilValue() { depth = float.MaxValue, stencil = 0 };
+                VkClearValue clearValue = new VkClearValue() { color = colorClear, depthStencil = depthClear };
+                renderPassBeginInfo.pClearValues = &clearValue;
+            }
+            renderPassBeginInfo.renderArea.extent = _scInfo.SwapchainExtent;
+
+            vkCmdBeginRenderPass(primaryCommandBuffer, ref renderPassBeginInfo, VkSubpassContents.SecondaryCommandBuffers);
+            RawList<VkCommandBuffer> secondaryCBs = _renderPassStates[0].SecondaryCommandBuffers;
+            if (secondaryCBs.Count > 0)
+            {
+                vkCmdExecuteCommands(primaryCommandBuffer, secondaryCBs.Count, ref secondaryCBs[0]);
+            }
+            vkCmdEndRenderPass(primaryCommandBuffer);
+            vkEndCommandBuffer(primaryCommandBuffer);
+
+            VkSubmitInfo submitInfo = VkSubmitInfo.New();
+            VkSemaphore waitSemaphore = _imageAvailableSemaphore;
+            VkPipelineStageFlags waitStages = VkPipelineStageFlags.ColorAttachmentOutput;
+            submitInfo.waitSemaphoreCount = 1;
+            submitInfo.pWaitSemaphores = &waitSemaphore;
+            submitInfo.pWaitDstStageMask = &waitStages;
+            VkCommandBuffer cb = primaryCommandBuffer;
+            submitInfo.commandBufferCount = 1;
+            submitInfo.pCommandBuffers = &cb;
+            VkSemaphore signalSemaphore = _renderCompleteSemaphore;
+            submitInfo.signalSemaphoreCount = 1;
+            submitInfo.pSignalSemaphores = &signalSemaphore;
+            vkQueueSubmit(_graphicsQueue, 1, ref submitInfo, VkFence.Null);
+
+            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.New();
+            presentInfo.waitSemaphoreCount = 1;
+            presentInfo.pWaitSemaphores = &signalSemaphore;
+
+            VkSwapchainKHR swapchain = _scInfo.Swapchain;
+            presentInfo.swapchainCount = 1;
+            presentInfo.pSwapchains = &swapchain;
+            presentInfo.pImageIndices = &imageIndex;
+
+            vkQueuePresentKHR(_presentQueue, ref presentInfo);
+        }
+
+        private VkCommandBuffer GetPrimaryCommandBuffer(uint imageIndex)
+        {
+            VkCommandBufferAllocateInfo commandBufferAI = VkCommandBufferAllocateInfo.New();
+            commandBufferAI.commandBufferCount = 1;
+            commandBufferAI.commandPool = _commandPool;
+            commandBufferAI.level = VkCommandBufferLevel.Primary;
+
+            VkResult result = vkAllocateCommandBuffers(_device, ref commandBufferAI, out VkCommandBuffer ret);
+            CheckResult(result);
+            return ret;
+        }
+
+        private RenderPassState GetCurrentRenderPass()
+        {
+            EnsureRenderPassCreated();
+            return _currentRenderPassState;
+        }
+
+        private void EnsureRenderPassCreated()
+        {
+            if (_needsNewRenderPass)
+            {
+                _needsNewRenderPass = false;
+                VkRenderPassCreateInfo renderPassCI = VkRenderPassCreateInfo.New();
+
+                VkAttachmentDescription colorAttachmentDesc = new VkAttachmentDescription();
+                colorAttachmentDesc.format = _scInfo.SwapchainFormat;
+                colorAttachmentDesc.samples = VkSampleCountFlags._1;
+                colorAttachmentDesc.loadOp = VkAttachmentLoadOp.Clear;
+                colorAttachmentDesc.storeOp = VkAttachmentStoreOp.Store;
+                colorAttachmentDesc.stencilLoadOp = VkAttachmentLoadOp.DontCare;
+                colorAttachmentDesc.stencilStoreOp = VkAttachmentStoreOp.DontCare;
+                colorAttachmentDesc.initialLayout = VkImageLayout.Undefined;
+                colorAttachmentDesc.finalLayout = VkImageLayout.PresentSrc;
+
+                VkAttachmentReference colorAttachmentRef = new VkAttachmentReference();
+                colorAttachmentRef.attachment = 0;
+                colorAttachmentRef.layout = VkImageLayout.ColorAttachmentOptimal;
+
+                VkAttachmentDescription depthAttachmentDesc = new VkAttachmentDescription();
+                VkAttachmentReference depthAttachmentRef = new VkAttachmentReference();
+                if (CurrentFramebuffer.DepthTexture != null)
+                {
+                    depthAttachmentDesc.format = CurrentFramebuffer.DepthTexture.Format;
+                    depthAttachmentDesc.samples = VkSampleCountFlags._1;
+                    depthAttachmentDesc.loadOp = VkAttachmentLoadOp.Clear;
+                    depthAttachmentDesc.storeOp = VkAttachmentStoreOp.Store;
+                    depthAttachmentDesc.stencilLoadOp = VkAttachmentLoadOp.DontCare;
+                    depthAttachmentDesc.stencilStoreOp = VkAttachmentStoreOp.DontCare;
+                    depthAttachmentDesc.initialLayout = VkImageLayout.Undefined;
+                    depthAttachmentDesc.finalLayout = VkImageLayout.DepthStencilAttachmentOptimal;
+
+                    depthAttachmentRef.attachment = 1;
+                    depthAttachmentRef.layout = VkImageLayout.DepthStencilAttachmentOptimal;
+                }
+
+                VkSubpassDescription subpass = new VkSubpassDescription();
+                subpass.pipelineBindPoint = VkPipelineBindPoint.Graphics;
+                subpass.colorAttachmentCount = 1;
+                subpass.pColorAttachments = &colorAttachmentRef;
+
+                StackList<VkAttachmentDescription, Size2IntPtr> attachments = new StackList<VkAttachmentDescription, Size2IntPtr>();
+                attachments.Add(colorAttachmentDesc);
+
+                if (CurrentFramebuffer.DepthTexture != null)
+                {
+                    subpass.pDepthStencilAttachment = &depthAttachmentRef;
+                    attachments.Add(depthAttachmentDesc);
+                }
+
+                VkSubpassDependency subpassDependency = new VkSubpassDependency();
+                subpassDependency.srcSubpass = SubpassExternal;
+                subpassDependency.srcStageMask = VkPipelineStageFlags.ColorAttachmentOutput;
+                subpassDependency.dstStageMask = VkPipelineStageFlags.ColorAttachmentOutput;
+                subpassDependency.dstAccessMask = VkAccessFlags.ColorAttachmentRead | VkAccessFlags.ColorAttachmentWrite;
+                if (CurrentFramebuffer.DepthTexture != null)
+                {
+                    subpassDependency.dstAccessMask |= VkAccessFlags.DepthStencilAttachmentRead | VkAccessFlags.DepthStencilAttachmentWrite;
+                }
+
+                renderPassCI.attachmentCount = attachments.Count;
+                renderPassCI.pAttachments = (VkAttachmentDescription*)attachments.Data;
+                renderPassCI.subpassCount = 1;
+                renderPassCI.pSubpasses = &subpass;
+                renderPassCI.dependencyCount = 1;
+                renderPassCI.pDependencies = &subpassDependency;
+
+
+                vkCreateRenderPass(_device, ref renderPassCI, null, out VkRenderPass newRenderPass);
+                _currentRenderPassState = new RenderPassState() { RenderPass = newRenderPass };
+                _renderPassStates.Add(_currentRenderPassState);
+            }
+        }
+
+        private VkPipeline GetCurrentGraphicsPipeline(out VkPipelineLayout layout)
+        {
+            VkGraphicsPipelineCreateInfo pipelineCI = VkGraphicsPipelineCreateInfo.New();
+            pipelineCI.renderPass = GetCurrentRenderPass().RenderPass;
+            pipelineCI.subpass = 0;
+            layout = GetCurrentPipelineLayout();
+            pipelineCI.layout = layout;
+
+            VkPipelineDynamicStateCreateInfo dynamicStateCI = VkPipelineDynamicStateCreateInfo.New();
+            VkDynamicState* dynamicStates = stackalloc VkDynamicState[2];
+            dynamicStates[0] = VkDynamicState.Viewport;
+            dynamicStates[1] = VkDynamicState.Scissor;
+            dynamicStateCI.dynamicStateCount = 2;
+            dynamicStateCI.pDynamicStates = dynamicStates;
+            pipelineCI.pDynamicState = &dynamicStateCI;
+
+            VkResult result = vkCreateGraphicsPipelines(_device, VkPipelineCache.Null, 1, ref pipelineCI, null, out VkPipeline ret);
+            CheckResult(result);
+            return ret;
+        }
+
+        private VkPipelineLayout GetCurrentPipelineLayout()
+        {
+            VkPipelineLayoutCreateInfo pipelineLayoutCI = VkPipelineLayoutCreateInfo.New();
+            VkDescriptorSetLayout layout = ((VkShaderResourceBindingSlots)ShaderResourceBindingSlots).DescriptorSetLayout;
+            pipelineLayoutCI.setLayoutCount = 1;
+            pipelineLayoutCI.pSetLayouts = &layout;
+            vkCreatePipelineLayout(_device, ref pipelineLayoutCI, null, out VkPipelineLayout ret);
+            return ret;
+        }
+
+        private VkDescriptorSet GetCurrentDescriptorSet()
+        {
             throw new NotImplementedException();
+        }
+
+        private VkCommandBuffer GetCommandBuffer()
+        {
+            VkCommandBufferAllocateInfo commandBufferAI = VkCommandBufferAllocateInfo.New();
+            commandBufferAI.commandBufferCount = 1;
+            commandBufferAI.commandPool = _commandPool;
+            commandBufferAI.level = VkCommandBufferLevel.Secondary;
+
+            vkAllocateCommandBuffers(_device, ref commandBufferAI, out VkCommandBuffer ret);
+            return ret;
+        }
+
+        private new VkVertexBuffer VertexBuffer => (VkVertexBuffer)base.VertexBuffer;
+        private new VkIndexBuffer IndexBuffer => (VkIndexBuffer)base.IndexBuffer;
+        private new VkFramebufferInfo CurrentFramebuffer => (VkFramebufferInfo)base.CurrentFramebuffer;
+        private new VkShaderResourceBindingSlots ShaderResourceBindingSlots
+            => (VkShaderResourceBindingSlots)base.ShaderResourceBindingSlots;
+
+        private class RenderPassState
+        {
+            public VkRenderPass RenderPass { get; set; }
+            public RawList<VkCommandBuffer> SecondaryCommandBuffers { get; set; } = new RawList<VkCommandBuffer>();
         }
     }
 }

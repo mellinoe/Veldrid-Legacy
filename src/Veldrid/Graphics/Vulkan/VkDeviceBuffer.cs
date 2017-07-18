@@ -15,6 +15,8 @@ namespace Veldrid.Graphics.Vulkan
         private ulong _bufferCapacity;
         private ulong _bufferDataSize;
 
+        public VkBuffer DeviceBuffer => _buffer;
+
         public VkDeviceBuffer(VkDevice device, VkPhysicalDevice physicalDevice, ulong size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperties)
         {
             _device = device;

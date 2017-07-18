@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Veldrid.Graphics.Vulkan
@@ -81,9 +82,13 @@ namespace Veldrid.Graphics.Vulkan
         }
     }
 
+    internal unsafe struct Size16Bytes { public fixed byte Data[16]; }
     internal unsafe struct Size64Bytes { public fixed byte Data[64]; }
     internal unsafe struct Size128Bytes { public fixed byte Data[64]; }
     internal unsafe struct Size512Bytes { public fixed byte Data[1024]; }
     internal unsafe struct Size1024Bytes { public fixed byte Data[1024]; }
     internal unsafe struct Size2048Bytes { public fixed byte Data[2048]; }
+#pragma warning disable 0649 // Fields are not assigned directly -- expected.
+    internal unsafe struct Size2IntPtr { public IntPtr First; public IntPtr Second; }
+#pragma warning restore 0649
 }

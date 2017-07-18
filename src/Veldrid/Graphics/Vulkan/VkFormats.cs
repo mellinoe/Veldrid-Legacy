@@ -49,5 +49,18 @@ namespace Veldrid.Graphics.Vulkan
                     throw Illegal.Value<TriangleFillMode>();
             }
         }
+
+        public static VkIndexType VeldridToVkIndexFormat(IndexFormat format)
+        {
+            switch (format)
+            {
+                case IndexFormat.UInt16:
+                    return VkIndexType.Uint16;
+                case IndexFormat.UInt32:
+                    return VkIndexType.Uint32;
+                default:
+                    throw Illegal.Value<IndexFormat>();
+            }
+        }
     }
 }

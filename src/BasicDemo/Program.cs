@@ -20,7 +20,7 @@ namespace BasicDemo
         private static bool s_allowDebugContexts = false;
         public static void Main(string[] args)
         {
-            bool useVulkan = false;
+            bool useVulkan = true;
             useVulkan |= args.Contains("vulkan");
 
             bool onWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
