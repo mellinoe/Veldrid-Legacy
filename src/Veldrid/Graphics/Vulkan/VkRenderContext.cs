@@ -455,7 +455,7 @@ namespace Veldrid.Graphics.Vulkan
 
                 VkAttachmentDescription colorAttachmentDesc = new VkAttachmentDescription();
                 colorAttachmentDesc.format = _scInfo.SwapchainFormat;
-                colorAttachmentDesc.samples = VkSampleCountFlags._1;
+                colorAttachmentDesc.samples = VkSampleCountFlags.Count1;
                 colorAttachmentDesc.loadOp = VkAttachmentLoadOp.Clear;
                 colorAttachmentDesc.storeOp = VkAttachmentStoreOp.Store;
                 colorAttachmentDesc.stencilLoadOp = VkAttachmentLoadOp.DontCare;
@@ -472,7 +472,7 @@ namespace Veldrid.Graphics.Vulkan
                 if (CurrentFramebuffer.DepthTexture != null)
                 {
                     depthAttachmentDesc.format = CurrentFramebuffer.DepthTexture.Format;
-                    depthAttachmentDesc.samples = VkSampleCountFlags._1;
+                    depthAttachmentDesc.samples = VkSampleCountFlags.Count1;
                     depthAttachmentDesc.loadOp = VkAttachmentLoadOp.Clear;
                     depthAttachmentDesc.storeOp = VkAttachmentStoreOp.Store;
                     depthAttachmentDesc.stencilLoadOp = VkAttachmentLoadOp.DontCare;

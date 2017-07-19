@@ -17,7 +17,7 @@
     <PackageReference Include="SharpDX.Direct3D11" Version="4.0.1" />
     <PackageReference Include="SharpDX.DXGI" Version="4.0.1" />
     <PackageReference Include="System.Text.Primitives" Version="0.1.0-e170627-2" />
-    <PackageReference Include="Vk" Version="1.0.1" />
+    <PackageReference Include="Vk" Version="1.0.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Veldrid.Primitives\Veldrid.Primitives.csproj" />
