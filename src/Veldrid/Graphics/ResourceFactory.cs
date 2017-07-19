@@ -43,7 +43,7 @@ namespace Veldrid.Graphics
         /// <returns>A new <see cref="VertexBuffer"/> containing the given data.</returns>
         public VertexBuffer CreateVertexBuffer<T>(T[] data, VertexDescriptor descriptor, bool isDynamic) where T : struct
         {
-            VertexBuffer vb = CreateVertexBuffer(descriptor.VertexSizeInBytes * descriptor.ElementCount, isDynamic);
+            VertexBuffer vb = CreateVertexBuffer(descriptor.VertexSizeInBytes * data.Length, isDynamic);
             vb.SetVertexData(data, descriptor);
             return vb;
         }

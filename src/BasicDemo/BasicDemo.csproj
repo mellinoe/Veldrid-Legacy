@@ -6,6 +6,10 @@
     <PreprocessHlslShaders>true</PreprocessHlslShaders>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Shaders\SPIR-V\simple.frag.spv" />
+    <None Remove="Shaders\SPIR-V\simple.vert.spv" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="ImGui.NET" Version="0.2.1" />
     <ProjectReference Include="..\Veldrid\Veldrid.csproj" />
     <ProjectReference Include="..\Veldrid.Sdl2\Veldrid.Sdl2.csproj" />
@@ -14,6 +18,14 @@
     <Compile Include="..\RenderDemo.Common\InputTracker.cs">
       <Link>Common\InputTracker.cs</Link>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Shaders\SPIR-V\simple.frag.spv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Shaders\SPIR-V\simple.vert.spv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildThisFileDirectory)..\..\build\ShaderCompilation.targets" />
 </Project>

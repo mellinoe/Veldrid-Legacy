@@ -28,6 +28,7 @@ namespace Veldrid.Graphics.Vulkan
         private VkCommandPool _commandPool;
         private VkSemaphore _imageAvailableSemaphore;
         private VkSemaphore _renderCompleteSemaphore;
+        private VkPrimitiveTopology _primitiveTopology = VkPrimitiveTopology.TriangleList;
 
         private VkSwapchainInfo _scInfo;
 
@@ -50,6 +51,8 @@ namespace Veldrid.Graphics.Vulkan
             SetFramebuffer(_scInfo.GetFramebuffer(0));
             CreateCommandPool();
             CreateSemaphores();
+
+            PostContextCreated();
         }
 
         private void CreateInstance()
@@ -326,6 +329,7 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override void PlatformSetPrimitiveTopology(PrimitiveTopology primitiveTopology)
         {
+            _primitiveTopology = VkFormats.VeldridToVkPrimitiveTopology(primitiveTopology);
         }
 
         protected override void PlatformSetRasterizerState(RasterizerState rasterizerState)
@@ -451,6 +455,7 @@ namespace Veldrid.Graphics.Vulkan
 
         private RenderPassInfo GetCurrentRenderPass()
         {
+            EnsureRenderPassCreated();
             return _currentRenderPassState;
         }
 
@@ -467,11 +472,16 @@ namespace Veldrid.Graphics.Vulkan
         private VkPipeline GetCurrentGraphicsPipeline(out VkPipelineLayout layout)
         {
             VkGraphicsPipelineCreateInfo pipelineCI = VkGraphicsPipelineCreateInfo.New();
+
+            // RenderPass
             pipelineCI.renderPass = GetCurrentRenderPass().Framebuffer.RenderPass;
             pipelineCI.subpass = 0;
+
+            // Layout
             layout = GetCurrentPipelineLayout();
             pipelineCI.layout = layout;
 
+            // DynamicState
             VkPipelineDynamicStateCreateInfo dynamicStateCI = VkPipelineDynamicStateCreateInfo.New();
             VkDynamicState* dynamicStates = stackalloc VkDynamicState[2];
             dynamicStates[0] = VkDynamicState.Viewport;
@@ -479,6 +489,99 @@ namespace Veldrid.Graphics.Vulkan
             dynamicStateCI.dynamicStateCount = 2;
             dynamicStateCI.pDynamicStates = dynamicStates;
             pipelineCI.pDynamicState = &dynamicStateCI;
+
+            // ColorBlendState
+            VkPipelineColorBlendAttachmentState colorBlendAttachementState = new VkPipelineColorBlendAttachmentState();
+            // TODO : Respect blend state options.
+            colorBlendAttachementState.colorWriteMask = VkColorComponentFlags.R | VkColorComponentFlags.G | VkColorComponentFlags.B | VkColorComponentFlags.A;
+            colorBlendAttachementState.blendEnable = false;
+            VkPipelineColorBlendStateCreateInfo colorBlendStateCI = VkPipelineColorBlendStateCreateInfo.New();
+            colorBlendStateCI.attachmentCount = 1;
+            colorBlendStateCI.pAttachments = &colorBlendAttachementState;
+            pipelineCI.pColorBlendState = &colorBlendStateCI;
+
+            // DepthStencilState
+            VkPipelineDepthStencilStateCreateInfo depthStencilStateCI = VkPipelineDepthStencilStateCreateInfo.New();
+            depthStencilStateCI.depthCompareOp = VkFormats.VeldridToVkDepthComparison(DepthStencilState.DepthComparison);
+            depthStencilStateCI.depthWriteEnable = DepthStencilState.IsDepthWriteEnabled;
+            depthStencilStateCI.depthTestEnable = DepthStencilState.IsDepthEnabled;
+            pipelineCI.pDepthStencilState = &depthStencilStateCI;
+
+            // MultisampleState
+            VkPipelineMultisampleStateCreateInfo multisampleStateCI = VkPipelineMultisampleStateCreateInfo.New();
+            multisampleStateCI.rasterizationSamples = VkSampleCountFlags.Count1;
+            pipelineCI.pMultisampleState = &multisampleStateCI;
+
+            // RasterizationState
+            VkPipelineRasterizationStateCreateInfo rasterizationStateCI = ((VkRasterizerState)RasterizerState).RasterizerStateCreateInfo;
+            rasterizationStateCI.lineWidth = 1f;
+            pipelineCI.pRasterizationState = &rasterizationStateCI;
+
+            // ViewportState
+            VkPipelineViewportStateCreateInfo viewportStateCI = VkPipelineViewportStateCreateInfo.New();
+            viewportStateCI.viewportCount = 1;
+            viewportStateCI.scissorCount = 1;
+            pipelineCI.pViewportState = &viewportStateCI;
+
+            // InputAssemblyState
+            VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCI = VkPipelineInputAssemblyStateCreateInfo.New();
+            inputAssemblyStateCI.topology = _primitiveTopology;
+            pipelineCI.pInputAssemblyState = &inputAssemblyStateCI;
+
+            // VertexInputState
+            VkPipelineVertexInputStateCreateInfo vertexInputStateCI = VkPipelineVertexInputStateCreateInfo.New();
+            VertexInputDescription[] inputDescriptions = ShaderSet.InputLayout.InputDescriptions;
+            uint bindingCount = (uint)inputDescriptions.Length;
+            uint attributeCount = (uint)inputDescriptions.Sum(desc => desc.Elements.Length);
+            VkVertexInputBindingDescription* bindingDescs = stackalloc VkVertexInputBindingDescription[(int)bindingCount];
+            VkVertexInputAttributeDescription* attributeDescs = stackalloc VkVertexInputAttributeDescription[(int)attributeCount];
+
+            int targetIndex = 0;
+            for (int binding = 0; binding < inputDescriptions.Length; binding++)
+            {
+                VertexInputDescription inputDesc = inputDescriptions[binding];
+                bindingDescs[targetIndex] = new VkVertexInputBindingDescription()
+                {
+                    binding = (uint)binding,
+                    inputRate = (inputDesc.Elements[0].StorageClassifier == VertexElementInputClass.PerInstance) ? VkVertexInputRate.Instance : VkVertexInputRate.Vertex,
+                    stride = (uint)inputDesc.VertexSizeInBytes
+                };
+
+                for (int location = 0; location < inputDesc.Elements.Length; location++)
+                {
+                    VertexInputElement inputElement = inputDesc.Elements[location];
+
+                    attributeDescs[targetIndex] = new VkVertexInputAttributeDescription()
+                    {
+                        format = VkFormats.VeldridToVkVertexElementFormat(inputElement.ElementFormat),
+                        binding = (uint)binding,
+                        location = (uint)location
+                    };
+
+                    targetIndex += 1;
+                }
+            }
+
+            vertexInputStateCI.vertexBindingDescriptionCount = bindingCount;
+            vertexInputStateCI.pVertexBindingDescriptions = bindingDescs;
+            vertexInputStateCI.vertexAttributeDescriptionCount = attributeCount;
+            vertexInputStateCI.pVertexAttributeDescriptions = attributeDescs;
+            pipelineCI.pVertexInputState = &vertexInputStateCI;
+
+            // ShaderStage
+            VkPipelineShaderStageCreateInfo* shaderStageCIs = stackalloc VkPipelineShaderStageCreateInfo[2];
+            VkPipelineShaderStageCreateInfo vertexStage = VkPipelineShaderStageCreateInfo.New();
+            vertexStage.stage = VkShaderStageFlags.Vertex;
+            vertexStage.module = ShaderSet.VertexShader.ShaderModule;
+            vertexStage.pName = CommonStrings.main;
+            VkPipelineShaderStageCreateInfo fragmentStage = VkPipelineShaderStageCreateInfo.New();
+            fragmentStage.stage = VkShaderStageFlags.Fragment;
+            fragmentStage.module = ShaderSet.FragmentShader.ShaderModule;
+            fragmentStage.pName = CommonStrings.main;
+            shaderStageCIs[0] = vertexStage;
+            shaderStageCIs[1] = fragmentStage;
+            pipelineCI.stageCount = 2;// TODO: NOT REALLY
+            pipelineCI.pStages = shaderStageCIs;
 
             VkResult result = vkCreateGraphicsPipelines(_device, VkPipelineCache.Null, 1, ref pipelineCI, null, out VkPipeline ret);
             CheckResult(result);
@@ -497,7 +600,9 @@ namespace Veldrid.Graphics.Vulkan
 
         private VkDescriptorSet GetCurrentDescriptorSet()
         {
-            throw new NotImplementedException();
+            VkDescriptorSetAllocateInfo descriptorSetAI = VkDescriptorSetAllocateInfo.New();
+            vkAllocateDescriptorSets(_device, ref descriptorSetAI, out VkDescriptorSet ret);
+            return ret;
         }
 
         private VkCommandBuffer GetCommandBuffer()
@@ -513,6 +618,7 @@ namespace Veldrid.Graphics.Vulkan
 
         private new VkVertexBuffer VertexBuffer => (VkVertexBuffer)base.VertexBuffer;
         private new VkIndexBuffer IndexBuffer => (VkIndexBuffer)base.IndexBuffer;
+        private new VkShaderSet ShaderSet => (VkShaderSet)base.ShaderSet;
         private new VkFramebufferInfo CurrentFramebuffer => (VkFramebufferInfo)base.CurrentFramebuffer;
         private new VkShaderResourceBindingSlots ShaderResourceBindingSlots
             => (VkShaderResourceBindingSlots)base.ShaderResourceBindingSlots;

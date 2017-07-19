@@ -19,8 +19,9 @@ namespace Veldrid.Graphics.Vulkan
             for (int i = 0; i < resources.Length; i++)
             {
                 ShaderResourceDescription desc = resources[i];
-                bindings[i].descriptorType = MapDescriptorType(desc.Type);
                 bindings[i].binding = (uint)i;
+                bindings[i].descriptorType = MapDescriptorType(desc.Type);
+                bindings[i].descriptorCount = 1;
                 bindings[i].stageFlags = MapStageFlags(desc.Stages);
             }
             descriptorSetLayoutCI.pBindings = bindings;
