@@ -17,10 +17,32 @@ namespace Veldrid.Graphics.Vulkan
                     return VkFormat.R16Uint;
                 case PixelFormat.R8_G8_B8_A8_UInt:
                     return VkFormat.R8g8b8a8Uint;
+                case PixelFormat.B8_G8_R8_A8_UInt:
+                    return VkFormat.B8g8r8a8Unorm;
                 default:
                     throw Illegal.Value<PixelFormat>();
             }
         }
+
+        public static PixelFormat VkToVeldridPixelFormat(VkFormat vkFormat)
+        {
+            switch (vkFormat)
+            {
+                case VkFormat.R32g32b32a32Sfloat:
+                    return PixelFormat.R32_G32_B32_A32_Float;
+                case VkFormat.R8Uint:
+                    return PixelFormat.R8_UInt;
+                case VkFormat.R16Uint:
+                    return PixelFormat.R16_UInt;
+                case VkFormat.R8g8b8a8Uint:
+                    return PixelFormat.R8_G8_B8_A8_UInt;
+                case VkFormat.B8g8r8a8Unorm:
+                    return PixelFormat.B8_G8_R8_A8_UInt;
+                default:
+                    throw Illegal.Value<VkFormat>();
+            }
+        }
+
 
         internal static VkCullModeFlags VeldridToVkCullMode(FaceCullingMode cullMode)
         {

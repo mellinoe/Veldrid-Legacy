@@ -32,10 +32,11 @@ namespace Veldrid.Graphics.Vulkan
         private VkSwapchainInfo _scInfo;
 
         // Draw call tracking
-        private List<RenderPassState> _renderPassStates = new List<RenderPassState>();
-        private RenderPassState _currentRenderPassState;
+        private List<RenderPassInfo> _renderPassStates = new List<RenderPassInfo>();
+        private RenderPassInfo _currentRenderPassState;
         private bool _needsNewRenderPass = true;
         private bool _clearBuffer;
+        private RgbaFloat _cachedClearColor;
 
         public VkRenderContext(IntPtr hinstance, IntPtr hwnd, int width, int height)
         {
@@ -45,8 +46,8 @@ namespace Veldrid.Graphics.Vulkan
             CreateLogicalDevice();
             ResourceFactory = new VkResourceFactory(_device, _physicalDevice);
             _scInfo = new VkSwapchainInfo();
-            _scInfo.CreateSwapchain(_device, _physicalDevice, _surface, _graphicsQueueIndex, _presentQueueIndex, width, height);
-            _scInfo.CreateImageViews(_device);
+            _scInfo.CreateSwapchain(_device, _physicalDevice, (VkResourceFactory)ResourceFactory, _surface, _graphicsQueueIndex, _presentQueueIndex, width, height);
+            SetFramebuffer(_scInfo.GetFramebuffer(0));
             CreateCommandPool();
             CreateSemaphores();
         }
@@ -232,7 +233,7 @@ namespace Veldrid.Graphics.Vulkan
         public override void DrawIndexedPrimitives(int count, int startingIndex) => DrawIndexedPrimitives(count, startingIndex, 0);
         public override void DrawIndexedPrimitives(int count, int startingIndex, int startingVertex)
         {
-            RenderPassState renderPassState = GetCurrentRenderPass();
+            RenderPassInfo renderPassState = GetCurrentRenderPass();
             VkPipeline graphicsPipeline = GetCurrentGraphicsPipeline(out VkPipelineLayout layout);
             VkDescriptorSet descriptorSet = GetCurrentDescriptorSet();
 
@@ -281,6 +282,7 @@ namespace Veldrid.Graphics.Vulkan
         protected override void PlatformClearBuffer()
         {
             _clearBuffer = true;
+            _cachedClearColor = ClearColor;
         }
 
         protected override void PlatformClearMaterialResourceBindings()
@@ -374,22 +376,26 @@ namespace Veldrid.Graphics.Vulkan
             beginInfo.flags = VkCommandBufferUsageFlags.OneTimeSubmit;
             vkBeginCommandBuffer(primaryCommandBuffer, ref beginInfo);
             VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.New();
-            renderPassBeginInfo.framebuffer = _scInfo.GetFramebuffer(imageIndex);
-            renderPassBeginInfo.renderPass = _renderPassStates[0].RenderPass;
+            VkFramebufferInfo fbInfo = _scInfo.GetFramebuffer(imageIndex);
+            renderPassBeginInfo.framebuffer = fbInfo.Framebuffer;
+            renderPassBeginInfo.renderPass = fbInfo.RenderPass;
             if (_clearBuffer)
             {
                 _clearBuffer = false;
-                renderPassBeginInfo.clearValueCount = 1;
                 VkClearColorValue colorClear = new VkClearColorValue
                 {
-                    float32_0 = ClearColor.R,
-                    float32_1 = ClearColor.G,
-                    float32_2 = ClearColor.B,
-                    float32_3 = ClearColor.A
+                    float32_0 = _cachedClearColor.R,
+                    float32_1 = _cachedClearColor.G,
+                    float32_2 = _cachedClearColor.B,
+                    float32_3 = _cachedClearColor.A
                 };
-                VkClearDepthStencilValue depthClear = new VkClearDepthStencilValue() { depth = float.MaxValue, stencil = 0 };
-                VkClearValue clearValue = new VkClearValue() { color = colorClear, depthStencil = depthClear };
-                renderPassBeginInfo.pClearValues = &clearValue;
+                VkClearDepthStencilValue depthClear = new VkClearDepthStencilValue() { depth = 1f, stencil = 0 };
+                FixedArray2<VkClearValue> clearValues = new FixedArray2<VkClearValue>();
+                clearValues.First.color = colorClear;
+                clearValues.Second.depthStencil = depthClear;
+
+                renderPassBeginInfo.clearValueCount = 2;
+                renderPassBeginInfo.pClearValues = &clearValues.First;
             }
             renderPassBeginInfo.renderArea.extent = _scInfo.SwapchainExtent;
 
@@ -426,6 +432,9 @@ namespace Veldrid.Graphics.Vulkan
             presentInfo.pImageIndices = &imageIndex;
 
             vkQueuePresentKHR(_presentQueue, ref presentInfo);
+
+            _renderPassStates.Clear();
+            _needsNewRenderPass = true;
         }
 
         private VkCommandBuffer GetPrimaryCommandBuffer(uint imageIndex)
@@ -440,9 +449,8 @@ namespace Veldrid.Graphics.Vulkan
             return ret;
         }
 
-        private RenderPassState GetCurrentRenderPass()
+        private RenderPassInfo GetCurrentRenderPass()
         {
-            EnsureRenderPassCreated();
             return _currentRenderPassState;
         }
 
@@ -451,73 +459,7 @@ namespace Veldrid.Graphics.Vulkan
             if (_needsNewRenderPass)
             {
                 _needsNewRenderPass = false;
-                VkRenderPassCreateInfo renderPassCI = VkRenderPassCreateInfo.New();
-
-                VkAttachmentDescription colorAttachmentDesc = new VkAttachmentDescription();
-                colorAttachmentDesc.format = _scInfo.SwapchainFormat;
-                colorAttachmentDesc.samples = VkSampleCountFlags.Count1;
-                colorAttachmentDesc.loadOp = VkAttachmentLoadOp.Clear;
-                colorAttachmentDesc.storeOp = VkAttachmentStoreOp.Store;
-                colorAttachmentDesc.stencilLoadOp = VkAttachmentLoadOp.DontCare;
-                colorAttachmentDesc.stencilStoreOp = VkAttachmentStoreOp.DontCare;
-                colorAttachmentDesc.initialLayout = VkImageLayout.Undefined;
-                colorAttachmentDesc.finalLayout = VkImageLayout.PresentSrc;
-
-                VkAttachmentReference colorAttachmentRef = new VkAttachmentReference();
-                colorAttachmentRef.attachment = 0;
-                colorAttachmentRef.layout = VkImageLayout.ColorAttachmentOptimal;
-
-                VkAttachmentDescription depthAttachmentDesc = new VkAttachmentDescription();
-                VkAttachmentReference depthAttachmentRef = new VkAttachmentReference();
-                if (CurrentFramebuffer.DepthTexture != null)
-                {
-                    depthAttachmentDesc.format = CurrentFramebuffer.DepthTexture.Format;
-                    depthAttachmentDesc.samples = VkSampleCountFlags.Count1;
-                    depthAttachmentDesc.loadOp = VkAttachmentLoadOp.Clear;
-                    depthAttachmentDesc.storeOp = VkAttachmentStoreOp.Store;
-                    depthAttachmentDesc.stencilLoadOp = VkAttachmentLoadOp.DontCare;
-                    depthAttachmentDesc.stencilStoreOp = VkAttachmentStoreOp.DontCare;
-                    depthAttachmentDesc.initialLayout = VkImageLayout.Undefined;
-                    depthAttachmentDesc.finalLayout = VkImageLayout.DepthStencilAttachmentOptimal;
-
-                    depthAttachmentRef.attachment = 1;
-                    depthAttachmentRef.layout = VkImageLayout.DepthStencilAttachmentOptimal;
-                }
-
-                VkSubpassDescription subpass = new VkSubpassDescription();
-                subpass.pipelineBindPoint = VkPipelineBindPoint.Graphics;
-                subpass.colorAttachmentCount = 1;
-                subpass.pColorAttachments = &colorAttachmentRef;
-
-                StackList<VkAttachmentDescription, Size2IntPtr> attachments = new StackList<VkAttachmentDescription, Size2IntPtr>();
-                attachments.Add(colorAttachmentDesc);
-
-                if (CurrentFramebuffer.DepthTexture != null)
-                {
-                    subpass.pDepthStencilAttachment = &depthAttachmentRef;
-                    attachments.Add(depthAttachmentDesc);
-                }
-
-                VkSubpassDependency subpassDependency = new VkSubpassDependency();
-                subpassDependency.srcSubpass = SubpassExternal;
-                subpassDependency.srcStageMask = VkPipelineStageFlags.ColorAttachmentOutput;
-                subpassDependency.dstStageMask = VkPipelineStageFlags.ColorAttachmentOutput;
-                subpassDependency.dstAccessMask = VkAccessFlags.ColorAttachmentRead | VkAccessFlags.ColorAttachmentWrite;
-                if (CurrentFramebuffer.DepthTexture != null)
-                {
-                    subpassDependency.dstAccessMask |= VkAccessFlags.DepthStencilAttachmentRead | VkAccessFlags.DepthStencilAttachmentWrite;
-                }
-
-                renderPassCI.attachmentCount = attachments.Count;
-                renderPassCI.pAttachments = (VkAttachmentDescription*)attachments.Data;
-                renderPassCI.subpassCount = 1;
-                renderPassCI.pSubpasses = &subpass;
-                renderPassCI.dependencyCount = 1;
-                renderPassCI.pDependencies = &subpassDependency;
-
-
-                vkCreateRenderPass(_device, ref renderPassCI, null, out VkRenderPass newRenderPass);
-                _currentRenderPassState = new RenderPassState() { RenderPass = newRenderPass };
+                _currentRenderPassState = new RenderPassInfo() { Framebuffer = CurrentFramebuffer };
                 _renderPassStates.Add(_currentRenderPassState);
             }
         }
@@ -525,7 +467,7 @@ namespace Veldrid.Graphics.Vulkan
         private VkPipeline GetCurrentGraphicsPipeline(out VkPipelineLayout layout)
         {
             VkGraphicsPipelineCreateInfo pipelineCI = VkGraphicsPipelineCreateInfo.New();
-            pipelineCI.renderPass = GetCurrentRenderPass().RenderPass;
+            pipelineCI.renderPass = GetCurrentRenderPass().Framebuffer.RenderPass;
             pipelineCI.subpass = 0;
             layout = GetCurrentPipelineLayout();
             pipelineCI.layout = layout;
@@ -575,10 +517,11 @@ namespace Veldrid.Graphics.Vulkan
         private new VkShaderResourceBindingSlots ShaderResourceBindingSlots
             => (VkShaderResourceBindingSlots)base.ShaderResourceBindingSlots;
 
-        private class RenderPassState
-        {
-            public VkRenderPass RenderPass { get; set; }
-            public RawList<VkCommandBuffer> SecondaryCommandBuffers { get; set; } = new RawList<VkCommandBuffer>();
-        }
+    }
+
+    internal class RenderPassInfo
+    {
+        public VkFramebufferInfo Framebuffer { get; set; }
+        public RawList<VkCommandBuffer> SecondaryCommandBuffers { get; set; } = new RawList<VkCommandBuffer>();
     }
 }

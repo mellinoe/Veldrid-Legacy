@@ -14,6 +14,7 @@ namespace Veldrid.Graphics.Vulkan
         private VkDevice _device;
         private VkPhysicalDevice _physicalDevice;
         private PixelFormat _veldridFormat;
+        private DeviceTextureCreateOptions _createOptions;
 
         public VkTexture2D(
             VkDevice device,
@@ -29,18 +30,27 @@ namespace Veldrid.Graphics.Vulkan
             MipLevels = mipLevels;
             Width = width;
             Height = height;
-            Format = VkFormats.VeldridToVkPixelFormat(veldridFormat);
+            _createOptions = createOptions;
+            if (createOptions == DeviceTextureCreateOptions.DepthStencil)
+            {
+                Format = VkFormat.D16Unorm;
+            }
+            else
+            {
+                Format = VkFormats.VeldridToVkPixelFormat(veldridFormat);
+            }
+
             _veldridFormat = veldridFormat;
 
             VkImageCreateInfo imageCI = VkImageCreateInfo.New();
             imageCI.mipLevels = (uint)mipLevels;
             imageCI.arrayLayers = 1;
-            imageCI.imageType = VkImageType._2d;
+            imageCI.imageType = VkImageType.Image2D;
             imageCI.extent.width = (uint)width;
             imageCI.extent.height = (uint)height;
             imageCI.extent.depth = 1;
-            imageCI.initialLayout = VkImageLayout.General; // TODO: Use proper VkImageLayout values and transitions.
-            imageCI.usage = VkImageUsageFlags.Sampled;
+            imageCI.initialLayout = VkImageLayout.Undefined; // TODO: Use proper VkImageLayout values and transitions.
+            imageCI.usage = VkImageUsageFlags.TransferSrc;
             if (createOptions == DeviceTextureCreateOptions.RenderTarget)
             {
                 imageCI.usage |= VkImageUsageFlags.ColorAttachment;
@@ -49,9 +59,10 @@ namespace Veldrid.Graphics.Vulkan
             {
                 imageCI.usage |= VkImageUsageFlags.DepthStencilAttachment;
             }
-            imageCI.tiling = VkImageTiling.Linear;
-            imageCI.format = VkFormats.VeldridToVkPixelFormat(veldridFormat);
-            imageCI.samples = VkSampleCountFlags._1;
+            imageCI.tiling = createOptions == DeviceTextureCreateOptions.DepthStencil ? VkImageTiling.Optimal : VkImageTiling.Linear;
+            imageCI.format = Format;
+
+            imageCI.samples = VkSampleCountFlags.Count1;
 
             VkResult result = vkCreateImage(device, ref imageCI, null, out _image);
             CheckResult(result);
@@ -63,9 +74,26 @@ namespace Veldrid.Graphics.Vulkan
             memoryAI.memoryTypeIndex = FindMemoryType(
                 _physicalDevice,
                 memoryRequirements.memoryTypeBits,
-                VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+                VkMemoryPropertyFlags.DeviceLocal);
             vkAllocateMemory(_device, ref memoryAI, null, out _memory);
             vkBindImageMemory(_device, _image, _memory, 0);
+        }
+
+        public VkTexture2D(
+            VkDevice device,
+            int mipLevels,
+            int width,
+            int height,
+            VkFormat vkFormat,
+            VkImage existingImage)
+        {
+            _device = device;
+            MipLevels = mipLevels;
+            Width = width;
+            Height = height;
+            Format = vkFormat;
+            _veldridFormat = VkFormats.VkToVeldridPixelFormat(vkFormat);
+            _image = existingImage;
         }
 
         public int Width { get; private set; }
@@ -124,7 +152,10 @@ namespace Veldrid.Graphics.Vulkan
         public void Dispose()
         {
             vkDestroyImage(_device, _image, null);
-            vkFreeMemory(_device, _memory, null);
+            if (_memory != VkDeviceMemory.Null)
+            {
+                vkFreeMemory(_device, _memory, null);
+            }
         }
     }
 }

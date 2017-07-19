@@ -8,13 +8,18 @@ namespace Veldrid.Graphics.Vulkan
 {
     public unsafe class VkSwapchainInfo
     {
+        private VkDevice _device;
+        private VkResourceFactory _resourceFactory;
+
         // Swapchain stuff
         private VkSwapchainKHR _swapchain;
         private RawList<VkImage> _scImages = new RawList<VkImage>();
-        private RawList<VkImageView> _scImageViews = new RawList<VkImageView>();
-        private RawList<VkFramebuffer> _scFramebuffers = new RawList<VkFramebuffer>();
+        private RawList<VkFramebufferInfo> _scFramebuffers = new RawList<VkFramebufferInfo>();
         private VkFormat _scImageFormat;
         private VkExtent2D _scExtent;
+
+        // Depth stuff
+        private VkTexture2D _depthTexture;
 
         public VkExtent2D SwapchainExtent => _scExtent;
         public VkSwapchainKHR Swapchain => _swapchain;
@@ -23,12 +28,16 @@ namespace Veldrid.Graphics.Vulkan
         public void CreateSwapchain(
             VkDevice device,
             VkPhysicalDevice physicalDevice,
+            VkResourceFactory resourceFactory,
             VkSurfaceKHR surface,
             uint graphicsQueueIndex,
             uint presentQueueIndex,
             int width,
             int height)
         {
+            _device = device;
+            _resourceFactory = resourceFactory;
+
             uint surfaceFormatCount = 0;
             vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, ref surfaceFormatCount, null);
             VkSurfaceFormatKHR[] formats = new VkSurfaceFormatKHR[surfaceFormatCount];
@@ -118,15 +127,9 @@ namespace Veldrid.Graphics.Vulkan
 
             _scImageFormat = surfaceFormat.format;
             _scExtent = sci.imageExtent;
-        }
 
-        public void CreateImageViews(VkDevice device)
-        {
-            _scImageViews.Resize(_scImages.Count);
-            for (int i = 0; i < _scImages.Count; i++)
-            {
-                CreateImageView(device, _scImages[i], _scImageFormat, out _scImageViews[i]);
-            }
+            CreateDepthTexture();
+            CreateFramebuffers();
         }
 
         public uint AcquireNextImage(VkDevice device, VkSemaphore semaphore)
@@ -145,7 +148,7 @@ namespace Veldrid.Graphics.Vulkan
             return imageIndex;
         }
 
-        public VkFramebuffer GetFramebuffer(uint imageIndex)
+        public VkFramebufferInfo GetFramebuffer(uint imageIndex)
         {
             return _scFramebuffers[imageIndex];
         }
@@ -154,7 +157,7 @@ namespace Veldrid.Graphics.Vulkan
         {
             VkImageViewCreateInfo imageViewCI = VkImageViewCreateInfo.New();
             imageViewCI.image = image;
-            imageViewCI.viewType = VkImageViewType._2d;
+            imageViewCI.viewType = VkImageViewType.Image2D;
             imageViewCI.format = format;
             imageViewCI.subresourceRange.aspectMask = VkImageAspectFlags.Color;
             imageViewCI.subresourceRange.baseMipLevel = 0;
@@ -165,21 +168,27 @@ namespace Veldrid.Graphics.Vulkan
             vkCreateImageView(device, ref imageViewCI, null, out imageView);
         }
 
+        private void CreateDepthTexture()
+        {
+            _depthTexture = (VkTexture2D)_resourceFactory.CreateTexture(
+                1, 
+                (int)_scExtent.width, 
+                (int)_scExtent.height, 
+                PixelFormat.R16_UInt, 
+                DeviceTextureCreateOptions.DepthStencil);
+        }
+
+
         private void CreateFramebuffers()
         {
-            _scFramebuffers.Resize(_scImageViews.Count);
-            for (uint i = 0; i < _scImageViews.Count; i++)
+            _scFramebuffers.Resize(_scImages.Count);
+            for (uint i = 0; i < _scImages.Count; i++)
             {
-                VkImageView attachment = _scImageViews[i];
-                VkFramebufferCreateInfo framebufferCI = VkFramebufferCreateInfo.New();
-                framebufferCI.renderPass = _renderPass;
-                framebufferCI.attachmentCount = 1;
-                framebufferCI.pAttachments = &attachment;
-                framebufferCI.width = _scExtent.width;
-                framebufferCI.height = _scExtent.height;
-                framebufferCI.layers = 1;
-
-                vkCreateFramebuffer(_device, ref framebufferCI, null, out _scFramebuffers[i]);
+                VkFramebufferInfo fb = (VkFramebufferInfo)_resourceFactory.CreateFramebuffer();
+                VkTexture2D colorTex = new VkTexture2D(_device, 1, (int)_scExtent.width, (int)_scExtent.height, _scImageFormat, _scImages[i]);
+                fb.ColorTexture = colorTex;
+                fb.DepthTexture = _depthTexture;
+                _scFramebuffers[i] = fb;
             }
         }
     }

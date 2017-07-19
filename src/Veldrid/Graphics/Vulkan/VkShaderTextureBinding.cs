@@ -16,7 +16,7 @@ namespace Veldrid.Graphics.Vulkan
             VkImageViewCreateInfo imageViewCI = VkImageViewCreateInfo.New();
             imageViewCI.format = tex2D.Format;
             imageViewCI.image = tex2D.DeviceImage;
-            imageViewCI.viewType = VkImageViewType._2d;
+            imageViewCI.viewType = VkImageViewType.Image2D;
             imageViewCI.subresourceRange.layerCount = 1;
             imageViewCI.subresourceRange.levelCount = (uint)tex2D.MipLevels;
 

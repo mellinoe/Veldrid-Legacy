@@ -60,7 +60,7 @@ namespace BasicDemo
             }
 
             _rc.Viewport = new Viewport(0, 0, _window.Width, _window.Height);
-            _rc.ClearBuffer(new RgbaFloat((Environment.TickCount / 1000.0f) % 1.0f, (Environment.TickCount / 3000.0f) % 1.0f, (Environment.TickCount / 100.0f) % 1.0f, 1f));
+            _rc.ClearBuffer(new RgbaFloat((Environment.TickCount / 10000.0f) % 1.0f, (Environment.TickCount / 30000.0f) % 1.0f, (Environment.TickCount / 1000.0f) % 1.0f, 1f));
             _rc.SwapBuffers();
         }
     }
