@@ -12,6 +12,7 @@ namespace Veldrid.Graphics.Vulkan
 
         public VkShaderResourceBindingSlots(VkDevice device, ShaderResourceDescription[] resources)
         {
+            Resources = resources;
             VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI = VkDescriptorSetLayoutCreateInfo.New();
             descriptorSetLayoutCI.bindingCount = (uint)resources.Length;
 

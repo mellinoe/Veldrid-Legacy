@@ -11,13 +11,13 @@ layout (binding = 0) uniform World
     mat4 world;
 } WorldBuffer;
 
-layout (binding = 0) uniform View
+layout (binding = 1) uniform View
 {
     mat4 view;
 } ViewBuffer;
 
 
-layout (binding = 0) uniform Projection
+layout (binding = 2) uniform Projection
 {
     mat4 projection;
 } ProjectionBuffer;
@@ -32,6 +32,8 @@ out gl_PerVertex
 
 void main() 
 {
-    gl_Position = ProjectionBuffer.projection * ViewBuffer.view * WorldBuffer.world * vec4(vsin_position, 1.0);
+	mat4 correctedProjection = ProjectionBuffer.projection;
+	correctedProjection[1][1] *= -1;
+    gl_Position = correctedProjection * ViewBuffer.view * WorldBuffer.world * vec4(vsin_position, 1.0);
     vsout_color = vsin_color;
 }

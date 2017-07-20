@@ -82,6 +82,14 @@ namespace BasicDemo
             // Poll input
             InputSnapshot snapshot = _window.PumpEvents();
             InputTracker.UpdateFrameInput(snapshot);
+            float circleWidth = 4f;
+            float timeFactor = (float)DateTime.UtcNow.TimeOfDay.TotalMilliseconds / 1000;
+            Vector3 position = new Vector3(
+                (float)(Math.Cos(timeFactor) * circleWidth),
+                3 + (float)Math.Sin(timeFactor) * 2,
+                (float)(Math.Sin(timeFactor) * circleWidth));
+            Vector3 lookDirection = -position;
+            _viewBuffer.SetData(Matrix4x4.CreateLookAt(position, position + lookDirection, Vector3.UnitY));
         }
 
         public void Draw()
@@ -92,7 +100,8 @@ namespace BasicDemo
                 _rc.ResizeMainWindow(_window.Width, _window.Height);
             }
 
-            _projectionBuffer.SetData(Matrix4x4.CreatePerspectiveFieldOfView(1f, _window.Width / (float)_window.Height, 1f, 50f));
+            Matrix4x4 proj = Matrix4x4.CreatePerspectiveFieldOfView(0.5f, _window.Width / (float)_window.Height, 1f, 50f);
+            _projectionBuffer.SetData(ref proj);
 
             _rc.Viewport = new Viewport(0, 0, _window.Width, _window.Height);
             _rc.ClearBuffer(new RgbaFloat((Environment.TickCount / 10000.0f) % 1.0f, (Environment.TickCount / 30000.0f) % 1.0f, (Environment.TickCount / 1000.0f) % 1.0f, 1f));

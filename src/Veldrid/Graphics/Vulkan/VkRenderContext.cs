@@ -26,11 +26,13 @@ namespace Veldrid.Graphics.Vulkan
         private VkQueue _graphicsQueue;
         private VkQueue _presentQueue;
         private VkCommandPool _commandPool;
+        private VkDescriptorPool _descriptorPool;
         private VkSemaphore _imageAvailableSemaphore;
         private VkSemaphore _renderCompleteSemaphore;
         private VkPrimitiveTopology _primitiveTopology = VkPrimitiveTopology.TriangleList;
-
         private VkSwapchainInfo _scInfo;
+        private VkConstantBuffer[] _constantBuffers = new VkConstantBuffer[20]; // TODO: Real limit.
+        private VkRect2D _scissorRect;
 
         // Draw call tracking
         private List<RenderPassInfo> _renderPassStates = new List<RenderPassInfo>();
@@ -50,6 +52,7 @@ namespace Veldrid.Graphics.Vulkan
             _scInfo.CreateSwapchain(_device, _physicalDevice, (VkResourceFactory)ResourceFactory, _surface, _graphicsQueueIndex, _presentQueueIndex, width, height);
             SetFramebuffer(_scInfo.GetFramebuffer(0));
             CreateCommandPool();
+            CreateDescriptorPool();
             CreateSemaphores();
 
             PostContextCreated();
@@ -222,6 +225,22 @@ namespace Veldrid.Graphics.Vulkan
             vkCreateCommandPool(_device, ref commandPoolCI, null, out _commandPool);
         }
 
+        private void CreateDescriptorPool()
+        {
+            VkDescriptorPoolSize* sizes = stackalloc VkDescriptorPoolSize[2];
+            sizes[0].type = VkDescriptorType.UniformBuffer;
+            sizes[0].descriptorCount = 1000;
+
+            VkDescriptorPoolCreateInfo descriptorPoolCI = VkDescriptorPoolCreateInfo.New();
+            descriptorPoolCI.flags = VkDescriptorPoolCreateFlags.FreeDescriptorSet;
+            descriptorPoolCI.maxSets = 1000;
+            descriptorPoolCI.pPoolSizes = sizes;
+            descriptorPoolCI.poolSizeCount = 1;
+
+            VkResult result = vkCreateDescriptorPool(_device, ref descriptorPoolCI, null, out _descriptorPool);
+            CheckResult(result);
+        }
+
         private void CreateSemaphores()
         {
             VkSemaphoreCreateInfo semaphoreCI = VkSemaphoreCreateInfo.New();
@@ -242,7 +261,10 @@ namespace Veldrid.Graphics.Vulkan
 
             VkCommandBuffer cb = GetCommandBuffer();
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.New();
-            beginInfo.flags = VkCommandBufferUsageFlags.OneTimeSubmit;
+            beginInfo.flags = VkCommandBufferUsageFlags.OneTimeSubmit | VkCommandBufferUsageFlags.RenderPassContinue;
+            VkCommandBufferInheritanceInfo inheritanceInfo = VkCommandBufferInheritanceInfo.New();
+            inheritanceInfo.renderPass = renderPassState.Framebuffer.RenderPass;
+            beginInfo.pInheritanceInfo = &inheritanceInfo;
             vkBeginCommandBuffer(cb, ref beginInfo);
 
             vkCmdBindPipeline(cb, VkPipelineBindPoint.Graphics, graphicsPipeline);
@@ -256,9 +278,21 @@ namespace Veldrid.Graphics.Vulkan
                 0,
                 IntPtr.Zero);
             VkBuffer vb = VertexBuffer.DeviceBuffer;
-            vkCmdBindVertexBuffers(cb, 0, 1, ref vb, null);
+            ulong offset = 0;
+            vkCmdBindVertexBuffers(cb, 0, 1, ref vb, ref offset);
             vkCmdBindIndexBuffer(cb, IndexBuffer.DeviceBuffer, 0, IndexBuffer.IndexType);
-            vkCmdDrawIndexed(cb, (uint)count, 0, (uint)startingIndex, startingVertex, 0);
+            VkViewport viewport = new VkViewport()
+            {
+                x = Viewport.X,
+                y = Viewport.Y,
+                width = Viewport.Width,
+                height = Viewport.Height,
+                minDepth = 0,
+                maxDepth = 1
+            };
+            vkCmdSetViewport(cb, 0, 1, ref viewport);
+            vkCmdSetScissor(cb, 0, 1, ref _scissorRect);
+            vkCmdDrawIndexed(cb, (uint)count, 1, (uint)startingIndex, startingVertex, 0);
             vkEndCommandBuffer(cb);
 
             renderPassState.SecondaryCommandBuffers.Add(cb);
@@ -308,6 +342,7 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override void PlatformSetConstantBuffer(int slot, ConstantBuffer cb)
         {
+            _constantBuffers[slot] = (VkConstantBuffer)cb;
         }
 
         protected override void PlatformSetDefaultFramebuffer()
@@ -342,6 +377,7 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override void PlatformSetScissorRectangle(Rectangle rectangle)
         {
+            _scissorRect = new VkRect2D(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
         }
 
         protected override void PlatformSetShaderResourceBindingSlots(ShaderResourceBindingSlots shaderConstantBindings)
@@ -383,6 +419,7 @@ namespace Veldrid.Graphics.Vulkan
             VkFramebufferInfo fbInfo = _scInfo.GetFramebuffer(imageIndex);
             renderPassBeginInfo.framebuffer = fbInfo.Framebuffer;
             renderPassBeginInfo.renderPass = fbInfo.RenderPass;
+            
             if (_clearBuffer)
             {
                 _clearBuffer = false;
@@ -439,6 +476,12 @@ namespace Veldrid.Graphics.Vulkan
 
             _renderPassStates.Clear();
             _needsNewRenderPass = true;
+
+            vkQueueWaitIdle(_graphicsQueue);
+            vkDestroyCommandPool(_device, _commandPool, null);
+            CreateCommandPool();
+            vkDestroyDescriptorPool(_device, _descriptorPool, null);
+            CreateDescriptorPool();
         }
 
         private VkCommandBuffer GetPrimaryCommandBuffer(uint imageIndex)
@@ -547,6 +590,7 @@ namespace Veldrid.Graphics.Vulkan
                     stride = (uint)inputDesc.VertexSizeInBytes
                 };
 
+                uint currentOffset = 0;
                 for (int location = 0; location < inputDesc.Elements.Length; location++)
                 {
                     VertexInputElement inputElement = inputDesc.Elements[location];
@@ -555,10 +599,12 @@ namespace Veldrid.Graphics.Vulkan
                     {
                         format = VkFormats.VeldridToVkVertexElementFormat(inputElement.ElementFormat),
                         binding = (uint)binding,
-                        location = (uint)location
+                        location = (uint)location,
+                        offset = currentOffset
                     };
 
                     targetIndex += 1;
+                    currentOffset = inputElement.SizeInBytes;
                 }
             }
 
@@ -601,8 +647,43 @@ namespace Veldrid.Graphics.Vulkan
         private VkDescriptorSet GetCurrentDescriptorSet()
         {
             VkDescriptorSetAllocateInfo descriptorSetAI = VkDescriptorSetAllocateInfo.New();
-            vkAllocateDescriptorSets(_device, ref descriptorSetAI, out VkDescriptorSet ret);
-            return ret;
+            descriptorSetAI.descriptorPool = _descriptorPool;
+            descriptorSetAI.descriptorSetCount = 1;
+            VkDescriptorSetLayout layout = ShaderResourceBindingSlots.DescriptorSetLayout;
+            descriptorSetAI.pSetLayouts = &layout;
+            VkResult result = vkAllocateDescriptorSets(_device, ref descriptorSetAI, out VkDescriptorSet descriptorSet);
+            CheckResult(result);
+
+            int resourceCount = ShaderResourceBindingSlots.Resources.Length;
+            VkWriteDescriptorSet[] descriptorWrites = new VkWriteDescriptorSet[resourceCount];
+            VkDescriptorBufferInfo* bufferInfos = stackalloc VkDescriptorBufferInfo[resourceCount]; // TODO: Fix this.
+
+            for (uint binding = 0; binding < resourceCount; binding++)
+            {
+                ShaderResourceDescription resource = ShaderResourceBindingSlots.Resources[binding];
+                if (resource.Type == ShaderResourceType.ConstantBuffer)
+                {
+                    VkConstantBuffer cb = _constantBuffers[binding];
+                    descriptorWrites[binding].sType = VkStructureType.WriteDescriptorSet;
+                    descriptorWrites[binding].descriptorCount = 1;
+                    descriptorWrites[binding].descriptorType = VkDescriptorType.UniformBuffer;
+                    descriptorWrites[binding].dstBinding = binding;
+                    descriptorWrites[binding].dstSet = descriptorSet;
+                    VkDescriptorBufferInfo* cbInfo = &bufferInfos[binding];
+                    cbInfo->buffer = cb.DeviceBuffer;
+                    cbInfo->offset = 0;
+                    cbInfo->range = (ulong)resource.DataSizeInBytes;
+                    descriptorWrites[binding].pBufferInfo = cbInfo;
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
+            vkUpdateDescriptorSets(_device, (uint)resourceCount, ref descriptorWrites[0], 0, null);
+
+            return descriptorSet;
         }
 
         private VkCommandBuffer GetCommandBuffer()
