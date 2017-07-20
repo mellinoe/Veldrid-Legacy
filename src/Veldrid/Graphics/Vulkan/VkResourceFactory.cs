@@ -7,11 +7,20 @@ namespace Veldrid.Graphics.Vulkan
     {
         private readonly VkDevice _device;
         private readonly VkPhysicalDevice _physicalDevice;
+        
+        public VkCommandPool CommandPool { get; }
 
-        public VkResourceFactory(VkDevice device, VkPhysicalDevice physicalDevice)
+        public VkRenderContext RenderContext { get; }
+
+        public VkResourceFactory(VkRenderContext rc)
         {
-            _device = device;
-            _physicalDevice = physicalDevice;
+            RenderContext = rc;
+            _device = rc.Device;
+            _physicalDevice = rc.PhysicalDevice;
+
+            VkCommandPoolCreateInfo commandPoolCI = VkCommandPoolCreateInfo.New();
+            commandPoolCI.flags = VkCommandPoolCreateFlags.None;
+            commandPoolCI.queueFamilyIndex = rc.GraphicsQueueIndex;
         }
 
         protected override GraphicsBackend PlatformGetGraphicsBackend() => GraphicsBackend.Vulkan;
@@ -81,7 +90,7 @@ namespace Veldrid.Graphics.Vulkan
             PixelFormat format,
             DeviceTextureCreateOptions createOptions)
         {
-            return new VkTexture2D(_device, _physicalDevice, mipLevels, width, height, format, createOptions);
+            return new VkTexture2D(_device, _physicalDevice, RenderContext, mipLevels, width, height, format, createOptions);
         }
 
         public override VertexBuffer CreateVertexBuffer(int sizeInBytes, bool isDynamic)
@@ -135,6 +144,7 @@ namespace Veldrid.Graphics.Vulkan
             int lodBias)
         {
             return new VkSamplerState(
+                _device,
                 addressU,
                 addressV,
                 addressW,

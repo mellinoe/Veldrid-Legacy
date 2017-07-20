@@ -4,7 +4,7 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 layout (location = 0) in vec3 vsin_position;
-layout (location = 1) in vec4 vsin_color;
+layout (location = 1) in vec2 vsin_texCoord;
 
 layout (binding = 0) uniform World
 {
@@ -23,7 +23,7 @@ layout (binding = 2) uniform Projection
 } ProjectionBuffer;
 
 
-layout (location = 0) out vec4 vsout_color;
+layout (location = 0) out vec2 vsout_texCoord;
 
 out gl_PerVertex 
 {
@@ -35,5 +35,5 @@ void main()
 	mat4 correctedProjection = ProjectionBuffer.projection;
 	correctedProjection[1][1] *= -1;
     gl_Position = correctedProjection * ViewBuffer.view * WorldBuffer.world * vec4(vsin_position, 1.0);
-    vsout_color = vsin_color;
+    vsout_texCoord = vsin_texCoord;
 }

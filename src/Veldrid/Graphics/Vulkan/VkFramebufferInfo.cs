@@ -172,6 +172,14 @@ namespace Veldrid.Graphics.Vulkan
 
         public void Dispose()
         {
+            if (RenderPass != VkRenderPass.Null)
+            {
+                vkDestroyRenderPass(_device, RenderPass, null);
+            }
+            if (Framebuffer != VkFramebuffer.Null)
+            {
+                vkDestroyFramebuffer(_device, Framebuffer, null);
+            }
         }
     }
 }

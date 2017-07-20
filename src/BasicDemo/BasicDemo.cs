@@ -25,6 +25,8 @@ namespace BasicDemo
         private ConstantBuffer _worldBuffer;
         private ConstantBuffer _viewBuffer;
         private ConstantBuffer _projectionBuffer;
+        private DeviceTexture2D _deviceTexture;
+        private ShaderTextureBinding _textureBinding;
 
         public BasicDemoApp(Sdl2Window window, RenderContext rc)
         {
@@ -35,23 +37,29 @@ namespace BasicDemo
             _window.Resized += () => _windowResized = true;
 
             ResourceFactory factory = _rc.ResourceFactory;
-            _vb = factory.CreateVertexBuffer(s_cubeVertices, new VertexDescriptor(VertexPositionColor.SizeInBytes, VertexPositionColor.ElementCount), false);
+            _vb = factory.CreateVertexBuffer(s_cubeVertices, new VertexDescriptor(VertexPositionTexture.SizeInBytes, VertexPositionTexture.ElementCount), false);
             _ib = factory.CreateIndexBuffer(s_cubeIndices, false);
 
             Shader vertexShader = factory.CreateShader(ShaderStages.Vertex, factory.LoadProcessedShader(GetShaderBytecode(factory.BackendType, true)));
             Shader fragmentShader = factory.CreateShader(ShaderStages.Fragment, factory.LoadProcessedShader(GetShaderBytecode(factory.BackendType, false)));
             VertexInputLayout inputLayout = factory.CreateInputLayout(
                 new VertexInputElement("vsin_position", VertexSemanticType.Position, VertexElementFormat.Float3),
-                new VertexInputElement("vsin_color", VertexSemanticType.Color, VertexElementFormat.Float4));
+                new VertexInputElement("vsin_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2));
             _shaderSet = factory.CreateShaderSet(inputLayout, vertexShader, fragmentShader);
             _resourceBindings = factory.CreateShaderResourceBindingSlots(
                 _shaderSet,
                 new ShaderResourceDescription("WorldBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("ViewBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("ProjectionBuffer", ShaderConstantType.Matrix4x4));
+                new ShaderResourceDescription("ProjectionBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture, ShaderStages.Fragment),
+                new ShaderResourceDescription("Sampler", ShaderResourceType.Sampler, ShaderStages.Fragment));
             _worldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _viewBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _projectionBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
+            TextureData textureData = new ImageSharpMipmapChain(
+                Path.Combine(AppContext.BaseDirectory, "Textures", "Sponza_Bricks.png"));
+            _deviceTexture = textureData.CreateDeviceTexture(factory);
+            _textureBinding = factory.CreateShaderTextureBinding(_deviceTexture);
 
             _worldBuffer.SetData(Matrix4x4.Identity);
             _viewBuffer.SetData(Matrix4x4.CreateLookAt(new Vector3(0, 0, -5), Vector3.Zero, Vector3.UnitY));
@@ -113,6 +121,8 @@ namespace BasicDemo
             _rc.SetConstantBuffer(0, _worldBuffer);
             _rc.SetConstantBuffer(1, _viewBuffer);
             _rc.SetConstantBuffer(2, _projectionBuffer);
+            _rc.SetTexture(3, _textureBinding);
+            _rc.SetSamplerState(4, _rc.LinearSampler);
             _rc.DrawIndexedPrimitives(s_cubeIndices.Length);
 
             _rc.SwapBuffers();
@@ -131,38 +141,38 @@ namespace BasicDemo
             }
         }
 
-        private static readonly VertexPositionColor[] s_cubeVertices = new VertexPositionColor[]
+        public static readonly VertexPositionTexture[] s_cubeVertices = new VertexPositionTexture[]
         {
             // Top
-            new VertexPositionColor(new Vector3(-.5f,.5f,-.5f),    RgbaFloat.Red),
-            new VertexPositionColor(new Vector3(.5f,.5f,-.5f),     RgbaFloat.Red),
-            new VertexPositionColor(new Vector3(.5f,.5f,.5f),      RgbaFloat.Red),
-            new VertexPositionColor(new Vector3(-.5f,.5f,.5f),     RgbaFloat.Red),
-            // Bottom
-            new VertexPositionColor(new Vector3(-.5f,-.5f,.5f),    RgbaFloat.Grey),
-            new VertexPositionColor(new Vector3(.5f,-.5f,.5f),     RgbaFloat.Grey),
-            new VertexPositionColor(new Vector3(.5f,-.5f,-.5f),    RgbaFloat.Grey),
-            new VertexPositionColor(new Vector3(-.5f,-.5f,-.5f),   RgbaFloat.Grey),
-            // Left
-            new VertexPositionColor(new Vector3(-.5f,.5f,-.5f),    RgbaFloat.Blue),
-            new VertexPositionColor(new Vector3(-.5f,.5f,.5f),     RgbaFloat.Blue),
-            new VertexPositionColor(new Vector3(-.5f,-.5f,.5f),    RgbaFloat.Blue),
-            new VertexPositionColor(new Vector3(-.5f,-.5f,-.5f),   RgbaFloat.Blue),
-            // Right
-            new VertexPositionColor(new Vector3(.5f,.5f,.5f),      RgbaFloat.White),
-            new VertexPositionColor(new Vector3(.5f,.5f,-.5f),     RgbaFloat.White),
-            new VertexPositionColor(new Vector3(.5f,-.5f,-.5f),    RgbaFloat.White),
-            new VertexPositionColor(new Vector3(.5f,-.5f,.5f),     RgbaFloat.White),
-            // Back
-            new VertexPositionColor(new Vector3(.5f,.5f,-.5f),     RgbaFloat.Yellow),
-            new VertexPositionColor(new Vector3(-.5f,.5f,-.5f),    RgbaFloat.Yellow),
-            new VertexPositionColor(new Vector3(-.5f,-.5f,-.5f),   RgbaFloat.Yellow),
-            new VertexPositionColor(new Vector3(.5f,-.5f,-.5f),    RgbaFloat.Yellow),
-            // Front
-            new VertexPositionColor(new Vector3(-.5f,.5f,.5f),     RgbaFloat.Green),
-            new VertexPositionColor(new Vector3(.5f,.5f,.5f),      RgbaFloat.Green),
-            new VertexPositionColor(new Vector3(.5f,-.5f,.5f),     RgbaFloat.Green),
-            new VertexPositionColor(new Vector3(-.5f,-.5f,.5f),    RgbaFloat.Green)
+            new VertexPositionTexture(new Vector3(-.5f,.5f,-.5f),     new Vector2(0, 0)),
+            new VertexPositionTexture(new Vector3(.5f,.5f,-.5f),      new Vector2(1, 0)),
+            new VertexPositionTexture(new Vector3(.5f,.5f,.5f),       new Vector2(1, 1)),
+            new VertexPositionTexture(new Vector3(-.5f,.5f,.5f),      new Vector2(0, 1)),
+            // Bottom                                                 
+            new VertexPositionTexture(new Vector3(-.5f,-.5f,.5f),     new Vector2(0, 0)),
+            new VertexPositionTexture(new Vector3(.5f,-.5f,.5f),      new Vector2(1, 0)),
+            new VertexPositionTexture(new Vector3(.5f,-.5f,-.5f),     new Vector2(1, 1)),
+            new VertexPositionTexture(new Vector3(-.5f,-.5f,-.5f),    new Vector2(0, 1)),
+            // Left                                                   
+            new VertexPositionTexture(new Vector3(-.5f,.5f,-.5f),     new Vector2(0, 0)),
+            new VertexPositionTexture(new Vector3(-.5f,.5f,.5f),      new Vector2(1, 0)),
+            new VertexPositionTexture(new Vector3(-.5f,-.5f,.5f),     new Vector2(1, 1)),
+            new VertexPositionTexture(new Vector3(-.5f,-.5f,-.5f),    new Vector2(0, 1)),
+            // Right                                                  
+            new VertexPositionTexture(new Vector3(.5f,.5f,.5f),       new Vector2(0, 0)),
+            new VertexPositionTexture(new Vector3(.5f,.5f,-.5f),      new Vector2(1, 0)),
+            new VertexPositionTexture(new Vector3(.5f,-.5f,-.5f),     new Vector2(1, 1)),
+            new VertexPositionTexture(new Vector3(.5f,-.5f,.5f),      new Vector2(0, 1)),
+            // Back                                                   
+            new VertexPositionTexture(new Vector3(.5f,.5f,-.5f),      new Vector2(0, 0)),
+            new VertexPositionTexture(new Vector3(-.5f,.5f,-.5f),     new Vector2(1, 0)),
+            new VertexPositionTexture(new Vector3(-.5f,-.5f,-.5f),    new Vector2(1, 1)),
+            new VertexPositionTexture(new Vector3(.5f,-.5f,-.5f),     new Vector2(0, 1)),
+            // Front                                                  
+            new VertexPositionTexture(new Vector3(-.5f,.5f,.5f),      new Vector2(0, 0)),
+            new VertexPositionTexture(new Vector3(.5f,.5f,.5f),       new Vector2(1, 0)),
+            new VertexPositionTexture(new Vector3(.5f,-.5f,.5f),      new Vector2(1, 1)),
+            new VertexPositionTexture(new Vector3(-.5f,-.5f,.5f),     new Vector2(0, 1)),
         };
 
         private static readonly ushort[] s_cubeIndices = new ushort[]

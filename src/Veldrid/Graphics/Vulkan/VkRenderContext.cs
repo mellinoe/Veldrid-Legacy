@@ -25,14 +25,17 @@ namespace Veldrid.Graphics.Vulkan
         private VkDevice _device;
         private VkQueue _graphicsQueue;
         private VkQueue _presentQueue;
-        private VkCommandPool _commandPool;
-        private VkDescriptorPool _descriptorPool;
+        private VkCommandPool _perFrameCommandPool;
+        private VkDescriptorPool _perFrameDescriptorPool;
         private VkSemaphore _imageAvailableSemaphore;
         private VkSemaphore _renderCompleteSemaphore;
         private VkPrimitiveTopology _primitiveTopology = VkPrimitiveTopology.TriangleList;
         private VkSwapchainInfo _scInfo;
         private VkConstantBuffer[] _constantBuffers = new VkConstantBuffer[20]; // TODO: Real limit.
+        private VkShaderTextureBinding[] _textureBindings = new VkShaderTextureBinding[20]; // TODO: Real limit.
+        private VkSamplerState[] _samplerStates = new VkSamplerState[20]; // TODO: Real limit.
         private VkRect2D _scissorRect;
+        private VkCommandPool _graphicsCommandPool;
 
         // Draw call tracking
         private List<RenderPassInfo> _renderPassStates = new List<RenderPassInfo>();
@@ -40,6 +43,15 @@ namespace Veldrid.Graphics.Vulkan
         private bool _needsNewRenderPass = true;
         private bool _clearBuffer;
         private RgbaFloat _cachedClearColor;
+        private List<IDisposable> _frameDisposables = new List<IDisposable>();
+        private List<VkPipeline> _framePipelines = new List<VkPipeline>();
+        private List<VkPipelineLayout> _framePipelineLayouts = new List<VkPipelineLayout>();
+
+        public VkDevice Device => _device;
+        public VkPhysicalDevice PhysicalDevice => _physicalDevice;
+        public VkQueue GraphicsQueue => _graphicsQueue;
+        public uint GraphicsQueueIndex => _graphicsQueueIndex;
+        public VkCommandPool GraphicsCommandPool => _graphicsCommandPool;
 
         public VkRenderContext(IntPtr hinstance, IntPtr hwnd, int width, int height)
         {
@@ -47,12 +59,13 @@ namespace Veldrid.Graphics.Vulkan
             CreateSurface(hinstance, hwnd);
             CreatePhysicalDevice();
             CreateLogicalDevice();
-            ResourceFactory = new VkResourceFactory(_device, _physicalDevice);
+            ResourceFactory = new VkResourceFactory(this);
             _scInfo = new VkSwapchainInfo();
             _scInfo.CreateSwapchain(_device, _physicalDevice, (VkResourceFactory)ResourceFactory, _surface, _graphicsQueueIndex, _presentQueueIndex, width, height);
             SetFramebuffer(_scInfo.GetFramebuffer(0));
-            CreateCommandPool();
-            CreateDescriptorPool();
+            CreatePerFrameCommandPool();
+            CreatePerFrameDescriptorPool();
+            CreateGraphicsCommandPool();
             CreateSemaphores();
 
             PostContextCreated();
@@ -170,9 +183,10 @@ namespace Veldrid.Graphics.Vulkan
 
                 deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
-                byte* layerNames = CommonStrings.StandardValidationLayerName;
-                deviceCreateInfo.enabledLayerCount = 1;
-                deviceCreateInfo.ppEnabledLayerNames = &layerNames;
+                StackList<IntPtr> layerNames = new StackList<IntPtr>();
+                layerNames.Add(CommonStrings.StandardValidationLayerName);
+                deviceCreateInfo.enabledLayerCount = layerNames.Count;
+                deviceCreateInfo.ppEnabledLayerNames = (byte**)layerNames.Data;
 
                 byte* extensionNames = CommonStrings.VK_KHR_SWAPCHAIN_EXTENSION_NAME;
                 deviceCreateInfo.enabledExtensionCount = 1;
@@ -217,27 +231,40 @@ namespace Veldrid.Graphics.Vulkan
             }
         }
 
-        private void CreateCommandPool()
+        private void CreatePerFrameCommandPool()
         {
             VkCommandPoolCreateInfo commandPoolCI = VkCommandPoolCreateInfo.New();
             commandPoolCI.flags = VkCommandPoolCreateFlags.ResetCommandBuffer;
             commandPoolCI.queueFamilyIndex = _graphicsQueueIndex;
-            vkCreateCommandPool(_device, ref commandPoolCI, null, out _commandPool);
+            vkCreateCommandPool(_device, ref commandPoolCI, null, out _perFrameCommandPool);
         }
 
-        private void CreateDescriptorPool()
+        private void CreatePerFrameDescriptorPool()
         {
-            VkDescriptorPoolSize* sizes = stackalloc VkDescriptorPoolSize[2];
+            VkDescriptorPoolSize* sizes = stackalloc VkDescriptorPoolSize[3];
             sizes[0].type = VkDescriptorType.UniformBuffer;
             sizes[0].descriptorCount = 1000;
+            sizes[1].type = VkDescriptorType.SampledImage;
+            sizes[1].descriptorCount = 1000;
+            sizes[2].type = VkDescriptorType.Sampler;
+            sizes[2].descriptorCount = 1000;
 
             VkDescriptorPoolCreateInfo descriptorPoolCI = VkDescriptorPoolCreateInfo.New();
             descriptorPoolCI.flags = VkDescriptorPoolCreateFlags.FreeDescriptorSet;
             descriptorPoolCI.maxSets = 1000;
             descriptorPoolCI.pPoolSizes = sizes;
-            descriptorPoolCI.poolSizeCount = 1;
+            descriptorPoolCI.poolSizeCount = 3;
 
-            VkResult result = vkCreateDescriptorPool(_device, ref descriptorPoolCI, null, out _descriptorPool);
+            VkResult result = vkCreateDescriptorPool(_device, ref descriptorPoolCI, null, out _perFrameDescriptorPool);
+            CheckResult(result);
+        }
+
+        private void CreateGraphicsCommandPool()
+        {
+            VkCommandPoolCreateInfo commandPoolCI = VkCommandPoolCreateInfo.New();
+            commandPoolCI.flags = VkCommandPoolCreateFlags.None;
+            commandPoolCI.queueFamilyIndex = _graphicsQueueIndex;
+            VkResult result = vkCreateCommandPool(_device, ref commandPoolCI, null, out _graphicsCommandPool);
             CheckResult(result);
         }
 
@@ -334,6 +361,16 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override void PlatformResize(int width, int height)
         {
+            vkDeviceWaitIdle(_device);
+            _scInfo.CreateSwapchain(
+                _device,
+                _physicalDevice,
+                (VkResourceFactory)ResourceFactory,
+                _surface,
+                _graphicsQueueIndex,
+                _presentQueueIndex,
+                width,
+                height);
         }
 
         protected override void PlatformSetBlendstate(BlendState blendState)
@@ -373,6 +410,7 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override void PlatformSetSamplerState(int slot, SamplerState samplerState, bool mipmapped)
         {
+            _samplerStates[slot] = (VkSamplerState)samplerState;
         }
 
         protected override void PlatformSetScissorRectangle(Rectangle rectangle)
@@ -390,6 +428,7 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override void PlatformSetTexture(int slot, ShaderTextureBinding textureBinding)
         {
+            _textureBindings[slot] = (VkShaderTextureBinding)textureBinding;
         }
 
         protected override void PlatformSetVertexBuffer(int slot, VertexBuffer vb)
@@ -419,7 +458,7 @@ namespace Veldrid.Graphics.Vulkan
             VkFramebufferInfo fbInfo = _scInfo.GetFramebuffer(imageIndex);
             renderPassBeginInfo.framebuffer = fbInfo.Framebuffer;
             renderPassBeginInfo.renderPass = fbInfo.RenderPass;
-            
+
             if (_clearBuffer)
             {
                 _clearBuffer = false;
@@ -477,18 +516,33 @@ namespace Veldrid.Graphics.Vulkan
             _renderPassStates.Clear();
             _needsNewRenderPass = true;
 
+            ClearFrameObjects();
+        }
+
+        private void ClearFrameObjects()
+        {
             vkQueueWaitIdle(_graphicsQueue);
-            vkDestroyCommandPool(_device, _commandPool, null);
-            CreateCommandPool();
-            vkDestroyDescriptorPool(_device, _descriptorPool, null);
-            CreateDescriptorPool();
+            vkResetCommandPool(_device, _perFrameCommandPool, VkCommandPoolResetFlags.ReleaseResources);
+            vkResetDescriptorPool(_device, _perFrameDescriptorPool, 0);
+
+            foreach (VkPipeline pipeline in _framePipelines)
+            {
+                vkDestroyPipeline(_device, pipeline, null);
+            }
+            _framePipelines.Clear();
+
+            foreach (VkPipelineLayout layout in _framePipelineLayouts)
+            {
+                vkDestroyPipelineLayout(_device, layout, null);
+            }
+            _framePipelineLayouts.Clear();
         }
 
         private VkCommandBuffer GetPrimaryCommandBuffer(uint imageIndex)
         {
             VkCommandBufferAllocateInfo commandBufferAI = VkCommandBufferAllocateInfo.New();
             commandBufferAI.commandBufferCount = 1;
-            commandBufferAI.commandPool = _commandPool;
+            commandBufferAI.commandPool = _perFrameCommandPool;
             commandBufferAI.level = VkCommandBufferLevel.Primary;
 
             VkResult result = vkAllocateCommandBuffers(_device, ref commandBufferAI, out VkCommandBuffer ret);
@@ -631,6 +685,7 @@ namespace Veldrid.Graphics.Vulkan
 
             VkResult result = vkCreateGraphicsPipelines(_device, VkPipelineCache.Null, 1, ref pipelineCI, null, out VkPipeline ret);
             CheckResult(result);
+            _framePipelines.Add(ret);
             return ret;
         }
 
@@ -640,14 +695,16 @@ namespace Veldrid.Graphics.Vulkan
             VkDescriptorSetLayout layout = ((VkShaderResourceBindingSlots)ShaderResourceBindingSlots).DescriptorSetLayout;
             pipelineLayoutCI.setLayoutCount = 1;
             pipelineLayoutCI.pSetLayouts = &layout;
-            vkCreatePipelineLayout(_device, ref pipelineLayoutCI, null, out VkPipelineLayout ret);
+            VkResult result = vkCreatePipelineLayout(_device, ref pipelineLayoutCI, null, out VkPipelineLayout ret);
+            CheckResult(result);
+            _framePipelineLayouts.Add(ret);
             return ret;
         }
 
         private VkDescriptorSet GetCurrentDescriptorSet()
         {
             VkDescriptorSetAllocateInfo descriptorSetAI = VkDescriptorSetAllocateInfo.New();
-            descriptorSetAI.descriptorPool = _descriptorPool;
+            descriptorSetAI.descriptorPool = _perFrameDescriptorPool;
             descriptorSetAI.descriptorSetCount = 1;
             VkDescriptorSetLayout layout = ShaderResourceBindingSlots.DescriptorSetLayout;
             descriptorSetAI.pSetLayouts = &layout;
@@ -657,27 +714,50 @@ namespace Veldrid.Graphics.Vulkan
             int resourceCount = ShaderResourceBindingSlots.Resources.Length;
             VkWriteDescriptorSet[] descriptorWrites = new VkWriteDescriptorSet[resourceCount];
             VkDescriptorBufferInfo* bufferInfos = stackalloc VkDescriptorBufferInfo[resourceCount]; // TODO: Fix this.
+            VkDescriptorImageInfo* imageInfos = stackalloc VkDescriptorImageInfo[resourceCount]; // TODO: Fix this.
 
             for (uint binding = 0; binding < resourceCount; binding++)
             {
+                descriptorWrites[binding].sType = VkStructureType.WriteDescriptorSet;
+                descriptorWrites[binding].descriptorCount = 1;
+                descriptorWrites[binding].dstBinding = binding;
+                descriptorWrites[binding].dstSet = descriptorSet;
+
                 ShaderResourceDescription resource = ShaderResourceBindingSlots.Resources[binding];
-                if (resource.Type == ShaderResourceType.ConstantBuffer)
+                switch (resource.Type)
                 {
-                    VkConstantBuffer cb = _constantBuffers[binding];
-                    descriptorWrites[binding].sType = VkStructureType.WriteDescriptorSet;
-                    descriptorWrites[binding].descriptorCount = 1;
-                    descriptorWrites[binding].descriptorType = VkDescriptorType.UniformBuffer;
-                    descriptorWrites[binding].dstBinding = binding;
-                    descriptorWrites[binding].dstSet = descriptorSet;
-                    VkDescriptorBufferInfo* cbInfo = &bufferInfos[binding];
-                    cbInfo->buffer = cb.DeviceBuffer;
-                    cbInfo->offset = 0;
-                    cbInfo->range = (ulong)resource.DataSizeInBytes;
-                    descriptorWrites[binding].pBufferInfo = cbInfo;
-                }
-                else
-                {
-                    throw new NotImplementedException();
+                    case ShaderResourceType.ConstantBuffer:
+                        {
+                            descriptorWrites[binding].descriptorType = VkDescriptorType.UniformBuffer;
+                            VkConstantBuffer cb = _constantBuffers[binding];
+                            VkDescriptorBufferInfo* cbInfo = &bufferInfos[binding];
+                            cbInfo->buffer = cb.DeviceBuffer;
+                            cbInfo->offset = 0;
+                            cbInfo->range = (ulong)resource.DataSizeInBytes;
+                            descriptorWrites[binding].pBufferInfo = cbInfo;
+                            break;
+                        }
+                    case ShaderResourceType.Texture:
+                        {
+                            descriptorWrites[binding].descriptorType = VkDescriptorType.SampledImage;
+                            VkShaderTextureBinding textureBinding = _textureBindings[binding];
+                            VkDescriptorImageInfo* imageInfo = &imageInfos[binding];
+                            imageInfo->imageLayout = textureBinding.ImageLayout;
+                            imageInfo->imageView = textureBinding.ImageView;
+                            descriptorWrites[binding].pImageInfo = imageInfo;
+                        }
+                        break;
+                    case ShaderResourceType.Sampler:
+                        {
+                            descriptorWrites[binding].descriptorType = VkDescriptorType.Sampler;
+                            VkSamplerState samplerState = _samplerStates[binding];
+                            VkDescriptorImageInfo* imageInfo = &imageInfos[binding];
+                            imageInfo->sampler = samplerState.Sampler;
+                            descriptorWrites[binding].pImageInfo = imageInfo;
+                        }
+                        break;
+                    default:
+                        throw Illegal.Value<ShaderResourceType>();
                 }
             }
 
@@ -690,10 +770,12 @@ namespace Veldrid.Graphics.Vulkan
         {
             VkCommandBufferAllocateInfo commandBufferAI = VkCommandBufferAllocateInfo.New();
             commandBufferAI.commandBufferCount = 1;
-            commandBufferAI.commandPool = _commandPool;
+            commandBufferAI.commandPool = _perFrameCommandPool;
             commandBufferAI.level = VkCommandBufferLevel.Secondary;
 
-            vkAllocateCommandBuffers(_device, ref commandBufferAI, out VkCommandBuffer ret);
+            VkResult result = vkAllocateCommandBuffers(_device, ref commandBufferAI, out VkCommandBuffer ret);
+            CheckResult(result);
+
             return ret;
         }
 

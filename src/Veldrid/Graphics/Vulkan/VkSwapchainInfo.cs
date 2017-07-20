@@ -82,38 +82,38 @@ namespace Veldrid.Graphics.Vulkan
             vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, out VkSurfaceCapabilitiesKHR surfaceCapabilities);
             uint imageCount = surfaceCapabilities.minImageCount + 1;
 
-            VkSwapchainCreateInfoKHR sci = VkSwapchainCreateInfoKHR.New();
-            sci.surface = surface;
-            sci.presentMode = presentMode;
-            sci.imageFormat = surfaceFormat.format;
-            sci.imageColorSpace = surfaceFormat.colorSpace;
-            sci.imageExtent = new VkExtent2D { width = (uint)width, height = (uint)height };
-            sci.minImageCount = imageCount;
-            sci.imageArrayLayers = 1;
-            sci.imageUsage = VkImageUsageFlags.ColorAttachment;
+            VkSwapchainCreateInfoKHR swapchainCI = VkSwapchainCreateInfoKHR.New();
+            swapchainCI.surface = surface;
+            swapchainCI.presentMode = presentMode;
+            swapchainCI.imageFormat = surfaceFormat.format;
+            swapchainCI.imageColorSpace = surfaceFormat.colorSpace;
+            swapchainCI.imageExtent = new VkExtent2D { width = (uint)width, height = (uint)height };
+            swapchainCI.minImageCount = imageCount;
+            swapchainCI.imageArrayLayers = 1;
+            swapchainCI.imageUsage = VkImageUsageFlags.ColorAttachment;
 
             FixedArray2<uint> queueFamilyIndices = new FixedArray2<uint>(graphicsQueueIndex, presentQueueIndex);
 
             if (graphicsQueueIndex != presentQueueIndex)
             {
-                sci.imageSharingMode = VkSharingMode.Concurrent;
-                sci.queueFamilyIndexCount = 2;
-                sci.pQueueFamilyIndices = &queueFamilyIndices.First;
+                swapchainCI.imageSharingMode = VkSharingMode.Concurrent;
+                swapchainCI.queueFamilyIndexCount = 2;
+                swapchainCI.pQueueFamilyIndices = &queueFamilyIndices.First;
             }
             else
             {
-                sci.imageSharingMode = VkSharingMode.Exclusive;
-                sci.queueFamilyIndexCount = 0;
+                swapchainCI.imageSharingMode = VkSharingMode.Exclusive;
+                swapchainCI.queueFamilyIndexCount = 0;
             }
 
-            sci.preTransform = surfaceCapabilities.currentTransform;
-            sci.compositeAlpha = VkCompositeAlphaFlagsKHR.Opaque;
-            sci.clipped = true;
+            swapchainCI.preTransform = surfaceCapabilities.currentTransform;
+            swapchainCI.compositeAlpha = VkCompositeAlphaFlagsKHR.Opaque;
+            swapchainCI.clipped = true;
 
             VkSwapchainKHR oldSwapchain = _swapchain;
-            sci.oldSwapchain = oldSwapchain;
+            swapchainCI.oldSwapchain = oldSwapchain;
 
-            vkCreateSwapchainKHR(device, ref sci, null, out _swapchain);
+            vkCreateSwapchainKHR(device, ref swapchainCI, null, out _swapchain);
             if (oldSwapchain != NullHandle)
             {
                 vkDestroySwapchainKHR(device, oldSwapchain, null);
@@ -126,7 +126,7 @@ namespace Veldrid.Graphics.Vulkan
             vkGetSwapchainImagesKHR(device, _swapchain, ref scImageCount, out _scImages.Items[0]);
 
             _scImageFormat = surfaceFormat.format;
-            _scExtent = sci.imageExtent;
+            _scExtent = swapchainCI.imageExtent;
 
             CreateDepthTexture();
             CreateFramebuffers();
@@ -153,23 +153,13 @@ namespace Veldrid.Graphics.Vulkan
             return _scFramebuffers[imageIndex];
         }
 
-        private void CreateImageView(VkDevice device, VkImage image, VkFormat format, out VkImageView imageView)
-        {
-            VkImageViewCreateInfo imageViewCI = VkImageViewCreateInfo.New();
-            imageViewCI.image = image;
-            imageViewCI.viewType = VkImageViewType.Image2D;
-            imageViewCI.format = format;
-            imageViewCI.subresourceRange.aspectMask = VkImageAspectFlags.Color;
-            imageViewCI.subresourceRange.baseMipLevel = 0;
-            imageViewCI.subresourceRange.levelCount = 1;
-            imageViewCI.subresourceRange.baseArrayLayer = 0;
-            imageViewCI.subresourceRange.layerCount = 1;
-
-            vkCreateImageView(device, ref imageViewCI, null, out imageView);
-        }
-
         private void CreateDepthTexture()
         {
+            if (_depthTexture != null)
+            {
+                _depthTexture.Dispose();
+            }
+
             _depthTexture = (VkTexture2D)_resourceFactory.CreateTexture(
                 1, 
                 (int)_scExtent.width, 
@@ -178,9 +168,17 @@ namespace Veldrid.Graphics.Vulkan
                 DeviceTextureCreateOptions.DepthStencil);
         }
 
-
         private void CreateFramebuffers()
         {
+            if (_scFramebuffers.Count > 0)
+            {
+                foreach (VkFramebufferInfo fb in _scFramebuffers)
+                {
+                    fb.Dispose();
+                }
+                _scFramebuffers.Clear();
+            }
+
             _scFramebuffers.Resize(_scImages.Count);
             for (uint i = 0; i < _scImages.Count; i++)
             {

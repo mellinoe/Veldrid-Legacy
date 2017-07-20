@@ -16,7 +16,7 @@ namespace Veldrid.Graphics.Vulkan
                 case PixelFormat.R16_UInt:
                     return VkFormat.R16Uint;
                 case PixelFormat.R8_G8_B8_A8_UInt:
-                    return VkFormat.R8g8b8a8Uint;
+                    return VkFormat.R8g8b8a8Unorm;
                 case PixelFormat.B8_G8_R8_A8_UInt:
                     return VkFormat.B8g8r8a8Unorm;
                 default:
@@ -43,6 +43,141 @@ namespace Veldrid.Graphics.Vulkan
             }
         }
 
+        public static void GetFilterProperties(
+            SamplerFilter filter,
+            out VkFilter minFilter,
+            out VkFilter magFilter,
+            out VkSamplerMipmapMode mipMode,
+            out bool anisotropyEnable,
+            out bool compareEnable)
+        {
+            anisotropyEnable = false;
+            compareEnable = false;
+
+            switch (filter)
+            {
+                case SamplerFilter.MinMagMipPoint:
+                    minFilter = VkFilter.Nearest;
+                    magFilter = VkFilter.Nearest;
+                    mipMode = VkSamplerMipmapMode.Nearest;
+                    break;
+                case SamplerFilter.MinMagPointMipLinear:
+                    minFilter = VkFilter.Nearest;
+                    magFilter = VkFilter.Nearest;
+                    mipMode = VkSamplerMipmapMode.Linear;
+                    break;
+                case SamplerFilter.MinPointMagLinearMipPoint:
+                    minFilter = VkFilter.Nearest;
+                    magFilter = VkFilter.Linear;
+                    mipMode = VkSamplerMipmapMode.Nearest;
+                    break;
+                case SamplerFilter.MinPointMagMipLinear:
+                    minFilter = VkFilter.Nearest;
+                    magFilter = VkFilter.Linear;
+                    mipMode = VkSamplerMipmapMode.Linear;
+                    break;
+                case SamplerFilter.MinLinearMagMipPoint:
+                    minFilter = VkFilter.Linear;
+                    magFilter = VkFilter.Nearest;
+                    mipMode = VkSamplerMipmapMode.Nearest;
+                    break;
+                case SamplerFilter.MinLinearMagPointMipLinear:
+                    minFilter = VkFilter.Linear;
+                    magFilter = VkFilter.Nearest;
+                    mipMode = VkSamplerMipmapMode.Linear;
+                    break;
+                case SamplerFilter.MinMagLinearMipPoint:
+                    minFilter = VkFilter.Linear;
+                    magFilter = VkFilter.Linear;
+                    mipMode = VkSamplerMipmapMode.Nearest;
+                    break;
+                case SamplerFilter.MinMagMipLinear:
+                    minFilter = VkFilter.Linear;
+                    magFilter = VkFilter.Linear;
+                    mipMode = VkSamplerMipmapMode.Linear;
+                    break;
+                case SamplerFilter.Anisotropic:
+                    anisotropyEnable = true;
+                    minFilter = VkFilter.Nearest;
+                    magFilter = VkFilter.Nearest;
+                    mipMode = VkSamplerMipmapMode.Nearest;
+                    break;
+                case SamplerFilter.ComparisonMinMagMipPoint:
+                    compareEnable = true;
+                    minFilter = VkFilter.Nearest;
+                    magFilter = VkFilter.Nearest;
+                    mipMode = VkSamplerMipmapMode.Nearest;
+                    break;
+                case SamplerFilter.ComparisonMinMagPointMipLinear:
+                    compareEnable = true;
+                    minFilter = VkFilter.Nearest;
+                    magFilter = VkFilter.Nearest;
+                    mipMode = VkSamplerMipmapMode.Linear;
+                    break;
+                case SamplerFilter.ComparisonMinPointMagLinearMipPoint:
+                    compareEnable = true;
+                    minFilter = VkFilter.Nearest;
+                    magFilter = VkFilter.Linear;
+                    mipMode = VkSamplerMipmapMode.Nearest;
+                    break;
+                case SamplerFilter.ComparisonMinPointMagMipLinear:
+                    compareEnable = true;
+                    minFilter = VkFilter.Nearest;
+                    magFilter = VkFilter.Linear;
+                    mipMode = VkSamplerMipmapMode.Linear;
+                    break;
+                case SamplerFilter.ComparisonMinLinearMagMipPoint:
+                    compareEnable = true;
+                    minFilter = VkFilter.Linear;
+                    magFilter = VkFilter.Nearest;
+                    mipMode = VkSamplerMipmapMode.Nearest;
+                    break;
+                case SamplerFilter.ComparisonMinLinearMagPointMipLinear:
+                    compareEnable = true;
+                    minFilter = VkFilter.Linear;
+                    magFilter = VkFilter.Nearest;
+                    mipMode = VkSamplerMipmapMode.Linear;
+                    break;
+                case SamplerFilter.ComparisonMinMagLinearMipPoint:
+                    compareEnable = true;
+                    minFilter = VkFilter.Linear;
+                    magFilter = VkFilter.Linear;
+                    mipMode = VkSamplerMipmapMode.Nearest;
+                    break;
+                case SamplerFilter.ComparisonMinMagMipLinear:
+                    compareEnable = true;
+                    minFilter = VkFilter.Linear;
+                    magFilter = VkFilter.Linear;
+                    mipMode = VkSamplerMipmapMode.Linear;
+                    break;
+                case SamplerFilter.ComparisonAnisotropic:
+                    compareEnable = true;
+                    anisotropyEnable = true;
+                    minFilter = VkFilter.Nearest;
+                    magFilter = VkFilter.Nearest;
+                    mipMode = VkSamplerMipmapMode.Nearest;
+                    break;
+                default:
+                    throw Illegal.Value<SamplerFilter>();
+            }
+        }
+
+        public static VkSamplerAddressMode VeldridToVkSamplerAddressMode(SamplerAddressMode mode)
+        {
+            switch (mode)
+            {
+                case SamplerAddressMode.Wrap:
+                    return VkSamplerAddressMode.Repeat;
+                case SamplerAddressMode.Mirror:
+                    return VkSamplerAddressMode.MirroredRepeat;
+                case SamplerAddressMode.Clamp:
+                    return VkSamplerAddressMode.ClampToEdge;
+                case SamplerAddressMode.Border:
+                    return VkSamplerAddressMode.ClampToBorder;
+                default:
+                    throw Illegal.Value<SamplerAddressMode>();
+            }
+        }
 
         internal static VkCullModeFlags VeldridToVkCullMode(FaceCullingMode cullMode)
         {
