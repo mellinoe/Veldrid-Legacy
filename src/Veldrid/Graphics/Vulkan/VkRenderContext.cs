@@ -634,12 +634,22 @@ namespace Veldrid.Graphics.Vulkan
 
             // ColorBlendState
             VkPipelineColorBlendAttachmentState colorBlendAttachementState = new VkPipelineColorBlendAttachmentState();
-            // TODO : Respect blend state options.
             colorBlendAttachementState.colorWriteMask = VkColorComponentFlags.R | VkColorComponentFlags.G | VkColorComponentFlags.B | VkColorComponentFlags.A;
-            colorBlendAttachementState.blendEnable = false;
+            colorBlendAttachementState.blendEnable = BlendState.IsBlendEnabled;
+            colorBlendAttachementState.srcColorBlendFactor = VkFormats.VeldridToVkBlendFactor(BlendState.SourceColorBlend);
+            colorBlendAttachementState.dstColorBlendFactor = VkFormats.VeldridToVkBlendFactor(BlendState.DestinationColorBlend);
+            colorBlendAttachementState.colorBlendOp = VkFormats.VeldridToVkBlendOp(BlendState.ColorBlendFunction);
+            colorBlendAttachementState.srcAlphaBlendFactor = VkFormats.VeldridToVkBlendFactor(BlendState.SourceAlphaBlend);
+            colorBlendAttachementState.dstAlphaBlendFactor = VkFormats.VeldridToVkBlendFactor(BlendState.DestinationAlphaBlend);
+            colorBlendAttachementState.alphaBlendOp = VkFormats.VeldridToVkBlendOp(BlendState.AlphaBlendFunction);
+
             VkPipelineColorBlendStateCreateInfo colorBlendStateCI = VkPipelineColorBlendStateCreateInfo.New();
             colorBlendStateCI.attachmentCount = 1;
             colorBlendStateCI.pAttachments = &colorBlendAttachementState;
+            colorBlendStateCI.blendConstants_0 = BlendState.BlendFactor.R;
+            colorBlendStateCI.blendConstants_1 = BlendState.BlendFactor.G;
+            colorBlendStateCI.blendConstants_2 = BlendState.BlendFactor.B;
+            colorBlendStateCI.blendConstants_3 = BlendState.BlendFactor.A;
             pipelineCI.pColorBlendState = &colorBlendStateCI;
 
             // DepthStencilState
@@ -714,19 +724,31 @@ namespace Veldrid.Graphics.Vulkan
             pipelineCI.pVertexInputState = &vertexInputStateCI;
 
             // ShaderStage
-            VkPipelineShaderStageCreateInfo* shaderStageCIs = stackalloc VkPipelineShaderStageCreateInfo[2];
+            StackList<VkPipelineShaderStageCreateInfo> shaderStageCIs = new StackList<VkPipelineShaderStageCreateInfo>();
+
             VkPipelineShaderStageCreateInfo vertexStage = VkPipelineShaderStageCreateInfo.New();
             vertexStage.stage = VkShaderStageFlags.Vertex;
             vertexStage.module = ShaderSet.VertexShader.ShaderModule;
             vertexStage.pName = CommonStrings.main;
+            shaderStageCIs.Add(vertexStage);
+
             VkPipelineShaderStageCreateInfo fragmentStage = VkPipelineShaderStageCreateInfo.New();
             fragmentStage.stage = VkShaderStageFlags.Fragment;
             fragmentStage.module = ShaderSet.FragmentShader.ShaderModule;
             fragmentStage.pName = CommonStrings.main;
-            shaderStageCIs[0] = vertexStage;
-            shaderStageCIs[1] = fragmentStage;
-            pipelineCI.stageCount = 2;// TODO: NOT REALLY
-            pipelineCI.pStages = shaderStageCIs;
+            shaderStageCIs.Add(fragmentStage);
+
+            if (ShaderSet.GeometryShader != null)
+            {
+                VkPipelineShaderStageCreateInfo geometryStage = VkPipelineShaderStageCreateInfo.New();
+                geometryStage.stage = VkShaderStageFlags.Geometry;
+                geometryStage.module = ShaderSet.GeometryShader.ShaderModule;
+                geometryStage.pName = CommonStrings.main;
+                shaderStageCIs.Add(geometryStage);
+            }
+
+            pipelineCI.stageCount = shaderStageCIs.Count;
+            pipelineCI.pStages = (VkPipelineShaderStageCreateInfo*)shaderStageCIs.Data;
 
             VkResult result = vkCreateGraphicsPipelines(_device, VkPipelineCache.Null, 1, ref pipelineCI, null, out VkPipeline ret);
             CheckResult(result);

@@ -284,5 +284,57 @@ namespace Veldrid.Graphics.Vulkan
                     throw Illegal.Value<VertexElementFormat>();
             }
         }
+
+        public static VkBlendFactor VeldridToVkBlendFactor(Blend blend)
+        {
+            switch (blend)
+            {
+                case Blend.Zero:
+                    return VkBlendFactor.Zero;
+                case Blend.One:
+                    return VkBlendFactor.One;
+                case Blend.SourceAlpha:
+                    return VkBlendFactor.SrcAlpha;
+                case Blend.InverseSourceAlpha:
+                    return VkBlendFactor.OneMinusSrcAlpha;
+                case Blend.DestinationAlpha:
+                    return VkBlendFactor.DstAlpha;
+                case Blend.InverseDestinationAlpha:
+                    return VkBlendFactor.OneMinusDstAlpha;
+                case Blend.SourceColor:
+                    return VkBlendFactor.SrcColor;
+                case Blend.InverseSourceColor:
+                    return VkBlendFactor.OneMinusSrcColor;
+                case Blend.DestinationColor:
+                    return VkBlendFactor.DstColor;
+                case Blend.InverseDestinationColor:
+                    return VkBlendFactor.OneMinusDstColor;
+                case Blend.BlendFactor:
+                    return VkBlendFactor.ConstantColor;
+                case Blend.InverseBlendFactor:
+                    return VkBlendFactor.OneMinusConstantColor;
+                default:
+                    throw Illegal.Value<Blend>();
+            }
+        }
+
+        public static VkBlendOp VeldridToVkBlendOp(BlendFunction func)
+        {
+            switch (func)
+            {
+                case BlendFunction.Add:
+                    return VkBlendOp.Add;
+                case BlendFunction.Subtract:
+                    return VkBlendOp.Subtract;
+                case BlendFunction.ReverseSubtract:
+                    return VkBlendOp.ReverseSubtract;
+                case BlendFunction.Minimum:
+                    return VkBlendOp.Min;
+                case BlendFunction.Maximum:
+                    return VkBlendOp.Max;
+                default:
+                    throw Illegal.Value<BlendFunction>();
+            }
+        }
     }
 }
