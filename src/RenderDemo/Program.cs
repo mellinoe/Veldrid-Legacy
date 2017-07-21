@@ -89,7 +89,7 @@ namespace Veldrid.RenderDemo
             Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
             Sdl2Native.SDL_GetWMWindowInfo(sdlHandle, &sysWmInfo);
             Win32WindowInfo w32Info = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info);
-            return new VkRenderContext(w32Info.hinstance, w32Info.window, window.Width, window.Height);
+            return new VkRenderContext(VkSurfaceSource.CreateWin32(w32Info.hinstance, w32Info.window), window.Width, window.Height);
         }
 
         private static OpenGLESRenderContext CreateDefaultOpenGLESRenderContext(Sdl2Window window)

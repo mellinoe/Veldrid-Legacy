@@ -112,7 +112,12 @@ namespace BasicDemo
             _projectionBuffer.SetData(ref proj);
 
             _rc.Viewport = new Viewport(0, 0, _window.Width, _window.Height);
-            _rc.ClearBuffer(new RgbaFloat((Environment.TickCount / 10000.0f) % 1.0f, (Environment.TickCount / 30000.0f) % 1.0f, (Environment.TickCount / 1000.0f) % 1.0f, 1f));
+            RgbaFloat clearColor = new RgbaFloat(
+                (float)Math.Sin(Environment.TickCount / 2000.0f),
+                (float)Math.Cos(Environment.TickCount / 3000.0f),
+                (float)Math.Sin(Environment.TickCount / 1000.0f),
+                1f);
+            _rc.ClearBuffer(clearColor);
 
             _rc.VertexBuffer = _vb;
             _rc.IndexBuffer = _ib;

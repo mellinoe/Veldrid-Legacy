@@ -46,6 +46,7 @@ namespace Veldrid.Graphics.Vulkan
         private List<IDisposable> _frameDisposables = new List<IDisposable>();
         private List<VkPipeline> _framePipelines = new List<VkPipeline>();
         private List<VkPipelineLayout> _framePipelineLayouts = new List<VkPipelineLayout>();
+        private PFN_vkDebugReportCallbackEXT _debugCallback;
 
         public VkDevice Device => _device;
         public VkPhysicalDevice PhysicalDevice => _physicalDevice;
@@ -53,10 +54,10 @@ namespace Veldrid.Graphics.Vulkan
         public uint GraphicsQueueIndex => _graphicsQueueIndex;
         public VkCommandPool GraphicsCommandPool => _graphicsCommandPool;
 
-        public VkRenderContext(IntPtr hinstance, IntPtr hwnd, int width, int height)
+        public VkRenderContext(VkSurfaceSource surfaceInfo, int width, int height)
         {
             CreateInstance();
-            CreateSurface(hinstance, hwnd);
+            CreateSurface(surfaceInfo);
             CreatePhysicalDevice();
             CreateLogicalDevice();
             ResourceFactory = new VkResourceFactory(this);
@@ -94,7 +95,7 @@ namespace Veldrid.Graphics.Vulkan
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                instanceExtensions.Add(CommonStrings.VK_KHR_XCB_SURFACE_EXTENSION_NAME);
+                instanceExtensions.Add(CommonStrings.VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
             }
             else
             {
@@ -119,14 +120,46 @@ namespace Veldrid.Graphics.Vulkan
 
             VkResult result = vkCreateInstance(ref instanceCI, null, out _instance);
             CheckResult(result);
+
+            if (debug)
+            {
+                EnableDebugCallback();
+            }
         }
 
-        private void CreateSurface(IntPtr hinstance, IntPtr hwnd)
+        public void EnableDebugCallback(VkDebugReportFlagsEXT flags = VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error)
         {
-            VkWin32SurfaceCreateInfoKHR surfaceCI = VkWin32SurfaceCreateInfoKHR.New();
-            surfaceCI.hwnd = hwnd;
-            surfaceCI.hinstance = hinstance;
-            CheckResult(vkCreateWin32SurfaceKHR(_instance, ref surfaceCI, null, out _surface));
+            _debugCallback = DebugCallback;
+            IntPtr debugFunctionPtr = Marshal.GetFunctionPointerForDelegate(_debugCallback);
+            VkDebugReportCallbackCreateInfoEXT debugCallbackCI = VkDebugReportCallbackCreateInfoEXT.New();
+            debugCallbackCI.flags = flags;
+            debugCallbackCI.pfnCallback = debugFunctionPtr;
+            FixedUtf8String debugExtFnName = "vkCreateDebugReportCallbackEXT";
+            IntPtr createFnPtr = vkGetInstanceProcAddr(_instance, debugExtFnName);
+            vkCreateDebugReportCallbackEXT_d createDelegate = Marshal.GetDelegateForFunctionPointer<vkCreateDebugReportCallbackEXT_d>(createFnPtr);
+            VkDebugReportCallbackEXT callback;
+            createDelegate(_instance, &debugCallbackCI, IntPtr.Zero, &callback);
+        }
+
+        private delegate VkResult vkCreateDebugReportCallbackEXT_d(VkInstance instance, VkDebugReportCallbackCreateInfoEXT* createInfo, IntPtr allocatorPtr, VkDebugReportCallbackEXT* ret);
+
+        private uint DebugCallback(
+            uint flags,
+            VkDebugReportObjectTypeEXT objectType,
+            ulong @object,
+            UIntPtr location,
+            int messageCode,
+            byte* pLayerPrefix,
+            byte* pMessage,
+            void* pUserData)
+        {
+            Console.WriteLine($"[{(VkDebugReportFlagsEXT)flags}] ({objectType}) {Utilities.GetString(pMessage)}");
+            return 0;
+        }
+
+        private void CreateSurface(VkSurfaceSource surfaceInfo)
+        {
+            _surface = surfaceInfo.CreateSurface(_instance);
         }
 
         private void CreatePhysicalDevice()
@@ -234,7 +267,7 @@ namespace Veldrid.Graphics.Vulkan
         private void CreatePerFrameCommandPool()
         {
             VkCommandPoolCreateInfo commandPoolCI = VkCommandPoolCreateInfo.New();
-            commandPoolCI.flags = VkCommandPoolCreateFlags.ResetCommandBuffer;
+            commandPoolCI.flags = VkCommandPoolCreateFlags.ResetCommandBuffer | VkCommandPoolCreateFlags.Transient;
             commandPoolCI.queueFamilyIndex = _graphicsQueueIndex;
             vkCreateCommandPool(_device, ref commandPoolCI, null, out _perFrameCommandPool);
         }
@@ -323,6 +356,7 @@ namespace Veldrid.Graphics.Vulkan
             vkEndCommandBuffer(cb);
 
             renderPassState.SecondaryCommandBuffers.Add(cb);
+            renderPassState.DescriptorSets.Add(descriptorSet);
         }
 
         public override void DrawInstancedPrimitives(int indexCount, int instanceCount, int startingIndex)
@@ -443,7 +477,6 @@ namespace Veldrid.Graphics.Vulkan
         {
             // Submit command buffers and present.
             uint imageIndex = _scInfo.AcquireNextImage(_device, _imageAvailableSemaphore);
-
             EnsureRenderPassCreated();
             if (_renderPassStates.Count > 1)
             {
@@ -513,15 +546,27 @@ namespace Veldrid.Graphics.Vulkan
 
             vkQueuePresentKHR(_presentQueue, ref presentInfo);
 
-            _renderPassStates.Clear();
-            _needsNewRenderPass = true;
-
             ClearFrameObjects();
+            vkFreeCommandBuffers(_device, _perFrameCommandPool, 1, ref primaryCommandBuffer);
+            _needsNewRenderPass = true;
         }
 
         private void ClearFrameObjects()
         {
             vkQueueWaitIdle(_graphicsQueue);
+            foreach (RenderPassInfo rps in _renderPassStates)
+            {
+                if (rps.SecondaryCommandBuffers.Count > 0)
+                {
+                    vkFreeCommandBuffers(_device, _perFrameCommandPool, rps.SecondaryCommandBuffers.Count, ref rps.SecondaryCommandBuffers[0]);
+                }
+                if (rps.DescriptorSets.Count > 0)
+                {
+                    vkFreeDescriptorSets(_device, _perFrameDescriptorPool, rps.DescriptorSets.Count, ref rps.DescriptorSets[0]);
+                }
+            }
+            _renderPassStates.Clear();
+
             vkResetCommandPool(_device, _perFrameCommandPool, VkCommandPoolResetFlags.ReleaseResources);
             vkResetDescriptorPool(_device, _perFrameDescriptorPool, 0);
 
@@ -792,5 +837,6 @@ namespace Veldrid.Graphics.Vulkan
     {
         public VkFramebufferInfo Framebuffer { get; set; }
         public RawList<VkCommandBuffer> SecondaryCommandBuffers { get; set; } = new RawList<VkCommandBuffer>();
+        public RawList<VkDescriptorSet> DescriptorSets { get; set; } = new RawList<VkDescriptorSet>();
     }
 }
