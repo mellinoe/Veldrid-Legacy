@@ -86,7 +86,7 @@ namespace Veldrid.RenderDemo
                 new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Texture),
-                new ShaderResourceDescription("sampler", ShaderResourceType.Sampler)
+                new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Sampler)
             };
             _material = factory.CreateMaterial(
                 context,

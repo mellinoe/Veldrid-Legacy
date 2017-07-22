@@ -359,15 +359,15 @@ namespace Veldrid.Graphics.Direct3D
             // TODO: These slots should be tracked and the sets elided if possible.
             if ((applicability & ShaderStages.Vertex) == ShaderStages.Vertex)
             {
-                _deviceContext.VertexShader.SetSampler(slot, d3dSamplerState.SamplerState);
+                _deviceContext.VertexShader.SetSampler(slotInfo.DeviceSlot, d3dSamplerState.SamplerState);
             }
             if ((applicability & ShaderStages.Geometry) == ShaderStages.Geometry)
             {
-                _deviceContext.GeometryShader.SetSampler(slot, d3dSamplerState.SamplerState);
+                _deviceContext.GeometryShader.SetSampler(slotInfo.DeviceSlot, d3dSamplerState.SamplerState);
             }
             if ((applicability & ShaderStages.Fragment) == ShaderStages.Fragment)
             {
-                _deviceContext.PixelShader.SetSampler(slot, d3dSamplerState.SamplerState);
+                _deviceContext.PixelShader.SetSampler(slotInfo.DeviceSlot, d3dSamplerState.SamplerState);
             }
         }
 

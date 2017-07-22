@@ -139,7 +139,7 @@ namespace Veldrid.RenderDemo
             rc.SetConstantBuffer(2, SharedDataProviders.DirectionalLightBuffer);
             rc.SetConstantBuffer(3, _worldBuffer);
             rc.SetConstantBuffer(4, _inverseTransposeWorldBuffer);
-            rc.SetTexture(0, _textureBinding);
+            rc.SetTexture(5, _textureBinding);
 
             rc.DrawIndexedPrimitives(_teapotMesh.Indices.Length, 0);
         }

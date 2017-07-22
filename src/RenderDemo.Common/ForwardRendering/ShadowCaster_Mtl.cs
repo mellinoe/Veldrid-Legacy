@@ -211,9 +211,12 @@ namespace Veldrid.RenderDemo.ForwardRendering
                 new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("MaterialPropertiesBuffer", ShaderConstantType.Float4),
-                new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture),
-                new ShaderResourceDescription("AlphaMap", ShaderResourceType.Texture),
-                new ShaderResourceDescription("ShadowMap", ShaderResourceType.Texture));
+                new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture, ShaderStages.Fragment),
+                new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Sampler, ShaderStages.Fragment),
+                new ShaderResourceDescription("AlphaMap", ShaderResourceType.Texture, ShaderStages.Fragment),
+                new ShaderResourceDescription("AlphaMap", ShaderResourceType.Sampler, ShaderStages.Fragment),
+                new ShaderResourceDescription("ShadowMap", ShaderResourceType.Texture, ShaderStages.Fragment),
+                new ShaderResourceDescription("ShadowMap", ShaderResourceType.Sampler, ShaderStages.Fragment));
 
             s_regularPassMaterial = new Material(shaderSet, constantSlots);
         }
@@ -281,12 +284,12 @@ namespace Veldrid.RenderDemo.ForwardRendering
                 rc.SetConstantBuffer(8, _inverseTransposeWorldBuffer);
                 rc.SetConstantBuffer(9, _mtlPropertiesBuffer);
 
-                rc.SetTexture(0, _textureBinding);
-                rc.SetTexture(1, _alphaMapTextureBinding);
-                rc.SetTexture(2, SharedTextures.GetTextureBinding("ShadowMap"));
-                rc.SetSamplerState(0, rc.Anisox4Sampler); // Surface texture
-                rc.SetSamplerState(1, rc.PointSampler); // Alpha map
-                rc.SetSamplerState(2, s_shadowMapSampler); // Shadow map
+                rc.SetTexture(10, _textureBinding);
+                rc.SetSamplerState(11, rc.Anisox4Sampler); // Surface texture
+                rc.SetTexture(12, _alphaMapTextureBinding);
+                rc.SetSamplerState(13, rc.PointSampler); // Alpha map
+                rc.SetTexture(14, SharedTextures.GetTextureBinding("ShadowMap"));
+                rc.SetSamplerState(15, s_shadowMapSampler); // Shadow map
 
                 if (_hasAlphaMap)
                 {

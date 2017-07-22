@@ -90,7 +90,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
             _material.Apply(rc);
             rc.SetConstantBuffer(0, _worldMatrixBuffer);
             rc.SetConstantBuffer(1, _projectionMatrixBuffer);
-            rc.SetTexture(0, SharedTextures.GetTextureBinding("ShadowMap"));
+            rc.SetTexture(2, SharedTextures.GetTextureBinding("ShadowMap"));
             rc.SetDepthStencilState(_depthDisabledState);
             rc.DrawIndexedPrimitives(6, 0);
             rc.SetDepthStencilState(rc.DefaultDepthStencilState);

@@ -117,7 +117,7 @@ namespace Veldrid.RenderDemo
             rc.SetConstantBuffer(1, _viewMatrixBuffer);
             RasterizerState previousRasterState = rc.RasterizerState;
             rc.SetRasterizerState(_rasterizerState);
-            rc.SetTexture(0, _cubemapBinding);
+            rc.SetTexture(2, _cubemapBinding);
             rc.DrawIndexedPrimitives(s_indices.Length, 0);
             rc.SetRasterizerState(previousRasterState);
         }

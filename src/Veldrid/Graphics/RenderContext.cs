@@ -57,7 +57,9 @@ namespace Veldrid.Graphics
 
         public void SetSamplerState(int slot, SamplerState samplerState)
         {
-            if (!_boundSamplersBySlot.TryGetValue(slot, out BoundSamplerStateInfo bssi) || bssi.SamplerState != samplerState)
+            // TODO : Fix state tracking in new resource binding system.
+            // Most likely, this should just be done per-backend.
+            // if (!_boundSamplersBySlot.TryGetValue(slot, out BoundSamplerStateInfo bssi) || bssi.SamplerState != samplerState)
             {
                 bool mipmap = false;
                 if (_boundTexturesBySlot.TryGetValue(slot, out DeviceTexture boundTex) && boundTex != null)

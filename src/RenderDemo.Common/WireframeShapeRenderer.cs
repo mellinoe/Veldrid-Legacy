@@ -93,7 +93,6 @@ namespace Veldrid.RenderDemo
             rc.SetConstantBuffer(1, SharedDataProviders.ViewMatrixBuffer);
             rc.SetConstantBuffer(2, _worldBuffer);
             rc.RasterizerState = _wireframeState;
-            rc.SetSamplerState(0, rc.PointSampler);
             rc.DrawIndexedPrimitives(_indices.Count, 0, PrimitiveTopology.LineList);
             rc.RasterizerState = rasterState;
         }

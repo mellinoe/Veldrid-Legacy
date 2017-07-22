@@ -133,16 +133,13 @@ namespace Veldrid.RenderDemo.ForwardRendering
                 rc.SetConstantBuffer(5, _worldBuffer);
                 rc.SetConstantBuffer(6, _inverseTransposeWorldBuffer);
 
-                rc.SetTexture(0, _surfaceTextureBinding);
-                rc.SetTexture(1, SharedTextures.GetTextureBinding("ShadowMap"));
-                rc.SetSamplerState(0, rc.Anisox4Sampler);
-                rc.SetSamplerState(1, _shadowMapSampler);
+                rc.SetTexture(7, _surfaceTextureBinding);
+                rc.SetSamplerState(8, rc.Anisox4Sampler);
+                rc.SetTexture(9, SharedTextures.GetTextureBinding("ShadowMap"));
+                rc.SetSamplerState(10, _shadowMapSampler);
             }
 
             rc.DrawIndexedPrimitives(_meshData.Indices.Length, 0);
-
-            rc.SetSamplerState(0, rc.PointSampler);
-            rc.SetSamplerState(1, rc.PointSampler);
         }
 
         public static Material CreateShadowPassMaterial(ResourceFactory factory)
@@ -186,7 +183,9 @@ namespace Veldrid.RenderDemo.ForwardRendering
                 new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture),
-                new ShaderResourceDescription("ShadowMap", ShaderResourceType.Texture));
+                new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Sampler),
+                new ShaderResourceDescription("ShadowMap", ShaderResourceType.Texture),
+                new ShaderResourceDescription("ShadowMap", ShaderResourceType.Sampler));
 
             return new Material(shaderSet, constantSlots);
         }
