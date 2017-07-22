@@ -306,7 +306,8 @@ namespace Veldrid.Graphics.Direct3D
 
         protected override void PlatformSetConstantBuffer(int slot, ConstantBuffer cb)
         {
-            ShaderStages applicability = ConstantBufferSlots.GetApplicability(slot);
+            D3DResourceBindingSlotInfo slotInfo = ShaderResourceBindingSlots.GetConstantBufferInfo(slot);
+            ShaderStages applicability = slotInfo.Stages;
 
             if ((applicability & ShaderStages.Vertex) == ShaderStages.Vertex
                 && _vertexConstantBindings[slot] != cb)
@@ -332,18 +333,19 @@ namespace Veldrid.Graphics.Direct3D
 
         protected override void PlatformSetTexture(int slot, ShaderTextureBinding binding)
         {
-            ShaderStages applicability = TextureSlots.GetApplicabilityForSlot(slot);
+            D3DResourceBindingSlotInfo slotInfo = ShaderResourceBindingSlots.GetTextureSlotInfo(slot);
+            ShaderStages applicability = slotInfo.Stages;
             if ((applicability & ShaderStages.Vertex) == ShaderStages.Vertex)
             {
-                SetTextureBinding(ShaderStages.Vertex, slot, binding);
+                SetTextureBinding(ShaderStages.Vertex, slotInfo.DeviceSlot, binding);
             }
             if ((applicability & ShaderStages.Geometry) == ShaderStages.Geometry)
             {
-                SetTextureBinding(ShaderStages.Geometry, slot, binding);
+                SetTextureBinding(ShaderStages.Geometry, slotInfo.DeviceSlot, binding);
             }
             if ((applicability & ShaderStages.Fragment) == ShaderStages.Fragment)
             {
-                SetTextureBinding(ShaderStages.Fragment, slot, binding);
+                SetTextureBinding(ShaderStages.Fragment, slotInfo.DeviceSlot, binding);
             }
         }
 
@@ -351,10 +353,22 @@ namespace Veldrid.Graphics.Direct3D
         {
             D3DSamplerState d3dSamplerState = (D3DSamplerState)samplerState;
 
-            // TODO: This should respect applicability flags like textures do.
-            _deviceContext.VertexShader.SetSampler(slot, d3dSamplerState.SamplerState);
-            _deviceContext.GeometryShader.SetSampler(slot, d3dSamplerState.SamplerState);
-            _deviceContext.PixelShader.SetSampler(slot, d3dSamplerState.SamplerState);
+            D3DResourceBindingSlotInfo slotInfo = ShaderResourceBindingSlots.GetSamplerSlotInfo(slot);
+            ShaderStages applicability = slotInfo.Stages;
+
+            // TODO: These slots should be tracked and the sets elided if possible.
+            if ((applicability & ShaderStages.Vertex) == ShaderStages.Vertex)
+            {
+                _deviceContext.VertexShader.SetSampler(slot, d3dSamplerState.SamplerState);
+            }
+            if ((applicability & ShaderStages.Geometry) == ShaderStages.Geometry)
+            {
+                _deviceContext.GeometryShader.SetSampler(slot, d3dSamplerState.SamplerState);
+            }
+            if ((applicability & ShaderStages.Fragment) == ShaderStages.Fragment)
+            {
+                _deviceContext.PixelShader.SetSampler(slot, d3dSamplerState.SamplerState);
+            }
         }
 
         protected override void PlatformSetFramebuffer(Framebuffer framebuffer)
@@ -481,8 +495,6 @@ namespace Veldrid.Graphics.Direct3D
         }
 
         private new D3DFramebuffer CurrentFramebuffer => (D3DFramebuffer)base.CurrentFramebuffer;
-
-        private D3DShaderConstantBindingSlots ConstantBufferSlots => ((D3DShaderResourceBindingSlots)ShaderResourceBindingSlots).ConstantBufferSlots;
-        private D3DShaderTextureBindingSlots TextureSlots => ((D3DShaderResourceBindingSlots)ShaderResourceBindingSlots).TextureSlots;
+        private new D3DShaderResourceBindingSlots ShaderResourceBindingSlots => (D3DShaderResourceBindingSlots)base.ShaderResourceBindingSlots;
     }
 }

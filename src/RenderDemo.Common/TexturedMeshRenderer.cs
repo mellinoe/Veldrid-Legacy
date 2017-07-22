@@ -85,7 +85,8 @@ namespace Veldrid.RenderDemo
                 new ShaderResourceDescription("LightBuffer", Unsafe.SizeOf<DirectionalLightBuffer>()),
                 new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Texture)
+                new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Texture),
+                new ShaderResourceDescription("sampler", ShaderResourceType.Sampler)
             };
             _material = factory.CreateMaterial(
                 context,
@@ -131,8 +132,8 @@ namespace Veldrid.RenderDemo
             rc.SetConstantBuffer(2, SharedDataProviders.DirectionalLightBuffer);
             rc.SetConstantBuffer(3, _worldBuffer);
             rc.SetConstantBuffer(4, _inverseTransposeWorldBuffer);
-            rc.SetTexture(0, _textureBinding);
-            rc.SetSamplerState(0, rc.PointSampler);
+            rc.SetTexture(5, _textureBinding);
+            rc.SetSamplerState(6, rc.PointSampler);
 
             rc.DrawIndexedPrimitives(_indices.Length, 0);
         }

@@ -116,7 +116,7 @@ namespace Veldrid.Graphics.Direct3D
             ShaderSet shaderSet,
             ShaderResourceDescription[] constants)
         {
-            return new D3DShaderResourceBindingSlots(_device, (D3DShaderSet)shaderSet, constants);
+            return new D3DShaderResourceBindingSlots(constants);
         }
 
         public override VertexBuffer CreateVertexBuffer(int sizeInBytes, bool isDynamic)

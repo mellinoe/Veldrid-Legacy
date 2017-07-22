@@ -135,12 +135,23 @@ namespace BasicDemo
 
         public byte[] GetShaderBytecode(GraphicsBackend backend, bool vertexShader)
         {
+            string name = vertexShader ? "simple-vertex" : "simple-frag";
             switch (backend)
             {
                 case GraphicsBackend.Vulkan:
-                    string name = vertexShader ? "simple.vert.spv" : "simple.frag.spv";
-                    string path = Path.Combine(AppContext.BaseDirectory, "Shaders", "SPIR-V", name);
-                    return File.ReadAllBytes(path);
+                    {
+                        name += ".spv";
+                        string path = Path.Combine(AppContext.BaseDirectory, "Shaders", "SPIR-V", name);
+                        return File.ReadAllBytes(path);
+                    }
+                case GraphicsBackend.Direct3D11:
+                    {
+                        name += ".hlsl";
+                        string path = Path.Combine(AppContext.BaseDirectory, "Shaders", "HLSL", name);
+                        string text = File.ReadAllText(path);
+                        CompiledShaderCode bytecode = _rc.ResourceFactory.ProcessShaderCode(vertexShader ? ShaderStages.Vertex : ShaderStages.Fragment, text);
+                        return ((Veldrid.Graphics.Direct3D.D3DShaderBytecode)bytecode).Bytecode.Data; // wtf
+                    }
                 default:
                     throw new NotImplementedException();
             }

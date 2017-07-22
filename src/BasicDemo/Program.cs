@@ -20,35 +20,26 @@ namespace BasicDemo
         private static bool s_allowDebugContexts = false;
         public static void Main(string[] args)
         {
-            bool useVulkan = true;
-            useVulkan |= args.Contains("vulkan");
+            GraphicsBackend backend = GraphicsBackend.Direct3D11;
 
             bool onWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             Sdl2Window window = new Sdl2Window("Veldrid Render Demo", 100, 100, 960, 540, SDL_WindowFlags.Resizable | SDL_WindowFlags.OpenGL, RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
             RenderContext rc;
-            if (useVulkan)
+            if (backend == GraphicsBackend.Vulkan)
             {
                 rc = CreateVulkanRenderContext(window);
             }
+            else if (backend == GraphicsBackend.Direct3D11)
+            {
+                rc = CreateDefaultD3dRenderContext(window);
+            }
+            else if (backend == GraphicsBackend.OpenGL)
+            {
+                rc = CreateDefaultOpenGLRenderContext(window);
+            }
             else
             {
-                bool preferOpenGL = args.Contains("opengl");
-                if (!preferOpenGL && onWindows)
-                {
-                    rc = CreateDefaultD3dRenderContext(window);
-                }
-                else
-                {
-                    bool useGLES = false;
-                    if (useGLES)
-                    {
-                        rc = CreateDefaultOpenGLESRenderContext(window);
-                    }
-                    else
-                    {
-                        rc = CreateDefaultOpenGLRenderContext(window);
-                    }
-                }
+                rc = CreateDefaultOpenGLESRenderContext(window);
             }
 
             BasicDemoApp app = new BasicDemoApp(window, rc);

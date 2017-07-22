@@ -1,3 +1,2 @@
-glslangvalidator -V simple.vert -o simple.vert.spv
-glslangvalidator -V simple.frag -o simple.frag.spv
-
+glslangvalidator -V simple-vertex.glsl -o simple-vertex.spv -S vert
+glslangvalidator -V simple-frag.glsl -o simple-frag.spv -S frag
