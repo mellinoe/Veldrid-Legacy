@@ -7,8 +7,8 @@ namespace Veldrid.Graphics.OpenGL
 {
     public partial class OpenGLShaderResourceBindingSlots : ShaderResourceBindingSlots
     {
-        private Dictionary<int, int> _textureBindings = new Dictionary<int, int>();
-        private Dictionary<int, int> _samplerBindings = new Dictionary<int, int>();
+        private Dictionary<int, OpenGLTextureBindingSlotInfo> _textureBindings = new Dictionary<int, OpenGLTextureBindingSlotInfo>();
+        private Dictionary<int, OpenGLTextureBindingSlotInfo> _samplerBindings = new Dictionary<int, OpenGLTextureBindingSlotInfo>();
         private Dictionary<int, OpenGLUniformBinding> _constantBindings = new Dictionary<int, OpenGLUniformBinding>();
 
         public ShaderResourceDescription[] Resources { get; }
@@ -19,6 +19,7 @@ namespace Veldrid.Graphics.OpenGL
             int programID = shaderSet.ProgramID;
 
             int lastTextureLocation = -1;
+            int relativeTextureIndex = -1;
             for (int i = 0; i < resources.Length; i++)
             {
                 ShaderResourceDescription resource = resources[i];
@@ -50,7 +51,8 @@ namespace Veldrid.Graphics.OpenGL
                         throw new VeldridException($"No sampler was found with the name {resource.Name}");
                     }
 
-                    _textureBindings[i] = location;
+                    relativeTextureIndex += 1;
+                    _textureBindings[i] = new OpenGLTextureBindingSlotInfo() { RelativeIndex = relativeTextureIndex, UniformLocation = location };
                     lastTextureLocation = location;
                 }
                 else
@@ -62,15 +64,15 @@ namespace Veldrid.Graphics.OpenGL
                             "OpenGL Shaders must specify at least one texture before a sampler. Samplers are implicity linked with the closest-previous texture resource in the binding list.");
                     }
 
-                    _samplerBindings[i] = lastTextureLocation;
+                    _samplerBindings[i] = new OpenGLTextureBindingSlotInfo() { RelativeIndex = relativeTextureIndex, UniformLocation = lastTextureLocation };
                 }
             }
 
         }
 
-        public int GetTextureUniformLocation(int slot)
+        public OpenGLTextureBindingSlotInfo GetTextureBindingInfo(int slot)
         {
-            if (!_textureBindings.TryGetValue(slot, out int binding))
+            if (!_textureBindings.TryGetValue(slot, out OpenGLTextureBindingSlotInfo binding))
             {
                 throw new VeldridException("There is no texture in slot " + slot);
             }
@@ -78,9 +80,9 @@ namespace Veldrid.Graphics.OpenGL
             return binding;
         }
 
-        public int GetSamplerUniformLocation(int slot)
+        public OpenGLTextureBindingSlotInfo GetSamplerBindingInfo(int slot)
         {
-            if (!_samplerBindings.TryGetValue(slot, out int binding))
+            if (!_samplerBindings.TryGetValue(slot, out OpenGLTextureBindingSlotInfo binding))
             {
                 throw new VeldridException("There is no sampler in slot " + slot);
             }
@@ -123,5 +125,18 @@ namespace Veldrid.Graphics.OpenGL
                 throw new VeldridException(errorMessage);
             }
         }
+    }
+
+    public struct OpenGLTextureBindingSlotInfo
+    {
+        /// <summary>
+        /// The relative index of this binding with relation to the other textures used by a shader.
+        /// Generally, this is the texture unit that the binding will be placed into.
+        /// </summary>
+        public int RelativeIndex;
+        /// <summary>
+        /// The uniform location of the binding in the shader program.
+        /// </summary>
+        public int UniformLocation;
     }
 }

@@ -442,7 +442,7 @@ namespace Veldrid.Graphics.Vulkan
         {
         }
 
-        protected override void PlatformSetSamplerState(int slot, SamplerState samplerState, bool mipmapped)
+        protected override void PlatformSetSamplerState(int slot, SamplerState samplerState)
         {
             _samplerStates[slot] = (VkSamplerState)samplerState;
         }

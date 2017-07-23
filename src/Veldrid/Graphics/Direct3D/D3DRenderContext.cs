@@ -349,7 +349,7 @@ namespace Veldrid.Graphics.Direct3D
             }
         }
 
-        protected override void PlatformSetSamplerState(int slot, SamplerState samplerState, bool mipmapped)
+        protected override void PlatformSetSamplerState(int slot, SamplerState samplerState)
         {
             D3DSamplerState d3dSamplerState = (D3DSamplerState)samplerState;
 

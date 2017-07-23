@@ -23,5 +23,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Veldrid.Primitives\Veldrid.Primitives.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="OpenGL\Graphics\" />
+  </ItemGroup>
   <Import Project="$(MSBuildThisFileDirectory)Veldrid.PackageInfo.props" />
 </Project>

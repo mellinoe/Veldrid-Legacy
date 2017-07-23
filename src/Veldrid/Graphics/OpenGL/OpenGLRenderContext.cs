@@ -19,7 +19,6 @@ namespace Veldrid.Graphics.OpenGL
         private readonly OpenGLConstantBuffer[] _constantBuffersBySlot;
         private readonly OpenGLConstantBuffer[] _newConstantBuffersBySlot; // CB's bound during draw call preparation
         private int _maxTextureUnits;
-        private readonly OpenGLTextureBinding[] _texturesBySlot; // This refers to the "ActiveTexture" texture unit slot.
         private int _newConstantBuffersCount;
         private readonly int _vertexArrayID;
         private readonly int _maxVertexAttributeSlots;
@@ -29,6 +28,8 @@ namespace Veldrid.Graphics.OpenGL
         private bool _vertexLayoutChanged;
         private Action _swapBufferFunc;
         private DebugProc _debugMessageCallback;
+
+        private readonly OpenGLTextureSamplerManager _textureSamplerManager;
 
         public OpenGLRenderContext(Window window, OpenGLPlatformContextInfo platformContext)
         {
@@ -60,12 +61,13 @@ namespace Veldrid.Graphics.OpenGL
             }
             _extensions = new OpenGLExtensions(extensions);
 
+            _textureSamplerManager = new OpenGLTextureSamplerManager(_extensions);
+
             _maxConstantBufferSlots = GL.GetInteger(GetPName.MaxUniformBufferBindings);
             _constantBuffersBySlot = new OpenGLConstantBuffer[_maxConstantBufferSlots];
             _newConstantBuffersBySlot = new OpenGLConstantBuffer[_maxConstantBufferSlots];
 
             _maxTextureUnits = GL.GetInteger(GetPName.MaxTextureUnits);
-            _texturesBySlot = new OpenGLTextureBinding[_maxTextureUnits];
 
             _maxVertexAttributeSlots = GL.GetInteger(GetPName.MaxVertexAttribs);
             _vertexAttribDivisors = new int[_maxVertexAttributeSlots];
@@ -385,55 +387,17 @@ namespace Veldrid.Graphics.OpenGL
 
         protected override void PlatformSetTexture(int slot, ShaderTextureBinding textureBinding)
         {
-            int actualSlot = ShaderResourceBindingSlots.GetTextureUniformLocation(slot);
-
-            OpenGLTexture boundTexture = (OpenGLTexture)textureBinding.BoundTexture;
-            int textureUnit = BindToNextTextureUnit((OpenGLTextureBinding)textureBinding);
-
-            int uniformLocation = ShaderResourceBindingSlots.GetTextureUniformLocation(slot);
-            ShaderSet.UpdateTextureUniform(uniformLocation, textureUnit); // Performs internal caching.
-
-            EnsureSamplerMipmapState(slot, boundTexture.MipLevels != 1);
+            OpenGLTextureBinding glTextureBinding = (OpenGLTextureBinding)textureBinding;
+            OpenGLTextureBindingSlotInfo info = ShaderResourceBindingSlots.GetTextureBindingInfo(slot);
+            _textureSamplerManager.SetTexture(info.RelativeIndex, glTextureBinding);
+            ShaderSet.UpdateTextureUniform(info.UniformLocation, info.RelativeIndex);
         }
 
-        private int _nextTextureUnit = 0;
-
-        private int BindToNextTextureUnit(OpenGLTextureBinding textureBinding)
+        protected override void PlatformSetSamplerState(int slot, SamplerState samplerState)
         {
-            OpenGLTexture boundTexture = textureBinding.BoundTexture;
-            if (_extensions.ARB_DirectStateAccess)
-            {
-                GL.BindTextureUnit(_nextTextureUnit, boundTexture.ID);
-            }
-            else
-            {
-                GL.ActiveTexture(TextureUnit.Texture0 + _nextTextureUnit);
-                boundTexture.Bind();
-            }
-            _texturesBySlot[_nextTextureUnit] = textureBinding;
-
-            int ret = _nextTextureUnit;
-            _nextTextureUnit = (_nextTextureUnit + 1) % _maxTextureUnits;
-            return ret;
-        }
-
-        protected override void PlatformSetSamplerState(int slot, SamplerState samplerState, bool mipmapped)
-        {
-            int uniformLocation = ShaderResourceBindingSlots.GetSamplerUniformLocation(slot);
-            OpenGLSamplerState glSamplerState = (OpenGLSamplerState)samplerState;
-            glSamplerState.Apply(slot, mipmapped);
-        }
-
-        private void EnsureSamplerMipmapState(int slot, bool mipmap)
-        {
-            if (_boundSamplersBySlot.TryGetValue(slot, out BoundSamplerStateInfo info))
-            {
-                if (info.SamplerState != null && info.Mipmapped != mipmap)
-                {
-                    ((OpenGLSamplerState)info.SamplerState).Apply(slot, mipmap);
-                    _boundSamplersBySlot[slot] = new BoundSamplerStateInfo(info.SamplerState, mipmap);
-                }
-            }
+            OpenGLSamplerState glSampler = (OpenGLSamplerState)samplerState;
+            OpenGLTextureBindingSlotInfo info = ShaderResourceBindingSlots.GetSamplerBindingInfo(slot);
+            _textureSamplerManager.SetSampler(info.RelativeIndex, glSampler);
         }
 
         protected override void PlatformSetFramebuffer(Framebuffer framebuffer)

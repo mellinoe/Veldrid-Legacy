@@ -28,7 +28,7 @@ namespace Veldrid.Graphics
         private ShaderResourceBindingSlots _resourceBindingSlots;
 
         protected readonly Dictionary<int, DeviceTexture> _boundTexturesBySlot = new Dictionary<int, DeviceTexture>();
-        protected readonly Dictionary<int, BoundSamplerStateInfo> _boundSamplersBySlot = new Dictionary<int, BoundSamplerStateInfo>();
+        protected readonly Dictionary<int, SamplerState> _boundSamplersBySlot = new Dictionary<int, SamplerState>();
 
         public RenderContext()
         {
@@ -61,14 +61,8 @@ namespace Veldrid.Graphics
             // Most likely, this should just be done per-backend.
             // if (!_boundSamplersBySlot.TryGetValue(slot, out BoundSamplerStateInfo bssi) || bssi.SamplerState != samplerState)
             {
-                bool mipmap = false;
-                if (_boundTexturesBySlot.TryGetValue(slot, out DeviceTexture boundTex) && boundTex != null)
-                {
-                    mipmap = boundTex.MipLevels != 1;
-                }
-
-                PlatformSetSamplerState(slot, samplerState, mipmap);
-                _boundSamplersBySlot[slot] = new BoundSamplerStateInfo(samplerState, mipmap);
+                PlatformSetSamplerState(slot, samplerState);
+                _boundSamplersBySlot[slot] = samplerState;
             }
         }
 
@@ -167,6 +161,8 @@ namespace Veldrid.Graphics
             {
                 throw new VeldridException("Cannot call SetTexture when TextureBindingSlots has not been set.");
             }
+
+            _boundTexturesBySlot[slot] = textureBinding.BoundTexture;
 
             PlatformSetTexture(slot, textureBinding);
         }
@@ -476,7 +472,7 @@ namespace Veldrid.Graphics
 
         protected abstract void PlatformSetTexture(int slot, ShaderTextureBinding textureBinding);
 
-        protected abstract void PlatformSetSamplerState(int slot, SamplerState samplerState, bool mipmapped);
+        protected abstract void PlatformSetSamplerState(int slot, SamplerState samplerState);
 
         protected abstract void PlatformClearMaterialResourceBindings();
 
@@ -504,18 +500,6 @@ namespace Veldrid.Graphics
 
             _indexBuffer = null;
             _resourceBindingSlots = null;
-        }
-
-        protected struct BoundSamplerStateInfo
-        {
-            public SamplerState SamplerState { get; }
-            public bool Mipmapped { get; }
-
-            public BoundSamplerStateInfo(SamplerState samplerState, bool mipmapped)
-            {
-                SamplerState = samplerState;
-                Mipmapped = mipmapped;
-            }
         }
     }
 }
