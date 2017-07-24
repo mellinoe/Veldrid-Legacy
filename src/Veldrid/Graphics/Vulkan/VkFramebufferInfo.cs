@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Vulkan;
 using static Vulkan.VulkanNative;
 
@@ -45,8 +46,8 @@ namespace Veldrid.Graphics.Vulkan
         DeviceTexture2D Framebuffer.ColorTexture { get => ColorTexture; set => AttachColorTexture(0, value); }
         DeviceTexture2D Framebuffer.DepthTexture { get => DepthTexture; set => DepthTexture = (VkTexture2D)value; }
 
-        public int Width => ColorTexture.Width;
-        public int Height => ColorTexture.Height;
+        public int Width => ColorTexture != null ? ColorTexture.Width : DepthTexture != null ? DepthTexture.Width : 0;
+        public int Height => ColorTexture != null ? ColorTexture.Height : DepthTexture != null ? DepthTexture.Height : 0;
 
         public VkRenderPass RenderPass { get; private set; }
         public VkFramebuffer Framebuffer { get; private set; }
@@ -77,7 +78,7 @@ namespace Veldrid.Graphics.Vulkan
             VkRenderPassCreateInfo renderPassCI = VkRenderPassCreateInfo.New();
 
             VkAttachmentDescription colorAttachmentDesc = new VkAttachmentDescription();
-            colorAttachmentDesc.format = ColorTexture.Format;
+            colorAttachmentDesc.format = ColorTexture?.Format ?? 0;
             colorAttachmentDesc.samples = VkSampleCountFlags.Count1;
             colorAttachmentDesc.loadOp = VkAttachmentLoadOp.Clear;
             colorAttachmentDesc.storeOp = VkAttachmentStoreOp.Store;
@@ -103,17 +104,19 @@ namespace Veldrid.Graphics.Vulkan
                 depthAttachmentDesc.initialLayout = VkImageLayout.Undefined;
                 depthAttachmentDesc.finalLayout = VkImageLayout.DepthStencilAttachmentOptimal;
 
-                depthAttachmentRef.attachment = 1;
+                depthAttachmentRef.attachment = ColorTexture == null ? 0u : 1u;
                 depthAttachmentRef.layout = VkImageLayout.DepthStencilAttachmentOptimal;
             }
 
             VkSubpassDescription subpass = new VkSubpassDescription();
-            subpass.pipelineBindPoint = VkPipelineBindPoint.Graphics;
-            subpass.colorAttachmentCount = 1;
-            subpass.pColorAttachments = &colorAttachmentRef;
-
             StackList<VkAttachmentDescription, Size512Bytes> attachments = new StackList<VkAttachmentDescription, Size512Bytes>();
-            attachments.Add(colorAttachmentDesc);
+            subpass.pipelineBindPoint = VkPipelineBindPoint.Graphics;
+            if (ColorTexture != null)
+            {
+                subpass.colorAttachmentCount = 1;
+                subpass.pColorAttachments = &colorAttachmentRef;
+                attachments.Add(colorAttachmentDesc);
+            }
 
             if (DepthTexture != null)
             {
@@ -142,18 +145,35 @@ namespace Veldrid.Graphics.Vulkan
             RenderPass = newRenderPass;
 
             StackList<VkImageView, Size2IntPtr> fbAttachments = new StackList<VkImageView, Size2IntPtr>();
-            fbAttachments.Add(ColorView);
+
+            if (ColorView != VkImageView.Null)
+            {
+                fbAttachments.Add(ColorView);
+            }
             if (DepthView != VkImageView.Null)
             {
                 fbAttachments.Add(DepthView);
+            }
+
+            uint width, height;
+            if (ColorTexture != null)
+            {
+                width = (uint)ColorTexture.Width;
+                height = (uint)ColorTexture.Height;
+            }
+            else
+            {
+                Debug.Assert(DepthTexture != null);
+                width = (uint)DepthTexture.Width;
+                height = (uint)DepthTexture.Height;
             }
 
             VkFramebufferCreateInfo framebufferCI = VkFramebufferCreateInfo.New();
             framebufferCI.renderPass = newRenderPass;
             framebufferCI.attachmentCount = fbAttachments.Count;
             framebufferCI.pAttachments = (VkImageView*)fbAttachments.Data;
-            framebufferCI.width = (uint)ColorTexture.Width;
-            framebufferCI.height = (uint)ColorTexture.Height;
+            framebufferCI.width = width;
+            framebufferCI.height = height;
             framebufferCI.layers = 1;
             vkCreateFramebuffer(_device, ref framebufferCI, null, out VkFramebuffer newFramebuffer);
 

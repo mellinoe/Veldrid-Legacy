@@ -279,7 +279,7 @@ namespace Veldrid.Graphics.Vulkan
                 case VertexElementFormat.Byte1:
                     return VkFormat.R8Uint;
                 case VertexElementFormat.Byte4:
-                    return VkFormat.R8g8b8a8Uint;
+                    return VkFormat.R8g8b8a8Unorm;
                 default:
                     throw Illegal.Value<VertexElementFormat>();
             }

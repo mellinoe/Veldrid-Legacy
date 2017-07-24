@@ -73,7 +73,8 @@ namespace Veldrid.RenderDemo
                 new ShaderResourceDescription("LightBuffer", Unsafe.SizeOf<DirectionalLightBuffer>()),
                 new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Texture)
+                new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Texture),
+                new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Sampler)
             };
 
             _material = factory.CreateMaterial(

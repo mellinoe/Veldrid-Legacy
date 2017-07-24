@@ -5,11 +5,11 @@
     float2 uv  : TEXCOORD0;
 };
 
-sampler sampler0;
-Texture2D texture0;
+Texture2D FontTexture : register(t0);
+sampler FontSampler : register(s0);
 
 float4 PS(PS_INPUT input) : SV_Target
 {
-    float4 out_col = input.col * texture0.Sample(sampler0, input.uv);
+    float4 out_col = input.col * FontTexture.Sample(FontSampler, input.uv);
     return out_col;
 }

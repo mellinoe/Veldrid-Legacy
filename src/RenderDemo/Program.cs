@@ -17,7 +17,7 @@ namespace Veldrid.RenderDemo
     {
         public static void Main()
         {
-            bool useVulkan = false;
+            bool useVulkan = true;
             bool onWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             var window = new Sdl2Window("Veldrid Render Demo", 100, 100, 960, 540, SDL_WindowFlags.Resizable | SDL_WindowFlags.OpenGL, RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
             RenderContext rc;
@@ -50,6 +50,7 @@ namespace Veldrid.RenderDemo
             var openGLOption = new RenderDemo.RendererOption("OpenGL", () => CreateDefaultOpenGLRenderContext(window));
             var openGLESOption = new RenderDemo.RendererOption("OpenGL ES", () => CreateDefaultOpenGLESRenderContext(window));
             var d3dOption = new RenderDemo.RendererOption("Direct3D", () => CreateDefaultD3dRenderContext(window));
+            var vulkanOption = new RenderDemo.RendererOption("Vulkan", () => CreateVulkanRenderContext(window));
 
             if (onWindows)
             {
@@ -58,12 +59,21 @@ namespace Veldrid.RenderDemo
                     options.Add(openGLOption);
                     options.Add(d3dOption);
                     options.Add(openGLESOption);
+                    options.Add(vulkanOption);
                 }
                 else if (rc is OpenGLESRenderContext)
                 {
                     options.Add(openGLESOption);
                     options.Add(openGLOption);
                     options.Add(d3dOption);
+                    options.Add(vulkanOption);
+                }
+                else if (rc is VkRenderContext)
+                {
+                    options.Add(vulkanOption);
+                    options.Add(d3dOption);
+                    options.Add(openGLOption);
+                    options.Add(openGLESOption);
                 }
                 else
                 {
@@ -76,6 +86,7 @@ namespace Veldrid.RenderDemo
             else
             {
                 options.Add(openGLOption);
+                options.Add(vulkanOption);
                 options.Add(openGLESOption);
             }
 

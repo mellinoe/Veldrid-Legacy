@@ -19,7 +19,8 @@ namespace Veldrid
     /// </summary>
     public class ImGuiRenderer : IDisposable
     {
-        private readonly EmbeddedResourceShaderLoader _embeddedResourceShaderLoader;
+        private RenderContext _rc;
+        private readonly Assembly _assembly;
 
         // Context objects
         private VertexBuffer _vertexBuffer;
@@ -35,7 +36,6 @@ namespace Veldrid
         private ConstantBuffer _projMatrixBuffer;
 
         private int _fontAtlasID = 1;
-        private RenderContext _rc;
         private bool _controlDown;
         private bool _shiftDown;
         private bool _altDown;
@@ -46,7 +46,7 @@ namespace Veldrid
         public ImGuiRenderer(RenderContext rc, Window window)
         {
             _rc = rc;
-            _embeddedResourceShaderLoader = new EmbeddedResourceShaderLoader(typeof(ImGuiRenderer).GetTypeInfo().Assembly);
+            _assembly = typeof(ImGuiRenderer).GetTypeInfo().Assembly;
 
             ImGui.GetIO().FontAtlas.AddDefaultFont();
 
@@ -68,8 +68,8 @@ namespace Veldrid
         private void InitializeContextObjects(RenderContext rc)
         {
             ResourceFactory factory = rc.ResourceFactory;
-            _vertexBuffer = factory.CreateVertexBuffer(500, false);
-            _indexBuffer = factory.CreateIndexBuffer(100, false);
+            _vertexBuffer = factory.CreateVertexBuffer(100000, false); // Overkill ?
+            _indexBuffer = factory.CreateIndexBuffer(10000, false);
             _blendState = factory.CreateCustomBlendState(
                 true,
                 Blend.InverseSourceAlpha, Blend.Zero, BlendFunction.Add,
@@ -79,8 +79,8 @@ namespace Veldrid
             _rasterizerState = factory.CreateRasterizerState(FaceCullingMode.None, TriangleFillMode.Solid, true, true);
             RecreateFontDeviceTexture(rc);
 
-            string vertexShaderCode = LoadEmbeddedShaderCode("imgui-vertex", rc.BackendType);
-            string fragmentShaderCode = LoadEmbeddedShaderCode("imgui-frag", rc.BackendType);
+            var vertexShaderCode = LoadEmbeddedShaderCode(rc.ResourceFactory, "imgui-vertex", ShaderStages.Vertex);
+            var fragmentShaderCode = LoadEmbeddedShaderCode(rc.ResourceFactory, "imgui-frag", ShaderStages.Fragment);
             Shader vertexShader = factory.CreateShader(ShaderStages.Vertex, vertexShaderCode);
             Shader fragmentShader = factory.CreateShader(ShaderStages.Fragment, fragmentShaderCode);
 
@@ -97,21 +97,51 @@ namespace Veldrid
             _resourceBindings = factory.CreateShaderResourceBindingSlots(
                 _shaderSet,
                 new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Texture));
+                new ShaderResourceDescription("FontTexture", ShaderResourceType.Texture),
+                new ShaderResourceDescription("FontSampler", ShaderResourceType.Sampler));
             _projMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
         }
 
-        private string LoadEmbeddedShaderCode(string name, GraphicsBackend backend)
+        private CompiledShaderCode LoadEmbeddedShaderCode(ResourceFactory factory, string name, ShaderStages stage)
         {
-            if (!_embeddedResourceShaderLoader.TryOpenShader(name, backend, out Stream stream))
+            switch (factory.BackendType)
             {
-                throw new InvalidOperationException("Couldn't open imgui-vertex shader code stream.");
+                case GraphicsBackend.Direct3D11:
+                    {
+                        string resourceName = name + ".hlsl";
+                        return factory.ProcessShaderCode(stage, GetEmbeddedResourceText(resourceName));
+                    }
+                case GraphicsBackend.OpenGL:
+                case GraphicsBackend.OpenGLES:
+                    {
+                        string resourceName = name + ".glsl";
+                        return factory.ProcessShaderCode(stage, GetEmbeddedResourceText(resourceName));
+                    }
+                case GraphicsBackend.Vulkan:
+                    {
+                        string resourceName = name + ".spv";
+                        return factory.LoadProcessedShader(GetEmbeddedResourceBytes(resourceName));
+                    }
+                default:
+                    throw new NotImplementedException();
             }
+        }
 
-            using (stream)
-            using (StreamReader sr = new StreamReader(stream))
+        private string GetEmbeddedResourceText(string resourceName)
+        {
+            using (StreamReader sr = new StreamReader(_assembly.GetManifestResourceStream(resourceName)))
             {
                 return sr.ReadToEnd();
+            }
+        }
+
+        private byte[] GetEmbeddedResourceBytes(string resourceName)
+        {
+            using (Stream s = _assembly.GetManifestResourceStream(resourceName))
+            {
+                byte[] ret = new byte[s.Length];
+                s.Read(ret, 0, (int)s.Length);
+                return ret;
             }
         }
 
@@ -313,6 +343,7 @@ namespace Veldrid
             rc.ShaderSet = _shaderSet;
             rc.ShaderResourceBindingSlots = _resourceBindings;
             rc.SetConstantBuffer(0, _projMatrixBuffer);
+            rc.SetSamplerState(2, _rc.PointSampler);
 
             ImGui.ScaleClipRects(draw_data, ImGui.GetIO().DisplayFramebufferScale);
 

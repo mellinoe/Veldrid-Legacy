@@ -90,6 +90,11 @@
     <ContentItems Include="GLSL\instanced-simple-frag.glsl" />
     <ContentItems Include="GLSL\wireframe-frag.glsl" />
     <ContentItems Include="GLSL\wireframe-vertex.glsl" />
+    <ContentItems Include="SPIR-V\simple-vertex.spv" />
+    <ContentItems Include="SPIR-V\simple-frag.spv" />
+    <ContentItems Include="SPIR-V\textured-vertex.spv" />
+    <ContentItems Include="SPIR-V\lit-frag.spv" />
+
     <HlslShader Include="$(MSBuildThisFileDirectory)HLSL\billboard-geometry.hlsl">
       <Profile>gs_5_0</Profile>
       <EntryPoint>GS</EntryPoint>

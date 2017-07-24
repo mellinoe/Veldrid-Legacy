@@ -30,7 +30,8 @@ namespace Veldrid.Graphics.Vulkan
             VkWin32SurfaceCreateInfoKHR surfaceCI = VkWin32SurfaceCreateInfoKHR.New();
             surfaceCI.hwnd = _hwnd;
             surfaceCI.hinstance = _hinstance;
-            CheckResult(vkCreateWin32SurfaceKHR(instance, ref surfaceCI, null, out VkSurfaceKHR surface));
+            VkResult result = vkCreateWin32SurfaceKHR(instance, ref surfaceCI, null, out VkSurfaceKHR surface);
+            CheckResult(result);
             return surface;
         }
     }
@@ -51,7 +52,8 @@ namespace Veldrid.Graphics.Vulkan
             VkXlibSurfaceCreateInfoKHR xsci = VkXlibSurfaceCreateInfoKHR.New();
             xsci.dpy = _display;
             xsci.window = _window;
-            CheckResult(vkCreateXlibSurfaceKHR(instance, ref xsci, null, out VkSurfaceKHR surface));
+            VkResult result = vkCreateXlibSurfaceKHR(instance, ref xsci, null, out VkSurfaceKHR surface);
+            CheckResult(result);
             return surface;
         }
     }

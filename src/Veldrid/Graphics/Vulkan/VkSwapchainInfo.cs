@@ -3,10 +3,11 @@ using System.Linq;
 using Veldrid.Collections;
 using Vulkan;
 using static Vulkan.VulkanNative;
+using static Veldrid.Graphics.Vulkan.VulkanUtil;
 
 namespace Veldrid.Graphics.Vulkan
 {
-    public unsafe class VkSwapchainInfo
+    public unsafe class VkSwapchainInfo : IDisposable
     {
         private VkDevice _device;
         private VkResourceFactory _resourceFactory;
@@ -113,7 +114,8 @@ namespace Veldrid.Graphics.Vulkan
             VkSwapchainKHR oldSwapchain = _swapchain;
             swapchainCI.oldSwapchain = oldSwapchain;
 
-            vkCreateSwapchainKHR(device, ref swapchainCI, null, out _swapchain);
+            VkResult result = vkCreateSwapchainKHR(device, ref swapchainCI, null, out _swapchain);
+            CheckResult(result);
             if (oldSwapchain != NullHandle)
             {
                 vkDestroySwapchainKHR(device, oldSwapchain, null);
@@ -121,9 +123,11 @@ namespace Veldrid.Graphics.Vulkan
 
             // Get the images
             uint scImageCount = 0;
-            vkGetSwapchainImagesKHR(device, _swapchain, ref scImageCount, null);
+            result = vkGetSwapchainImagesKHR(device, _swapchain, ref scImageCount, null);
+            CheckResult(result);
             _scImages.Count = scImageCount;
-            vkGetSwapchainImagesKHR(device, _swapchain, ref scImageCount, out _scImages.Items[0]);
+            result = vkGetSwapchainImagesKHR(device, _swapchain, ref scImageCount, out _scImages.Items[0]);
+            CheckResult(result);
 
             _scImageFormat = surfaceFormat.format;
             _scExtent = swapchainCI.imageExtent;
@@ -188,6 +192,11 @@ namespace Veldrid.Graphics.Vulkan
                 fb.DepthTexture = _depthTexture;
                 _scFramebuffers[i] = fb;
             }
+        }
+
+        public void Dispose()
+        {
+            vkDestroySwapchainKHR(_device, _swapchain, null);
         }
     }
 }

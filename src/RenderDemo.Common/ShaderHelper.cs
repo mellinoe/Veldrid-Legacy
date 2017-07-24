@@ -10,7 +10,7 @@ namespace Veldrid.RenderDemo
         public static CompiledShaderCode LoadShaderCode(string shaderName, ShaderStages type, ResourceFactory factory)
         {
             GraphicsBackend backend = factory.BackendType;
-            string searchPath = Path.Combine(AppContext.BaseDirectory, backend == GraphicsBackend.Direct3D11 ? "HLSL" : "GLSL");
+            string searchPath = Path.Combine(AppContext.BaseDirectory, backend == GraphicsBackend.Direct3D11 ? "HLSL" : backend == GraphicsBackend.Vulkan ? "SPIR-V" : "GLSL");
 
             if (backend == GraphicsBackend.Direct3D11)
             {
@@ -28,6 +28,11 @@ namespace Veldrid.RenderDemo
                         return factory.ProcessShaderCode(type, File.ReadAllText(hlslPath));
                     }
                 }
+            }
+            else if (backend == GraphicsBackend.Vulkan)
+            {
+                string bytecodePath = Path.Combine(searchPath, $"{shaderName}.spv");
+                return factory.LoadProcessedShader(File.ReadAllBytes(bytecodePath));
             }
             else
             {

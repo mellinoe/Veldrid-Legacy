@@ -1,11 +1,14 @@
 ﻿using System;
 using Vulkan;
 using static Vulkan.VulkanNative;
+using static Veldrid.Graphics.Vulkan.VulkanUtil;
 
 namespace Veldrid.Graphics.Vulkan
 {
     public unsafe class VkShaderResourceBindingSlots : ShaderResourceBindingSlots
     {
+        public VkPipelineLayout PipelineLayout { get; }
+
         public VkDescriptorSetLayout DescriptorSetLayout { get; }
 
         public ShaderResourceDescription[] Resources { get; }
@@ -29,6 +32,13 @@ namespace Veldrid.Graphics.Vulkan
 
             vkCreateDescriptorSetLayout(device, ref descriptorSetLayoutCI, null, out VkDescriptorSetLayout descriptorSetLayout);
             DescriptorSetLayout = descriptorSetLayout;
+
+            VkPipelineLayoutCreateInfo pipelineLayoutCI = VkPipelineLayoutCreateInfo.New();
+            pipelineLayoutCI.setLayoutCount = 1;
+            pipelineLayoutCI.pSetLayouts = &descriptorSetLayout;
+            VkResult result = vkCreatePipelineLayout(device, ref pipelineLayoutCI, null, out VkPipelineLayout layout);
+            CheckResult(result);
+            PipelineLayout = layout;
         }
 
         private VkDescriptorType MapDescriptorType(ShaderResourceType type)

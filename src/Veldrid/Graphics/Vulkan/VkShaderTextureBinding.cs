@@ -16,7 +16,7 @@ namespace Veldrid.Graphics.Vulkan
             imageViewCI.format = tex2D.Format;
             imageViewCI.image = tex2D.DeviceImage;
             imageViewCI.viewType = VkImageViewType.Image2D;
-            imageViewCI.subresourceRange.aspectMask = VkImageAspectFlags.Color;
+            imageViewCI.subresourceRange.aspectMask = tex2D.CreateOptions == DeviceTextureCreateOptions.DepthStencil ? VkImageAspectFlags.Depth : VkImageAspectFlags.Color;
             imageViewCI.subresourceRange.layerCount = 1;
             imageViewCI.subresourceRange.levelCount = (uint)tex2D.MipLevels;
 

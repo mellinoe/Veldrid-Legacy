@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using SharpDX.DXGI;
 using System.Threading.Tasks;
 using Veldrid.Graphics.OpenGLES;
+using Veldrid.Graphics.Vulkan;
 
 namespace Veldrid.RenderDemo
 {
@@ -533,7 +534,7 @@ namespace Veldrid.RenderDemo
             DrawMainMenu();
 
             _fta.AddTime(deltaSeconds);
-            string apiName = (_rc is OpenGLRenderContext) ? "OpenGL" : (_rc is OpenGLESRenderContext) ? "OpenGL ES" : "Direct3D";
+            string apiName = (_rc is OpenGLRenderContext) ? "OpenGL" : (_rc is OpenGLESRenderContext) ? "OpenGL ES" : (_rc is VkRenderContext) ? "Vulkan" : "Direct3D";
             _window.Title = $"[{apiName}] " + _fta.CurrentAverageFramesPerSecond.ToString("000.0 fps / ") + _fta.CurrentAverageFrameTimeMilliseconds.ToString("#00.00 ms");
             if (InputTracker.GetKeyDown(Key.F4) && (InputTracker.GetKey(Key.AltLeft) || InputTracker.GetKey(Key.AltRight)))
             {

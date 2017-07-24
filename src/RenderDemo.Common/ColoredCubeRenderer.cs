@@ -13,7 +13,7 @@ namespace Veldrid.RenderDemo
         private static VertexBuffer s_vb1;
         private static IndexBuffer s_ib;
         private static Material s_material;
-        private static ConstantBuffer s_modelViewBuffer;
+        private ConstantBuffer _modelViewBuffer;
         private static RenderContext s_currentContext;
 
         public Vector3 Position { get; set; } = Vector3.Zero;
@@ -32,6 +32,8 @@ namespace Veldrid.RenderDemo
                     ChangeRenderContext(ad, context);
                 }
             }
+
+            _modelViewBuffer = context.ResourceFactory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
         }
 
         public void ChangeRenderContext(AssetDatabase ad, RenderContext context)
@@ -41,6 +43,7 @@ namespace Veldrid.RenderDemo
                 Dispose();
                 InitializeContextObjects(context);
             }
+            _modelViewBuffer = context.ResourceFactory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
         }
 
         private void InitializeContextObjects(RenderContext context)
@@ -85,8 +88,6 @@ namespace Veldrid.RenderDemo
                 materialInputs0,
                 materialInputs1,
                 resources);
-
-            s_modelViewBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
         }
 
         public IList<string> GetStagesParticipated() => CommonStages.Standard;
@@ -102,13 +103,13 @@ namespace Veldrid.RenderDemo
                 * Matrix4x4.CreateTranslation(Position)
                 * Matrix4x4.CreateTranslation((float)Math.Sin(rotationAmount) * Vector3.UnitY)
                 * SharedDataProviders.GetProvider<Matrix4x4>("ViewMatrix").Data;
-            s_modelViewBuffer.SetData(ref mvData, 64);
+            _modelViewBuffer.SetData(ref mvData, 64);
             rc.SetVertexBuffer(0, s_vb0);
             rc.SetVertexBuffer(1, s_vb1);
             rc.IndexBuffer = s_ib;
             s_material.Apply(rc);
             rc.SetConstantBuffer(0, SharedDataProviders.ProjectionMatrixBuffer);
-            rc.SetConstantBuffer(1, s_modelViewBuffer);
+            rc.SetConstantBuffer(1, _modelViewBuffer);
             rc.DrawIndexedPrimitives(s_cubeIndices.Length, 0);
         }
 
@@ -123,6 +124,7 @@ namespace Veldrid.RenderDemo
             s_vb1.Dispose();
             s_ib.Dispose();
             s_material.Dispose();
+            _modelViewBuffer.Dispose();
         }
 
         public bool Cull(ref BoundingFrustum visibleFrustum)

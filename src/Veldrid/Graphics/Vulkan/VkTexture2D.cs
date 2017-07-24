@@ -112,6 +112,8 @@ namespace Veldrid.Graphics.Vulkan
 
         public VkImage DeviceImage => _image;
 
+        public DeviceTextureCreateOptions CreateOptions => _createOptions;
+
         public void GetTextureData(int mipLevel, IntPtr destination, int storageSizeInBytes)
         {
             throw new NotImplementedException();
