@@ -27,7 +27,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
         public void ChangeRenderContext(AssetDatabase ad, RenderContext rc)
         {
             var factory = rc.ResourceFactory;
-            _vertexBuffer = factory.CreateVertexBuffer(VertexPositionTexture.SizeInBytes, false);
+            _vertexBuffer = factory.CreateVertexBuffer(VertexPositionTexture.SizeInBytes * 4, false);
             _vertexBuffer.SetVertexData(new VertexPositionTexture[]
             {
                 new VertexPositionTexture(new Vector3(0, 0, 0), new Vector2(0, 0)),
@@ -37,7 +37,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
             }, new VertexDescriptor(VertexPositionTexture.SizeInBytes, VertexPositionTexture.ElementCount, 0, IntPtr.Zero),
             0);
 
-            _indexBuffer = factory.CreateIndexBuffer(sizeof(byte) * 6, false);
+            _indexBuffer = factory.CreateIndexBuffer(sizeof(ushort) * 6, false);
             _indexBuffer.SetIndices(new ushort[] { 0, 1, 2, 0, 2, 3 });
 
             _material = factory.CreateMaterial(
@@ -52,7 +52,8 @@ namespace Veldrid.RenderDemo.ForwardRendering
                 {
                     new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
                     new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                    new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture)
+                    new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture),
+                    new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Sampler),
                 });
 
             _worldMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);

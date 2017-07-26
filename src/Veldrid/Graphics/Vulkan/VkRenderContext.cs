@@ -28,7 +28,7 @@ namespace Veldrid.Graphics.Vulkan
         private VkCommandPool _perFrameCommandPool;
         private VkDescriptorPool _perFrameDescriptorPool;
         private VkSemaphore _imageAvailableSemaphore;
-        private VkSemaphore _renderCompleteSemaphore;
+        private RawList<VkSemaphore> _renderPassSemaphores = new RawList<VkSemaphore>();
         private VkPrimitiveTopology _primitiveTopology = VkPrimitiveTopology.TriangleList;
         private VkSwapchainInfo _scInfo;
         private VkConstantBuffer[] _constantBuffers = new VkConstantBuffer[20]; // TODO: Real limit.
@@ -37,17 +37,15 @@ namespace Veldrid.Graphics.Vulkan
         private VkRect2D _scissorRect;
         private VkCommandPool _graphicsCommandPool;
         private VkResourceCache _resourceCache;
+        private PFN_vkDebugReportCallbackEXT _debugCallback;
 
         // Draw call tracking
         private List<RenderPassInfo> _renderPassStates = new List<RenderPassInfo>();
         private RenderPassInfo _currentRenderPassState;
-        private bool _needsNewRenderPass = true;
-        private bool _clearBuffer;
-        private RgbaFloat _cachedClearColor;
         private List<IDisposable> _frameDisposables = new List<IDisposable>();
         private List<VkPipeline> _framePipelines = new List<VkPipeline>();
         private List<VkPipelineLayout> _framePipelineLayouts = new List<VkPipelineLayout>();
-        private PFN_vkDebugReportCallbackEXT _debugCallback;
+        private bool _framebufferChanged;
 
         public VkDevice Device => _device;
         public VkPhysicalDevice PhysicalDevice => _physicalDevice;
@@ -307,15 +305,15 @@ namespace Veldrid.Graphics.Vulkan
         {
             VkDescriptorPoolSize* sizes = stackalloc VkDescriptorPoolSize[3];
             sizes[0].type = VkDescriptorType.UniformBuffer;
-            sizes[0].descriptorCount = 1000;
+            sizes[0].descriptorCount = 5000;
             sizes[1].type = VkDescriptorType.SampledImage;
-            sizes[1].descriptorCount = 1000;
+            sizes[1].descriptorCount = 5000;
             sizes[2].type = VkDescriptorType.Sampler;
-            sizes[2].descriptorCount = 1000;
+            sizes[2].descriptorCount = 5000;
 
             VkDescriptorPoolCreateInfo descriptorPoolCI = VkDescriptorPoolCreateInfo.New();
             descriptorPoolCI.flags = VkDescriptorPoolCreateFlags.FreeDescriptorSet;
-            descriptorPoolCI.maxSets = 1000;
+            descriptorPoolCI.maxSets = 5000;
             descriptorPoolCI.pPoolSizes = sizes;
             descriptorPoolCI.poolSizeCount = 3;
 
@@ -336,12 +334,17 @@ namespace Veldrid.Graphics.Vulkan
         {
             VkSemaphoreCreateInfo semaphoreCI = VkSemaphoreCreateInfo.New();
             vkCreateSemaphore(_device, ref semaphoreCI, null, out _imageAvailableSemaphore);
-            vkCreateSemaphore(_device, ref semaphoreCI, null, out _renderCompleteSemaphore);
+            const int MaxRenderPasses = 10;
+            _renderPassSemaphores.Resize(MaxRenderPasses);
+            for (int i = 0; i < MaxRenderPasses; i++)
+            {
+                vkCreateSemaphore(_device, ref semaphoreCI, null, out _renderPassSemaphores[i]);
+            }
         }
 
         public override ResourceFactory ResourceFactory { get; }
 
-        public override RenderCapabilities RenderCapabilities => throw new NotImplementedException();
+        public override RenderCapabilities RenderCapabilities => new RenderCapabilities(true, true);
 
         public override void DrawIndexedPrimitives(int count, int startingIndex) => DrawIndexedPrimitives(count, startingIndex, 0);
         public override void DrawIndexedPrimitives(int count, int startingIndex, int startingVertex)
@@ -349,7 +352,7 @@ namespace Veldrid.Graphics.Vulkan
             RenderPassInfo renderPassState = GetCurrentRenderPass();
             VkPipelineLayout layout = ShaderResourceBindingSlots.PipelineLayout;
             VkPipelineCacheKey pipelineCacheKey = new VkPipelineCacheKey();
-            pipelineCacheKey.RenderPass = renderPassState.Framebuffer.RenderPass;
+            pipelineCacheKey.RenderPass = renderPassState.Framebuffer.RenderPassClearBuffer;
             pipelineCacheKey.PipelineLayout = layout;
             pipelineCacheKey.BlendState = (VkBlendState)BlendState;
             pipelineCacheKey.Framebuffer = renderPassState.Framebuffer;
@@ -370,7 +373,7 @@ namespace Veldrid.Graphics.Vulkan
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.New();
             beginInfo.flags = VkCommandBufferUsageFlags.OneTimeSubmit | VkCommandBufferUsageFlags.RenderPassContinue;
             VkCommandBufferInheritanceInfo inheritanceInfo = VkCommandBufferInheritanceInfo.New();
-            inheritanceInfo.renderPass = renderPassState.Framebuffer.RenderPass;
+            inheritanceInfo.renderPass = renderPassState.Framebuffer.RenderPassClearBuffer;
             beginInfo.pInheritanceInfo = &inheritanceInfo;
             vkBeginCommandBuffer(cb, ref beginInfo);
 
@@ -433,8 +436,9 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override void PlatformClearBuffer()
         {
-            _clearBuffer = true;
-            _cachedClearColor = ClearColor;
+            RenderPassInfo renderPassInfo = GetCurrentRenderPass();
+            renderPassInfo.ClearBuffer = true;
+            renderPassInfo.ClearColor = ClearColor;
         }
 
         protected override void PlatformClearMaterialResourceBindings()
@@ -475,7 +479,7 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override void PlatformSetFramebuffer(Framebuffer framebuffer)
         {
-            _needsNewRenderPass = true;
+            _framebufferChanged = true;
         }
 
         protected override void PlatformSetIndexBuffer(IndexBuffer ib)
@@ -530,7 +534,8 @@ namespace Veldrid.Graphics.Vulkan
             // Then, present the swapchain.
             VkPresentInfoKHR presentInfo = VkPresentInfoKHR.New();
             presentInfo.waitSemaphoreCount = 1;
-            VkSemaphore signalSemaphore = _renderCompleteSemaphore;
+            // Wait on the last render pass to complete before presenting.
+            VkSemaphore signalSemaphore = _renderPassSemaphores[_renderPassStates.Count - 1];
             presentInfo.pWaitSemaphores = &signalSemaphore;
 
             VkSwapchainKHR swapchain = _scInfo.Swapchain;
@@ -542,70 +547,70 @@ namespace Veldrid.Graphics.Vulkan
             vkQueuePresentKHR(_presentQueue, ref presentInfo);
 
             ClearFrameObjects();
-            _needsNewRenderPass = true;
+            _framebufferChanged = true;
         }
 
         private void FlushFrameDrawCommands()
         {
             _scInfo.AcquireNextImage(_device, _imageAvailableSemaphore);
-            EnsureRenderPassCreated();
-            if (_renderPassStates.Count > 1)
+            for (int i = 0; i < _renderPassStates.Count; i++)
             {
-                throw new NotImplementedException();
-            }
+                RenderPassInfo renderPassState = _renderPassStates[i];
 
-            VkCommandBuffer primaryCommandBuffer = GetPrimaryCommandBuffer();
-            _renderPassStates[0].PrimaryCommandBuffer = primaryCommandBuffer;
-            VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.New();
-            beginInfo.flags = VkCommandBufferUsageFlags.OneTimeSubmit;
-            vkBeginCommandBuffer(primaryCommandBuffer, ref beginInfo);
-            VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.New();
-            VkRegularFramebuffer fbInfo = _scInfo.GetCurrentFramebuffer();
-            renderPassBeginInfo.framebuffer = fbInfo.VkFramebuffer;
-            renderPassBeginInfo.renderPass = fbInfo.RenderPass;
+                VkCommandBuffer primaryCommandBuffer = GetPrimaryCommandBuffer();
+                renderPassState.PrimaryCommandBuffer = primaryCommandBuffer;
+                VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.New();
+                beginInfo.flags = VkCommandBufferUsageFlags.OneTimeSubmit;
+                vkBeginCommandBuffer(primaryCommandBuffer, ref beginInfo);
+                VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.New();
+                VkFramebufferBase fbInfo = renderPassState.Framebuffer;
+                renderPassBeginInfo.framebuffer = fbInfo.VkFramebuffer;
+                renderPassBeginInfo.renderPass = renderPassState.ClearBuffer
+                    ? fbInfo.RenderPassClearBuffer
+                    : fbInfo.RenderPassNoClear;
 
-            if (_clearBuffer)
-            {
-                _clearBuffer = false;
-                VkClearColorValue colorClear = new VkClearColorValue
+                if (renderPassState.ClearBuffer)
                 {
-                    float32_0 = _cachedClearColor.R,
-                    float32_1 = _cachedClearColor.G,
-                    float32_2 = _cachedClearColor.B,
-                    float32_3 = _cachedClearColor.A
-                };
-                VkClearDepthStencilValue depthClear = new VkClearDepthStencilValue() { depth = 1f, stencil = 0 };
-                FixedArray2<VkClearValue> clearValues = new FixedArray2<VkClearValue>();
-                clearValues.First.color = colorClear;
-                clearValues.Second.depthStencil = depthClear;
+                    VkClearColorValue colorClear = new VkClearColorValue
+                    {
+                        float32_0 = renderPassState.ClearColor.R,
+                        float32_1 = renderPassState.ClearColor.G,
+                        float32_2 = renderPassState.ClearColor.B,
+                        float32_3 = renderPassState.ClearColor.A
+                    };
+                    VkClearDepthStencilValue depthClear = new VkClearDepthStencilValue() { depth = 1f, stencil = 0 };
+                    FixedArray2<VkClearValue> clearValues = new FixedArray2<VkClearValue>();
+                    clearValues.First.color = colorClear;
+                    clearValues.Second.depthStencil = depthClear;
 
-                renderPassBeginInfo.clearValueCount = 2;
-                renderPassBeginInfo.pClearValues = &clearValues.First;
+                    renderPassBeginInfo.clearValueCount = 2;
+                    renderPassBeginInfo.pClearValues = &clearValues.First;
+                }
+                renderPassBeginInfo.renderArea.extent = new VkExtent2D(fbInfo.Width, fbInfo.Height);
+
+                vkCmdBeginRenderPass(primaryCommandBuffer, ref renderPassBeginInfo, VkSubpassContents.SecondaryCommandBuffers);
+                RawList<VkCommandBuffer> secondaryCBs = renderPassState.SecondaryCommandBuffers;
+                if (secondaryCBs.Count > 0)
+                {
+                    vkCmdExecuteCommands(primaryCommandBuffer, secondaryCBs.Count, ref secondaryCBs[0]);
+                }
+                vkCmdEndRenderPass(primaryCommandBuffer);
+                vkEndCommandBuffer(primaryCommandBuffer);
+
+                VkSubmitInfo submitInfo = VkSubmitInfo.New();
+                VkSemaphore waitSemaphore = (i == 0) ? _imageAvailableSemaphore : _renderPassSemaphores[i - 1];
+                VkPipelineStageFlags waitStages = VkPipelineStageFlags.ColorAttachmentOutput;
+                submitInfo.waitSemaphoreCount = 1;
+                submitInfo.pWaitSemaphores = &waitSemaphore;
+                submitInfo.pWaitDstStageMask = &waitStages;
+                VkCommandBuffer cb = primaryCommandBuffer;
+                submitInfo.commandBufferCount = 1;
+                submitInfo.pCommandBuffers = &cb;
+                VkSemaphore signalSemaphore = _renderPassSemaphores[i];
+                submitInfo.signalSemaphoreCount = 1;
+                submitInfo.pSignalSemaphores = &signalSemaphore;
+                vkQueueSubmit(_graphicsQueue, 1, ref submitInfo, VkFence.Null);
             }
-            renderPassBeginInfo.renderArea.extent = _scInfo.SwapchainExtent;
-
-            vkCmdBeginRenderPass(primaryCommandBuffer, ref renderPassBeginInfo, VkSubpassContents.SecondaryCommandBuffers);
-            RawList<VkCommandBuffer> secondaryCBs = _renderPassStates[0].SecondaryCommandBuffers;
-            if (secondaryCBs.Count > 0)
-            {
-                vkCmdExecuteCommands(primaryCommandBuffer, secondaryCBs.Count, ref secondaryCBs[0]);
-            }
-            vkCmdEndRenderPass(primaryCommandBuffer);
-            vkEndCommandBuffer(primaryCommandBuffer);
-
-            VkSubmitInfo submitInfo = VkSubmitInfo.New();
-            VkSemaphore waitSemaphore = _imageAvailableSemaphore;
-            VkPipelineStageFlags waitStages = VkPipelineStageFlags.ColorAttachmentOutput;
-            submitInfo.waitSemaphoreCount = 1;
-            submitInfo.pWaitSemaphores = &waitSemaphore;
-            submitInfo.pWaitDstStageMask = &waitStages;
-            VkCommandBuffer cb = primaryCommandBuffer;
-            submitInfo.commandBufferCount = 1;
-            submitInfo.pCommandBuffers = &cb;
-            VkSemaphore signalSemaphore = _renderCompleteSemaphore;
-            submitInfo.signalSemaphoreCount = 1;
-            submitInfo.pSignalSemaphores = &signalSemaphore;
-            vkQueueSubmit(_graphicsQueue, 1, ref submitInfo, VkFence.Null);
         }
 
         private void ClearFrameObjects()
@@ -651,18 +656,19 @@ namespace Veldrid.Graphics.Vulkan
 
         private RenderPassInfo GetCurrentRenderPass()
         {
-            EnsureRenderPassCreated();
+            if (_framebufferChanged)
+            {
+                _framebufferChanged = false;
+                CreateNextRenderPass();
+            }
+
             return _currentRenderPassState;
         }
 
-        private void EnsureRenderPassCreated()
+        private void CreateNextRenderPass()
         {
-            if (_needsNewRenderPass)
-            {
-                _needsNewRenderPass = false;
-                _currentRenderPassState = new RenderPassInfo() { Framebuffer = CurrentFramebuffer };
-                _renderPassStates.Add(_currentRenderPassState);
-            }
+            _currentRenderPassState = new RenderPassInfo() { Framebuffer = CurrentFramebuffer };
+            _renderPassStates.Add(_currentRenderPassState);
         }
 
         private VkCommandBuffer GetCommandBuffer()
@@ -692,5 +698,7 @@ namespace Veldrid.Graphics.Vulkan
         public VkFramebufferBase Framebuffer;
         public VkCommandBuffer PrimaryCommandBuffer;
         public RawList<VkCommandBuffer> SecondaryCommandBuffers { get; set; } = new RawList<VkCommandBuffer>();
+        public bool ClearBuffer;
+        public RgbaFloat ClearColor;
     }
 }

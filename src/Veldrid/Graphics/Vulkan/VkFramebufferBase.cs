@@ -6,7 +6,8 @@ namespace Veldrid.Graphics.Vulkan
     public abstract class VkFramebufferBase : Framebuffer
     {
         public abstract VkFramebuffer VkFramebuffer { get; }
-        public abstract VkRenderPass RenderPass { get; }
+        public abstract VkRenderPass RenderPassClearBuffer { get; }
+        public abstract VkRenderPass RenderPassNoClear { get; }
 
         public abstract VkTexture2D ColorTexture { get; set; }
         public abstract VkTexture2D DepthTexture { get; set; }

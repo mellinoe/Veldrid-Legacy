@@ -25,15 +25,15 @@ namespace Veldrid.Graphics.Vulkan
 
             VkDescriptorPoolSize* sizes = stackalloc VkDescriptorPoolSize[3];
             sizes[0].type = VkDescriptorType.UniformBuffer;
-            sizes[0].descriptorCount = 10000;
+            sizes[0].descriptorCount = 50000;
             sizes[1].type = VkDescriptorType.SampledImage;
-            sizes[1].descriptorCount = 1000;
+            sizes[1].descriptorCount = 15000;
             sizes[2].type = VkDescriptorType.Sampler;
-            sizes[2].descriptorCount = 1000;
+            sizes[2].descriptorCount = 15000;
 
             VkDescriptorPoolCreateInfo descriptorPoolCI = VkDescriptorPoolCreateInfo.New();
             descriptorPoolCI.flags = VkDescriptorPoolCreateFlags.FreeDescriptorSet;
-            descriptorPoolCI.maxSets = 1000;
+            descriptorPoolCI.maxSets = 15000;
             descriptorPoolCI.pPoolSizes = sizes;
             descriptorPoolCI.poolSizeCount = 3;
 

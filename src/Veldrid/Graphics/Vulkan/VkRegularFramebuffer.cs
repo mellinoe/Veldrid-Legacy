@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using Vulkan;
+using static Veldrid.Graphics.Vulkan.VulkanUtil;
 using static Vulkan.VulkanNative;
 
 namespace Veldrid.Graphics.Vulkan
@@ -13,7 +14,8 @@ namespace Veldrid.Graphics.Vulkan
         private VkTexture2D _colorTexture;
         private VkTexture2D _depthTexture;
         private VkFramebuffer _framebuffer;
-        private VkRenderPass _renderPass;
+        private VkRenderPass _renderPassClear;
+        private VkRenderPass _renderPassNoClear;
 
         public VkRegularFramebuffer(VkDevice device, VkPhysicalDevice physicalDevice)
         {
@@ -48,7 +50,8 @@ namespace Veldrid.Graphics.Vulkan
         public override int Width => ColorTexture != null ? ColorTexture.Width : DepthTexture != null ? DepthTexture.Width : 0;
         public override int Height => ColorTexture != null ? ColorTexture.Height : DepthTexture != null ? DepthTexture.Height : 0;
 
-        public override VkRenderPass RenderPass => _renderPass;
+        public override VkRenderPass RenderPassClearBuffer => _renderPassClear;
+        public override VkRenderPass RenderPassNoClear => _renderPassNoClear;
         public override VkFramebuffer VkFramebuffer => _framebuffer;
 
         public override void AttachColorTexture(int index, VkTexture2D texture)
@@ -140,8 +143,16 @@ namespace Veldrid.Graphics.Vulkan
             renderPassCI.dependencyCount = 1;
             renderPassCI.pDependencies = &subpassDependency;
 
-            vkCreateRenderPass(_device, ref renderPassCI, null, out VkRenderPass newRenderPass);
-            _renderPass = newRenderPass;
+            VkResult result = vkCreateRenderPass(_device, ref renderPassCI, null, out _renderPassClear);
+            CheckResult(result);
+
+            for (int i = 0; i < attachments.Count; i++)
+            {
+                attachments[i].loadOp = VkAttachmentLoadOp.Load;
+            }
+
+            result = vkCreateRenderPass(_device, ref renderPassCI, null, out _renderPassNoClear);
+            CheckResult(result);
 
             StackList<VkImageView, Size2IntPtr> fbAttachments = new StackList<VkImageView, Size2IntPtr>();
 
@@ -168,7 +179,7 @@ namespace Veldrid.Graphics.Vulkan
             }
 
             VkFramebufferCreateInfo framebufferCI = VkFramebufferCreateInfo.New();
-            framebufferCI.renderPass = newRenderPass;
+            framebufferCI.renderPass = _renderPassClear;
             framebufferCI.attachmentCount = fbAttachments.Count;
             framebufferCI.pAttachments = (VkImageView*)fbAttachments.Data;
             framebufferCI.width = width;
@@ -191,9 +202,9 @@ namespace Veldrid.Graphics.Vulkan
 
         public override void Dispose()
         {
-            if (RenderPass != VkRenderPass.Null)
+            if (RenderPassClearBuffer != VkRenderPass.Null)
             {
-                vkDestroyRenderPass(_device, RenderPass, null);
+                vkDestroyRenderPass(_device, RenderPassClearBuffer, null);
             }
             if (VkFramebuffer != VkFramebuffer.Null)
             {

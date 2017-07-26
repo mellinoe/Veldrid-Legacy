@@ -37,16 +37,11 @@ out gl_PerVertex
 
 void main()
 {
-    mat4 correctedProjection = projection_matrix;
-    correctedProjection[1][1] *= -1;
-
     vec4 worldPos = world_matrix * vec4(in_position, 1);
     vec4 viewPos = view_matrix * worldPos;
-    vec4 screenPos = correctedProjection * viewPos;
+    vec4 screenPos = projection_matrix * viewPos;
     gl_Position = screenPos;
-
-    // Normalize depth range
-    gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;
+    gl_Position.y = -gl_Position.y; // Correct for Vulkan clip coordinates
 
     texCoord = in_texCoord; // Pass along unchanged.
 

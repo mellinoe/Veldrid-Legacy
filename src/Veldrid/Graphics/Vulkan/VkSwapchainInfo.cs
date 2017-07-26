@@ -45,7 +45,8 @@ namespace Veldrid.Graphics.Vulkan
 
         public override int Height => (int)_scExtent.height;
 
-        public override VkRenderPass RenderPass => _scFramebuffers[0].RenderPass;
+        public override VkRenderPass RenderPassClearBuffer => _scFramebuffers[0].RenderPassClearBuffer;
+        public override VkRenderPass RenderPassNoClear => _scFramebuffers[0].RenderPassNoClear;
 
         public VkSwapchainInfo(
             VkDevice device,

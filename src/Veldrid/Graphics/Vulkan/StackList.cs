@@ -80,6 +80,8 @@ namespace Veldrid.Graphics.Vulkan
 
             _count += 1;
         }
+
+        public ref T this[int index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(Data), index);
     }
 
     internal unsafe struct Size16Bytes { public fixed byte Data[16]; }

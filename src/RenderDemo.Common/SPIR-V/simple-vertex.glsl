@@ -26,9 +26,7 @@ out gl_PerVertex
 
 void main()
 {
-    mat4 correctedProjection = projection_matrix;
-    correctedProjection[1][1] *= -1;
-    gl_Position = correctedProjection * modelview_matrix * vec4(in_position, 1);
-    // Normalize depth range
+    gl_Position = projection_matrix * modelview_matrix * vec4(in_position, 1);
+    gl_Position.y = -gl_Position.y; // Correct for Vulkan clip coordinates
     color = in_color;
 }

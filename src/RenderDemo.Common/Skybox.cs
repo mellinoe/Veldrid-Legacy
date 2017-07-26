@@ -68,7 +68,8 @@ namespace Veldrid.RenderDemo
                 shaderSet,
                 new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("Skybox", ShaderResourceType.Texture));
+                new ShaderResourceDescription("Skybox", ShaderResourceType.Texture),
+                new ShaderResourceDescription("Skybox", ShaderResourceType.Sampler));
 
             _material = new Material(shaderSet, constantSlots);
             _viewMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);

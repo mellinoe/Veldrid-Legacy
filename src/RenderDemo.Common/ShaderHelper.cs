@@ -6,7 +6,6 @@ namespace Veldrid.RenderDemo
 {
     public static class ShaderHelper
     {
-
         public static CompiledShaderCode LoadShaderCode(string shaderName, ShaderStages type, ResourceFactory factory)
         {
             GraphicsBackend backend = factory.BackendType;

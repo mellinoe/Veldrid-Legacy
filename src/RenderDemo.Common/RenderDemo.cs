@@ -352,8 +352,8 @@ namespace Veldrid.RenderDemo
                 _sceneBoundsRenderer = new BoundingBoxWireframeRenderer(_shadowsScene.OctreeRootNode.GetPreciseBounds(), _ad, _rc);
                 _shadowsScene.AddRenderItem(_sceneBoundsRenderer);
 
-                var skybox = new Skybox(_rc, _ad);
-                _shadowsScene.AddRenderItem(skybox);
+                //var skybox = new Skybox(_rc, _ad);
+                //_shadowsScene.AddRenderItem(skybox);
 
                 _shadowMapPreview = new ShadowMapPreview(_ad, _rc);
                 _shadowsScene.AddRenderItem(_shadowMapPreview);

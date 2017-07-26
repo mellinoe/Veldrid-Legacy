@@ -9,3 +9,15 @@ glslangvalidator.exe -V shadowmap-frag.glsl -o shadowmap-frag.spv -S frag
 
 glslangvalidator.exe -V forward_mtl-vertex.glsl -o forward_mtl-vertex.spv -S vert
 glslangvalidator.exe -V forward_mtl-frag.glsl -o forward_mtl-frag.spv -S frag
+
+glslangvalidator.exe -V shadow-vertex.glsl -o shadow-vertex.spv -S vert
+glslangvalidator.exe -V shadow-frag.glsl -o shadow-frag.spv -S frag
+
+glslangvalidator.exe -V wireframe-vertex.glsl -o wireframe-vertex.spv -S vert
+glslangvalidator.exe -V wireframe-frag.glsl -o wireframe-frag.spv -S frag
+
+glslangvalidator.exe -V skybox-vertex.glsl -o skybox-vertex.spv -S vert
+glslangvalidator.exe -V skybox-frag.glsl -o skybox-frag.spv -S frag
+
+glslangvalidator.exe -V simple-2d-vertex.glsl -o simple-2d-vertex.spv -S vert
+glslangvalidator.exe -V simple-2d-frag.glsl -o simple-2d-frag.spv -S frag

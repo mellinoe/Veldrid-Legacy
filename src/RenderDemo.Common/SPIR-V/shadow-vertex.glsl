@@ -23,12 +23,12 @@ layout(binding = 3) uniform LightViewMatrixBuffer
     mat4 lightView;
 };
 
-layout(binding = 4) uniform WorldMatrixBuffer
+layout(binding = 5) uniform WorldMatrixBuffer
 {
     mat4 world;
 };
 
-layout(binding = 5) uniform InverseTransposeWorldMatrixBuffer
+layout(binding = 6) uniform InverseTransposeWorldMatrixBuffer
 {
     mat4 inverseTransposeWorld;
 };
