@@ -54,6 +54,7 @@ namespace Veldrid.Graphics.Vulkan
             samplerCI.maxLod = maximumLod;
             samplerCI.mipLodBias = lodBias;
             samplerCI.compareOp = VkFormats.VeldridToVkDepthComparison(comparison);
+            samplerCI.borderColor = VkBorderColor.FloatOpaqueWhite;
             VkResult result = vkCreateSampler(_device, ref samplerCI, null, out VkSampler sampler);
             CheckResult(result);
             Sampler = sampler;

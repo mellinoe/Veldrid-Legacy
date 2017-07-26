@@ -35,9 +35,31 @@ namespace Veldrid.Graphics.Vulkan
                 true);
         }
 
-        public override CubemapTexture CreateCubemapTexture(IntPtr pixelsFront, IntPtr pixelsBack, IntPtr pixelsLeft, IntPtr pixelsRight, IntPtr pixelsTop, IntPtr pixelsBottom, int width, int height, int pixelSizeinBytes, PixelFormat format)
+        public override CubemapTexture CreateCubemapTexture(
+            IntPtr pixelsFront,
+            IntPtr pixelsBack,
+            IntPtr pixelsLeft,
+            IntPtr pixelsRight,
+            IntPtr pixelsTop,
+            IntPtr pixelsBottom,
+            int width,
+            int height,
+            int pixelSizeinBytes,
+            PixelFormat format)
         {
-            throw new NotImplementedException();
+            return new VkCubemapTexture(
+                _device,
+                _physicalDevice,
+                RenderContext,
+                pixelsFront,
+                pixelsBack,
+                pixelsLeft,
+                pixelsRight,
+                pixelsTop,
+                pixelsBottom,
+                width,
+                height,
+                format);
         }
 
         public override Framebuffer CreateFramebuffer()
@@ -82,7 +104,7 @@ namespace Veldrid.Graphics.Vulkan
 
         public override ShaderTextureBinding CreateShaderTextureBinding(DeviceTexture texture)
         {
-            return new VkShaderTextureBinding(_device, (VkTexture2D)texture);
+            return new VkShaderTextureBinding(_device, (VkDeviceTexture)texture);
         }
 
         public override DeviceTexture2D CreateTexture(

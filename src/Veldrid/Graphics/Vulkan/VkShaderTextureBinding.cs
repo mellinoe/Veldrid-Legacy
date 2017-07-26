@@ -8,17 +8,17 @@ namespace Veldrid.Graphics.Vulkan
     {
         private readonly VkDevice _device;
 
-        public VkShaderTextureBinding(VkDevice device, VkTexture2D tex2D)
+        public VkShaderTextureBinding(VkDevice device, VkDeviceTexture deviceTexture)
         {
             _device = device;
-            BoundTexture = tex2D;
+            BoundTexture = deviceTexture;
             VkImageViewCreateInfo imageViewCI = VkImageViewCreateInfo.New();
-            imageViewCI.format = tex2D.Format;
-            imageViewCI.image = tex2D.DeviceImage;
+            imageViewCI.format = deviceTexture.Format;
+            imageViewCI.image = deviceTexture.DeviceImage;
             imageViewCI.viewType = VkImageViewType.Image2D;
-            imageViewCI.subresourceRange.aspectMask = tex2D.CreateOptions == DeviceTextureCreateOptions.DepthStencil ? VkImageAspectFlags.Depth : VkImageAspectFlags.Color;
+            imageViewCI.subresourceRange.aspectMask = deviceTexture.CreateOptions == DeviceTextureCreateOptions.DepthStencil ? VkImageAspectFlags.Depth : VkImageAspectFlags.Color;
             imageViewCI.subresourceRange.layerCount = 1;
-            imageViewCI.subresourceRange.levelCount = (uint)tex2D.MipLevels;
+            imageViewCI.subresourceRange.levelCount = (uint)deviceTexture.MipLevels;
 
             VkResult result = vkCreateImageView(_device, ref imageViewCI, null, out VkImageView imageView);
             CheckResult(result);
@@ -26,7 +26,7 @@ namespace Veldrid.Graphics.Vulkan
         }
 
         public VkImageView ImageView { get; }
-        public VkTexture2D BoundTexture { get; }
+        public VkDeviceTexture BoundTexture { get; }
         public VkImageLayout ImageLayout { get; internal set; }
 
         DeviceTexture ShaderTextureBinding.BoundTexture => BoundTexture;

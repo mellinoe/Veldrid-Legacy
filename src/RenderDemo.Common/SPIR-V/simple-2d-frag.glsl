@@ -12,7 +12,7 @@ layout(location = 0) out vec4 outputColor;
 
 void main()
 {
-    bool flipTexCoords = true;
+    bool flipTexCoords = false;
     vec2 texCoord_mod = out_texCoord;
     if (flipTexCoords)
     {

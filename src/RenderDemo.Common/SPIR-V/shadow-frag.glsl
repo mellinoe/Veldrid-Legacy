@@ -27,7 +27,7 @@ void main()
     vec4 surfaceColor = texture(sampler2D(SurfaceTexture, SurfaceSampler), out_texCoord);
     vec4 ambient = vec4(.4, .4, .4, 1);
 
-	// perform perspective divide
+    // perform perspective divide
     vec3 projCoords = out_lightPosition.xyz / out_lightPosition.w;
 
     // if out_position is not visible to the light - dont illuminate it
@@ -37,17 +37,20 @@ void main()
         projCoords.z < 0.0f || projCoords.z > 1.0f)
     {
         outputColor = ambient * surfaceColor;
-		return;
+        outputColor = vec4(0.74, 0, 0, 1); // DEBUG
+        return;
     }
 
-	// Transform to [0,1] range
-    projCoords = projCoords * 0.5 + 0.5;
+    // Transform to [0,1] range.
+    // NOTE: Vulkan z-range is already [0,1].
+    projCoords.x = projCoords.x * 0.5 + 0.5;
+    projCoords.y = projCoords.y * 0.5 + 0.5;
 
     vec3 L = -1 * normalize(lightDir);
     float ndotl = dot(normalize(out_normal), L);
 
     float cosTheta = clamp(ndotl, 0, 1);
-    float bias = 0.0015 * tan(acos(cosTheta));
+    float bias = 0.0005 * tan(acos(cosTheta));
     bias = clamp(bias, 0, 0.01);
 
     projCoords.z -= bias;
@@ -59,11 +62,13 @@ void main()
     if (shadowMapDepth < projCoords.z)
     {
         outputColor = ambient * surfaceColor;
-		return;
+        //outputColor = vec4(0, .85, 0, 1); // DEBUG
+        return;
     }
 
     //otherwise calculate ilumination at fragment
     ndotl = clamp(ndotl, 0, 1);
     outputColor = ambient * surfaceColor + surfaceColor * ndotl;
-	return;
+    //outputColor = vec4(0, .1, 0.9, 1); // DEBUG
+    return;
 }

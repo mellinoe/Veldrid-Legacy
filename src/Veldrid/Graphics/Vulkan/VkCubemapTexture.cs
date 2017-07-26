@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Vulkan;
 using static Veldrid.Graphics.Vulkan.VulkanUtil;
@@ -7,169 +6,122 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrid.Graphics.Vulkan
 {
-    public unsafe class VkTexture2D : VkDeviceTexture, DeviceTexture2D
+    public unsafe class VkCubemapTexture : VkDeviceTexture, CubemapTexture
     {
-        private readonly VkDevice _device;
-        private readonly VkPhysicalDevice _physicalDevice;
         private readonly VkRenderContext _rc;
+        private readonly VkPhysicalDevice _physicalDevice;
+        private readonly VkDevice _device;
+        private readonly PixelFormat _format;
 
         private VkImage _image;
         private VkDeviceMemory _memory;
-        private PixelFormat _veldridFormat;
-        private DeviceTextureCreateOptions _createOptions;
+        private readonly VkFormat _vkFormat;
         private VkImageLayout _imageLayout;
-        private int _width;
-        private int _height;
 
-        public VkTexture2D(
+        public VkCubemapTexture(
             VkDevice device,
             VkPhysicalDevice physicalDevice,
             VkRenderContext rc,
-            int mipLevels,
+            IntPtr pixelsFront,
+            IntPtr pixelsBack,
+            IntPtr pixelsLeft,
+            IntPtr pixelsRight,
+            IntPtr pixelsTop,
+            IntPtr pixelsBottom,
             int width,
             int height,
-            PixelFormat veldridFormat,
-            DeviceTextureCreateOptions createOptions)
+            PixelFormat format)
         {
             _device = device;
             _physicalDevice = physicalDevice;
             _rc = rc;
 
-            MipLevels = mipLevels;
-            _width = width;
-            _height = height;
-            _createOptions = createOptions;
-            if (createOptions == DeviceTextureCreateOptions.DepthStencil)
-            {
-                Format = VkFormat.D16Unorm;
-            }
-            else
-            {
-                Format = VkFormats.VeldridToVkPixelFormat(veldridFormat);
-            }
-
-            _veldridFormat = veldridFormat;
+            Width = width;
+            Height = height;
+            _format = format;
+            _vkFormat = VkFormats.VeldridToVkPixelFormat(_format);
 
             VkImageCreateInfo imageCI = VkImageCreateInfo.New();
-            imageCI.mipLevels = (uint)mipLevels;
-            imageCI.arrayLayers = 1;
             imageCI.imageType = VkImageType.Image2D;
+            imageCI.flags = VkImageCreateFlags.CubeCompatible;
+            imageCI.format = _vkFormat;
             imageCI.extent.width = (uint)width;
             imageCI.extent.height = (uint)height;
             imageCI.extent.depth = 1;
-            imageCI.initialLayout = VkImageLayout.Preinitialized; // TODO: Use proper VkImageLayout values and transitions.
-            imageCI.usage = VkImageUsageFlags.TransferDst | VkImageUsageFlags.Sampled;
-            if (createOptions == DeviceTextureCreateOptions.RenderTarget)
-            {
-                imageCI.usage |= VkImageUsageFlags.ColorAttachment;
-            }
-            else if (createOptions == DeviceTextureCreateOptions.DepthStencil)
-            {
-                imageCI.usage |= VkImageUsageFlags.DepthStencilAttachment;
-            }
-            imageCI.tiling = createOptions == DeviceTextureCreateOptions.DepthStencil ? VkImageTiling.Optimal : VkImageTiling.Optimal;
-            imageCI.format = Format;
-
+            imageCI.mipLevels = 1;
+            imageCI.arrayLayers = 6;
             imageCI.samples = VkSampleCountFlags.Count1;
+            imageCI.tiling = VkImageTiling.Optimal;
+            imageCI.usage = VkImageUsageFlags.Sampled | VkImageUsageFlags.TransferDst;
+            imageCI.initialLayout = VkImageLayout.Undefined;
 
-            VkResult result = vkCreateImage(device, ref imageCI, null, out _image);
+            VkResult result = vkCreateImage(_device, ref imageCI, null, out _image);
             CheckResult(result);
 
-            vkGetImageMemoryRequirements(_device, _image, out VkMemoryRequirements memoryRequirements);
-
+            vkGetImageMemoryRequirements(_device, _image, out VkMemoryRequirements memReqs);
+            uint memoryType = FindMemoryType(_physicalDevice, memReqs.memoryTypeBits, VkMemoryPropertyFlags.DeviceLocal);
             VkMemoryAllocateInfo memoryAI = VkMemoryAllocateInfo.New();
-            memoryAI.allocationSize = memoryRequirements.size;
-            memoryAI.memoryTypeIndex = FindMemoryType(
-                _physicalDevice,
-                memoryRequirements.memoryTypeBits,
-                VkMemoryPropertyFlags.DeviceLocal);
-            vkAllocateMemory(_device, ref memoryAI, null, out _memory);
+            memoryAI.allocationSize = memReqs.size;
+            memoryAI.memoryTypeIndex = memoryType;
+            result = vkAllocateMemory(_device, ref memoryAI, null, out _memory);
+            CheckResult(result);
+
             vkBindImageMemory(_device, _image, _memory, 0);
-        }
 
-        public VkTexture2D(
-            VkDevice device,
-            int mipLevels,
-            int width,
-            int height,
-            VkFormat vkFormat,
-            VkImage existingImage)
-        {
-            _device = device;
-            MipLevels = mipLevels;
-            _width = width;
-            _height = height;
-            Format = vkFormat;
-            _veldridFormat = VkFormats.VkToVeldridPixelFormat(vkFormat);
-            _image = existingImage;
-        }
+            // Copy data into image.
 
-        public override int Width => _width;
-
-        public override int Height => _height;
-
-        public override int MipLevels { get; }
-
-        public override VkFormat Format { get; }
-
-        public override VkImage DeviceImage => _image;
-
-        public override DeviceTextureCreateOptions CreateOptions => _createOptions;
-
-        public void GetTextureData(int mipLevel, IntPtr destination, int storageSizeInBytes)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void GetTextureData<T>(int mipLevel, T[] destination) where T : struct
-        {
-            throw new NotImplementedException();
-        }
-
-        public void SetTextureData(int mipLevel, int x, int y, int width, int height, IntPtr data, int dataSizeInBytes)
-        {
-            if (x != 0 || y != 0)
-            {
-                throw new NotImplementedException();
-            }
-
-            // First, create a staging texture.
             CreateImage(
                 _device,
                 _physicalDevice,
                 (uint)width,
                 (uint)height,
-                1,
-                Format,
+                6,
+                _vkFormat,
                 VkImageTiling.Linear,
                 VkImageUsageFlags.TransferSrc,
                 VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
                 out VkImage stagingImage,
                 out VkDeviceMemory stagingMemory);
 
-            VkImageSubresource subresource = new VkImageSubresource();
-            subresource.aspectMask = VkImageAspectFlags.Color;
-            subresource.mipLevel = 0;
-            subresource.arrayLayer = 0;
-            vkGetImageSubresourceLayout(_device, stagingImage, ref subresource, out VkSubresourceLayout stagingLayout);
-            ulong rowPitch = stagingLayout.rowPitch;
+            int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(_format);
+            int dataSizeInBytes = width * height * pixelSizeInBytes;
 
+            vkGetImageMemoryRequirements(_device, stagingImage, out VkMemoryRequirements stagingMemReqs);
             void* mappedPtr;
-            VkResult result = vkMapMemory(_device, stagingMemory, 0, stagingLayout.size, 0, &mappedPtr);
+            result = vkMapMemory(_device, stagingMemory, 0, stagingMemReqs.size, 0, &mappedPtr);
             CheckResult(result);
 
-            if (rowPitch == (ulong)width)
+            StackList<IntPtr, Size6IntPtr> faces = new StackList<IntPtr, Size6IntPtr>();
+            faces.Add(pixelsFront);
+            faces.Add(pixelsBack);
+            faces.Add(pixelsLeft);
+            faces.Add(pixelsRight);
+            faces.Add(pixelsTop);
+            faces.Add(pixelsBottom);
+
+            for (uint i = 0; i < 6; i++)
             {
-                Buffer.MemoryCopy(data.ToPointer(), mappedPtr, dataSizeInBytes, dataSizeInBytes);
-            }
-            else
-            {
-                int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(_veldridFormat);
-                for (uint yy = 0; yy < height; yy++)
+                VkImageSubresource subresource;
+                subresource.mipLevel = 0;
+                subresource.arrayLayer = i;
+                subresource.aspectMask = VkImageAspectFlags.Color;
+                vkGetImageSubresourceLayout(_device, _image, ref subresource, out VkSubresourceLayout layout);
+
+                ulong rowPitch = layout.rowPitch;
+                IntPtr data = faces[i];
+
+                if (rowPitch == (ulong)width)
                 {
-                    byte* dstRowStart = ((byte*)mappedPtr) + (rowPitch * yy);
-                    byte* srcRowStart = ((byte*)data.ToPointer()) + (width * yy * pixelSizeInBytes);
-                    Unsafe.CopyBlock(dstRowStart, srcRowStart, (uint)(width * pixelSizeInBytes));
+                    Buffer.MemoryCopy(data.ToPointer(), mappedPtr, dataSizeInBytes, dataSizeInBytes);
+                }
+                else
+                {
+                    for (uint yy = 0; yy < height; yy++)
+                    {
+                        byte* dstRowStart = ((byte*)mappedPtr) + (rowPitch * yy);
+                        byte* srcRowStart = ((byte*)data.ToPointer()) + (width * yy * pixelSizeInBytes);
+                        Unsafe.CopyBlock(dstRowStart, srcRowStart, (uint)(width * pixelSizeInBytes));
+                    }
                 }
             }
 
@@ -177,20 +129,30 @@ namespace Veldrid.Graphics.Vulkan
 
             TransitionImageLayout(stagingImage, 1, VkImageLayout.Preinitialized, VkImageLayout.TransferSrcOptimal);
             TransitionImageLayout(_image, (uint)MipLevels, _imageLayout, VkImageLayout.TransferDstOptimal);
-            CopyImage(stagingImage, 0, _image, (uint)mipLevel, (uint)width, (uint)height);
+            CopyImage(stagingImage, 0, _image, 0, (uint)width, (uint)height);
             TransitionImageLayout(_image, (uint)MipLevels, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
             _imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
 
             vkDestroyImage(_device, stagingImage, null);
+
+
         }
+
+        public override int Width { get; }
+
+        public override int Height { get; }
+
+        public override int MipLevels => 1; // Probably
+
+        public override VkFormat Format => _vkFormat;
+
+        public override VkImage DeviceImage => _image;
+
+        public override DeviceTextureCreateOptions CreateOptions => DeviceTextureCreateOptions.Default;
 
         public override void Dispose()
         {
-            vkDestroyImage(_device, _image, null);
-            if (_memory != VkDeviceMemory.Null)
-            {
-                vkFreeMemory(_device, _memory, null);
-            }
+
         }
 
         protected void TransitionImageLayout(VkImage image, uint mipLevels, VkImageLayout oldLayout, VkImageLayout newLayout)

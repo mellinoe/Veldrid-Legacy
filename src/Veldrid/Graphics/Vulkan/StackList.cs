@@ -82,6 +82,7 @@ namespace Veldrid.Graphics.Vulkan
         }
 
         public ref T this[int index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(Data), index);
+        public ref T this[uint index] => ref Unsafe.Add(ref Unsafe.AsRef<T>(Data), (int)index);
     }
 
     internal unsafe struct Size16Bytes { public fixed byte Data[16]; }
@@ -92,5 +93,6 @@ namespace Veldrid.Graphics.Vulkan
     internal unsafe struct Size2048Bytes { public fixed byte Data[2048]; }
 #pragma warning disable 0649 // Fields are not assigned directly -- expected.
     internal unsafe struct Size2IntPtr { public IntPtr First; public IntPtr Second; }
+    internal unsafe struct Size6IntPtr { public IntPtr First; public IntPtr Second; public IntPtr Third; public IntPtr Fourth; public IntPtr Fifth; public IntPtr Sixth; }
 #pragma warning restore 0649
 }

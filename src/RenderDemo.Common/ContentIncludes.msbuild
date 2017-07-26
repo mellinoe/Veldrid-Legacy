@@ -102,8 +102,8 @@
     <ContentItems Include="SPIR-V\shadow-frag.spv" />
     <ContentItems Include="SPIR-V\wireframe-vertex.spv" />
     <ContentItems Include="SPIR-V\wireframe-frag.spv" />
-    <!--<ContentItems Include="SPIR-V\skybox-vertex.spv" />
-    <ContentItems Include="SPIR-V\skybox-frag.spv" />-->
+    <ContentItems Include="SPIR-V\skybox-vertex.spv" />
+    <ContentItems Include="SPIR-V\skybox-frag.spv" />
     <ContentItems Include="SPIR-V\simple-2d-vertex.spv" />
     <ContentItems Include="SPIR-V\simple-2d-frag.spv" />
 

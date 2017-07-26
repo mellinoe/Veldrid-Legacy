@@ -579,12 +579,18 @@ namespace Veldrid.Graphics.Vulkan
                         float32_3 = renderPassState.ClearColor.A
                     };
                     VkClearDepthStencilValue depthClear = new VkClearDepthStencilValue() { depth = 1f, stencil = 0 };
-                    FixedArray2<VkClearValue> clearValues = new FixedArray2<VkClearValue>();
-                    clearValues.First.color = colorClear;
-                    clearValues.Second.depthStencil = depthClear;
+                    StackList<VkClearValue, Size512Bytes> clearValues = new StackList<VkClearValue, Size512Bytes>();
+                    if (fbInfo.ColorTexture != null)
+                    {
+                        clearValues.Add(new VkClearValue() { color = colorClear });
+                    }
+                    if (fbInfo.DepthTexture != null)
+                    {
+                        clearValues.Add(new VkClearValue() { depthStencil = depthClear });
+                    }
 
-                    renderPassBeginInfo.clearValueCount = 2;
-                    renderPassBeginInfo.pClearValues = &clearValues.First;
+                    renderPassBeginInfo.clearValueCount = clearValues.Count;
+                    renderPassBeginInfo.pClearValues = (VkClearValue*)clearValues.Data;
                 }
                 renderPassBeginInfo.renderArea.extent = new VkExtent2D(fbInfo.Width, fbInfo.Height);
 

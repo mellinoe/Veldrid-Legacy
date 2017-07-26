@@ -6,10 +6,10 @@
 layout(location = 0) in vec3 TexCoords;
 layout(location = 0) out vec4 color;
 
-layout(location = 2) uniform texture2D Skybox;
+layout(location = 2) uniform textureCube Skybox;
 layout(location = 3) uniform sampler SkyboxSampler;
 
 void main()
 {
-    color = texture(sampler2D(Skybox, SkyboxSampler), TexCoords);
+    color = texture(samplerCube(Skybox, SkyboxSampler), TexCoords);
 }
