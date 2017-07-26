@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Vulkan;
 using static Veldrid.Graphics.Vulkan.VulkanUtil;
@@ -9,17 +10,26 @@ namespace Veldrid.Graphics.Vulkan
     public unsafe class VkDeviceBuffer : DeviceBufferBase
     {
         private readonly VkDevice _device;
+        private readonly bool _dynamic;
 
         private VkBuffer _buffer;
         private VkDeviceMemory _memory;
         private ulong _bufferCapacity;
         private ulong _bufferDataSize;
+        private void* _mappedPtr;
 
         public VkBuffer DeviceBuffer => _buffer;
 
-        public VkDeviceBuffer(VkDevice device, VkPhysicalDevice physicalDevice, ulong size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryProperties)
+        public VkDeviceBuffer(
+            VkDevice device,
+            VkPhysicalDevice physicalDevice,
+            ulong size,
+            VkBufferUsageFlags usage,
+            VkMemoryPropertyFlags memoryProperties,
+            bool dynamic)
         {
             _device = device;
+            _dynamic = dynamic;
             VkBufferCreateInfo bufferCI = VkBufferCreateInfo.New();
             bufferCI.size = size;
             bufferCI.usage = usage;
@@ -34,6 +44,11 @@ namespace Veldrid.Graphics.Vulkan
             memoryAI.memoryTypeIndex = memoryType;
             vkAllocateMemory(device, ref memoryAI, null, out _memory);
             vkBindBufferMemory(device, _buffer, _memory, 0);
+
+            if (_dynamic)
+            {
+                MapBuffer((int)size, true);
+            }
         }
 
         public override void GetData(IntPtr storageLocation, int storageSizeInBytes)
@@ -44,12 +59,23 @@ namespace Veldrid.Graphics.Vulkan
             UnmapBuffer();
         }
 
-        public override IntPtr MapBuffer(int numBytes)
+        public override IntPtr MapBuffer(int numBytes) => MapBuffer(numBytes, false);
+
+        public IntPtr MapBuffer(int numBytes, bool initDynamic)
         {
-            void* mappedPtr;
-            VkResult result = vkMapMemory(_device, _memory, 0, (ulong)numBytes, 0, &mappedPtr);
-            CheckResult(result);
-            return (IntPtr)mappedPtr;
+            if (!_dynamic || initDynamic)
+            {
+                void* mappedPtr;
+                VkResult result = vkMapMemory(_device, _memory, 0, (ulong)numBytes, 0, &mappedPtr);
+                CheckResult(result);
+                _mappedPtr = mappedPtr;
+                return (IntPtr)mappedPtr;
+            }
+            else
+            {
+                Debug.Assert(_mappedPtr != null);
+                return (IntPtr)_mappedPtr;
+            }
         }
 
         public override void SetData(IntPtr data, int dataSizeInBytes, int destinationOffsetInBytes)
@@ -64,7 +90,10 @@ namespace Veldrid.Graphics.Vulkan
 
         public override void UnmapBuffer()
         {
-            vkUnmapMemory(_device, _memory);
+            if (!_dynamic)
+            {
+                vkUnmapMemory(_device, _memory);
+            }
         }
 
         public override void Dispose()

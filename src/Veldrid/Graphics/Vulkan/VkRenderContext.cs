@@ -62,9 +62,8 @@ namespace Veldrid.Graphics.Vulkan
             CreatePhysicalDevice();
             CreateLogicalDevice();
             ResourceFactory = new VkResourceFactory(this);
-            _scInfo = new VkSwapchainInfo();
-            _scInfo.CreateSwapchain(_device, _physicalDevice, (VkResourceFactory)ResourceFactory, _surface, _graphicsQueueIndex, _presentQueueIndex, width, height);
-            SetFramebuffer(_scInfo.GetFramebuffer(0));
+            _scInfo = new VkSwapchainInfo(_device, _physicalDevice, (VkResourceFactory)ResourceFactory, _surface, _graphicsQueueIndex, _presentQueueIndex, width, height);
+            SetFramebuffer(_scInfo);
             CreatePerFrameCommandPool();
             CreatePerFrameDescriptorPool();
             CreateGraphicsCommandPool();
@@ -237,6 +236,7 @@ namespace Veldrid.Graphics.Vulkan
             }
 
             VkPhysicalDeviceFeatures deviceFeatures = new VkPhysicalDeviceFeatures();
+            deviceFeatures.samplerAnisotropy = true;
 
             VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.New();
 
@@ -452,15 +452,7 @@ namespace Veldrid.Graphics.Vulkan
         protected override void PlatformResize(int width, int height)
         {
             vkDeviceWaitIdle(_device);
-            _scInfo.CreateSwapchain(
-                _device,
-                _physicalDevice,
-                (VkResourceFactory)ResourceFactory,
-                _surface,
-                _graphicsQueueIndex,
-                _presentQueueIndex,
-                width,
-                height);
+            _scInfo.Resize(width, height);
         }
 
         protected override void PlatformSetBlendstate(BlendState blendState)
@@ -474,7 +466,7 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override void PlatformSetDefaultFramebuffer()
         {
-            SetFramebuffer(_scInfo.GetFramebuffer(0));
+            SetFramebuffer(_scInfo);
         }
 
         protected override void PlatformSetDepthStencilState(DepthStencilState depthStencilState)
@@ -532,21 +524,44 @@ namespace Veldrid.Graphics.Vulkan
 
         protected override void PlatformSwapBuffers()
         {
-            // Submit command buffers and present.
-            uint imageIndex = _scInfo.AcquireNextImage(_device, _imageAvailableSemaphore);
+            // First, ensure all pending draws are submitted to the proper render passes, and are completed.
+            FlushFrameDrawCommands();
+
+            // Then, present the swapchain.
+            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.New();
+            presentInfo.waitSemaphoreCount = 1;
+            VkSemaphore signalSemaphore = _renderCompleteSemaphore;
+            presentInfo.pWaitSemaphores = &signalSemaphore;
+
+            VkSwapchainKHR swapchain = _scInfo.Swapchain;
+            presentInfo.swapchainCount = 1;
+            presentInfo.pSwapchains = &swapchain;
+            uint imageIndex = _scInfo.ImageIndex;
+            presentInfo.pImageIndices = &imageIndex;
+
+            vkQueuePresentKHR(_presentQueue, ref presentInfo);
+
+            ClearFrameObjects();
+            _needsNewRenderPass = true;
+        }
+
+        private void FlushFrameDrawCommands()
+        {
+            _scInfo.AcquireNextImage(_device, _imageAvailableSemaphore);
             EnsureRenderPassCreated();
             if (_renderPassStates.Count > 1)
             {
                 throw new NotImplementedException();
             }
 
-            VkCommandBuffer primaryCommandBuffer = GetPrimaryCommandBuffer(imageIndex);
+            VkCommandBuffer primaryCommandBuffer = GetPrimaryCommandBuffer();
+            _renderPassStates[0].PrimaryCommandBuffer = primaryCommandBuffer;
             VkCommandBufferBeginInfo beginInfo = VkCommandBufferBeginInfo.New();
             beginInfo.flags = VkCommandBufferUsageFlags.OneTimeSubmit;
             vkBeginCommandBuffer(primaryCommandBuffer, ref beginInfo);
             VkRenderPassBeginInfo renderPassBeginInfo = VkRenderPassBeginInfo.New();
-            VkFramebufferInfo fbInfo = _scInfo.GetFramebuffer(imageIndex);
-            renderPassBeginInfo.framebuffer = fbInfo.Framebuffer;
+            VkRegularFramebuffer fbInfo = _scInfo.GetCurrentFramebuffer();
+            renderPassBeginInfo.framebuffer = fbInfo.VkFramebuffer;
             renderPassBeginInfo.renderPass = fbInfo.RenderPass;
 
             if (_clearBuffer)
@@ -591,21 +606,6 @@ namespace Veldrid.Graphics.Vulkan
             submitInfo.signalSemaphoreCount = 1;
             submitInfo.pSignalSemaphores = &signalSemaphore;
             vkQueueSubmit(_graphicsQueue, 1, ref submitInfo, VkFence.Null);
-
-            VkPresentInfoKHR presentInfo = VkPresentInfoKHR.New();
-            presentInfo.waitSemaphoreCount = 1;
-            presentInfo.pWaitSemaphores = &signalSemaphore;
-
-            VkSwapchainKHR swapchain = _scInfo.Swapchain;
-            presentInfo.swapchainCount = 1;
-            presentInfo.pSwapchains = &swapchain;
-            presentInfo.pImageIndices = &imageIndex;
-
-            vkQueuePresentKHR(_presentQueue, ref presentInfo);
-
-            ClearFrameObjects();
-            vkFreeCommandBuffers(_device, _perFrameCommandPool, 1, ref primaryCommandBuffer);
-            _needsNewRenderPass = true;
         }
 
         private void ClearFrameObjects()
@@ -613,6 +613,7 @@ namespace Veldrid.Graphics.Vulkan
             vkQueueWaitIdle(_graphicsQueue);
             foreach (RenderPassInfo rps in _renderPassStates)
             {
+                vkFreeCommandBuffers(_device, _perFrameCommandPool, 1, ref rps.PrimaryCommandBuffer);
                 if (rps.SecondaryCommandBuffers.Count > 0)
                 {
                     vkFreeCommandBuffers(_device, _perFrameCommandPool, rps.SecondaryCommandBuffers.Count, ref rps.SecondaryCommandBuffers[0]);
@@ -636,7 +637,7 @@ namespace Veldrid.Graphics.Vulkan
             _framePipelineLayouts.Clear();
         }
 
-        private VkCommandBuffer GetPrimaryCommandBuffer(uint imageIndex)
+        private VkCommandBuffer GetPrimaryCommandBuffer()
         {
             VkCommandBufferAllocateInfo commandBufferAI = VkCommandBufferAllocateInfo.New();
             commandBufferAI.commandBufferCount = 1;
@@ -680,7 +681,7 @@ namespace Veldrid.Graphics.Vulkan
         private new VkVertexBuffer VertexBuffer => (VkVertexBuffer)base.VertexBuffer;
         private new VkIndexBuffer IndexBuffer => (VkIndexBuffer)base.IndexBuffer;
         private new VkShaderSet ShaderSet => (VkShaderSet)base.ShaderSet;
-        private new VkFramebufferInfo CurrentFramebuffer => (VkFramebufferInfo)base.CurrentFramebuffer;
+        private new VkFramebufferBase CurrentFramebuffer => (VkFramebufferBase)base.CurrentFramebuffer;
         private new VkShaderResourceBindingSlots ShaderResourceBindingSlots
             => (VkShaderResourceBindingSlots)base.ShaderResourceBindingSlots;
 
@@ -688,7 +689,8 @@ namespace Veldrid.Graphics.Vulkan
 
     internal class RenderPassInfo
     {
-        public VkFramebufferInfo Framebuffer { get; set; }
+        public VkFramebufferBase Framebuffer;
+        public VkCommandBuffer PrimaryCommandBuffer;
         public RawList<VkCommandBuffer> SecondaryCommandBuffers { get; set; } = new RawList<VkCommandBuffer>();
     }
 }

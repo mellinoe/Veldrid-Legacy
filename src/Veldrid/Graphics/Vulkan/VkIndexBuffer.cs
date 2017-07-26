@@ -9,8 +9,9 @@ namespace Veldrid.Graphics.Vulkan
             VkDevice device,
             VkPhysicalDevice physicalDevice,
             ulong size,
-            VkMemoryPropertyFlags memoryProperties)
-            : base(device, physicalDevice, size, VkBufferUsageFlags.IndexBuffer, memoryProperties)
+            VkMemoryPropertyFlags memoryProperties,
+            bool dynamic)
+            : base(device, physicalDevice, size, VkBufferUsageFlags.IndexBuffer, memoryProperties, dynamic)
         {
         }
 

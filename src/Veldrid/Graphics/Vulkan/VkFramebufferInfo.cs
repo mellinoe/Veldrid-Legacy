@@ -5,22 +5,24 @@ using static Vulkan.VulkanNative;
 
 namespace Veldrid.Graphics.Vulkan
 {
-    public unsafe class VkFramebufferInfo : Framebuffer
+    public unsafe class VkRegularFramebuffer : VkFramebufferBase
     {
-        private readonly VkDevice _device;
-        private readonly VkPhysicalDevice _physicalDevice;
+        protected readonly VkDevice _device;
+        protected readonly VkPhysicalDevice _physicalDevice;
 
         private VkTexture2D _colorTexture;
         private VkTexture2D _depthTexture;
+        private VkFramebuffer _framebuffer;
+        private VkRenderPass _renderPass;
 
-        public VkFramebufferInfo(VkDevice device, VkPhysicalDevice physicalDevice)
+        public VkRegularFramebuffer(VkDevice device, VkPhysicalDevice physicalDevice)
         {
             _device = device;
             _physicalDevice = physicalDevice;
         }
 
-        public VkTexture2D ColorTexture { get => _colorTexture; set => AttachColorTexture(0, value); }
-        public VkTexture2D DepthTexture
+        public override VkTexture2D ColorTexture { get => _colorTexture; set => AttachColorTexture(0, value); }
+        public override VkTexture2D DepthTexture
         {
             get => _depthTexture;
             set
@@ -43,16 +45,13 @@ namespace Veldrid.Graphics.Vulkan
         public VkImageView ColorView { get; private set; }
         public VkImageView DepthView { get; private set; }
 
-        DeviceTexture2D Framebuffer.ColorTexture { get => ColorTexture; set => AttachColorTexture(0, value); }
-        DeviceTexture2D Framebuffer.DepthTexture { get => DepthTexture; set => DepthTexture = (VkTexture2D)value; }
+        public override int Width => ColorTexture != null ? ColorTexture.Width : DepthTexture != null ? DepthTexture.Width : 0;
+        public override int Height => ColorTexture != null ? ColorTexture.Height : DepthTexture != null ? DepthTexture.Height : 0;
 
-        public int Width => ColorTexture != null ? ColorTexture.Width : DepthTexture != null ? DepthTexture.Width : 0;
-        public int Height => ColorTexture != null ? ColorTexture.Height : DepthTexture != null ? DepthTexture.Height : 0;
+        public override VkRenderPass RenderPass => _renderPass;
+        public override VkFramebuffer VkFramebuffer => _framebuffer;
 
-        public VkRenderPass RenderPass { get; private set; }
-        public VkFramebuffer Framebuffer { get; private set; }
-
-        public void AttachColorTexture(int index, DeviceTexture2D texture)
+        public override void AttachColorTexture(int index, VkTexture2D texture)
         {
             if (index != 0)
             {
@@ -142,7 +141,7 @@ namespace Veldrid.Graphics.Vulkan
             renderPassCI.pDependencies = &subpassDependency;
 
             vkCreateRenderPass(_device, ref renderPassCI, null, out VkRenderPass newRenderPass);
-            RenderPass = newRenderPass;
+            _renderPass = newRenderPass;
 
             StackList<VkImageView, Size2IntPtr> fbAttachments = new StackList<VkImageView, Size2IntPtr>();
 
@@ -177,10 +176,10 @@ namespace Veldrid.Graphics.Vulkan
             framebufferCI.layers = 1;
             vkCreateFramebuffer(_device, ref framebufferCI, null, out VkFramebuffer newFramebuffer);
 
-            Framebuffer = newFramebuffer;
+            _framebuffer = newFramebuffer;
         }
 
-        public DeviceTexture2D GetColorTexture(int index)
+        public override VkTexture2D GetColorTexture(int index)
         {
             if (index != 0)
             {
@@ -190,15 +189,15 @@ namespace Veldrid.Graphics.Vulkan
             return ColorTexture;
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             if (RenderPass != VkRenderPass.Null)
             {
                 vkDestroyRenderPass(_device, RenderPass, null);
             }
-            if (Framebuffer != VkFramebuffer.Null)
+            if (VkFramebuffer != VkFramebuffer.Null)
             {
-                vkDestroyFramebuffer(_device, Framebuffer, null);
+                vkDestroyFramebuffer(_device, VkFramebuffer, null);
             }
         }
     }

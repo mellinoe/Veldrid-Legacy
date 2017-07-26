@@ -492,13 +492,13 @@ namespace Veldrid.RenderDemo
 
                 //_sponzaAtrium.AddRenderItem(new OctreeRenderer<RenderItem>(_sponzaAtrium.Octree, _ad, _rc));
 
-                var skybox = new Skybox(_rc, _ad);
-                _sponzaAtrium.AddRenderItem(skybox);
+                //var skybox = new Skybox(_rc, _ad);
+                //_sponzaAtrium.AddRenderItem(skybox);
 
                 _sponzaAtrium.AddRenderItem(_imguiRenderer);
 
-                _sceneBoundsRenderer = new BoundingBoxWireframeRenderer(_sponzaAtrium.OctreeRootNode.GetPreciseBounds(), _ad, _rc);
-                _sponzaAtrium.AddRenderItem(_sceneBoundsRenderer);
+                //_sceneBoundsRenderer = new BoundingBoxWireframeRenderer(_sponzaAtrium.OctreeRootNode.GetPreciseBounds(), _ad, _rc);
+                //_sponzaAtrium.AddRenderItem(_sceneBoundsRenderer);
 
                 sw.Stop();
                 Console.WriteLine("Total elapsed loading time: " + sw.Elapsed);
@@ -597,7 +597,7 @@ namespace Veldrid.RenderDemo
             }
             if (_visibilityManager == _shadowsScene || _visibilityManager == _sponzaAtrium)
             {
-                _sceneBoundsRenderer.Box = ((OctreeVisibilityManager)_visibilityManager).OctreeRootNode.GetPreciseBounds();
+                //_sceneBoundsRenderer.Box = ((OctreeVisibilityManager)_visibilityManager).OctreeRootNode.GetPreciseBounds();
             }
             UpdateLightMatrices();
             UpdatePointLights();

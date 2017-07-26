@@ -7,7 +7,7 @@ namespace Veldrid.Graphics.Vulkan
     {
         private readonly VkDevice _device;
         private readonly VkPhysicalDevice _physicalDevice;
-        
+
         public VkCommandPool CommandPool { get; }
 
         public VkRenderContext RenderContext { get; }
@@ -31,7 +31,8 @@ namespace Veldrid.Graphics.Vulkan
                 _device,
                 _physicalDevice,
                 (ulong)sizeInBytes,
-                VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+                VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
+                true);
         }
 
         public override CubemapTexture CreateCubemapTexture(IntPtr pixelsFront, IntPtr pixelsBack, IntPtr pixelsLeft, IntPtr pixelsRight, IntPtr pixelsTop, IntPtr pixelsBottom, int width, int height, int pixelSizeinBytes, PixelFormat format)
@@ -41,7 +42,7 @@ namespace Veldrid.Graphics.Vulkan
 
         public override Framebuffer CreateFramebuffer()
         {
-            return new VkFramebufferInfo(_device, _physicalDevice);
+            return new VkRegularFramebuffer(_device, _physicalDevice);
         }
 
         public override IndexBuffer CreateIndexBuffer(int sizeInBytes, bool isDynamic, IndexFormat format)
@@ -50,7 +51,8 @@ namespace Veldrid.Graphics.Vulkan
                 _device,
                 _physicalDevice,
                 (ulong)sizeInBytes,
-                VkMemoryPropertyFlags.HostCoherent | VkMemoryPropertyFlags.HostVisible);
+                VkMemoryPropertyFlags.HostCoherent | VkMemoryPropertyFlags.HostVisible,
+                isDynamic);
         }
 
         public override VertexInputLayout CreateInputLayout(params VertexInputDescription[] vertexInputs)
@@ -95,7 +97,12 @@ namespace Veldrid.Graphics.Vulkan
 
         public override VertexBuffer CreateVertexBuffer(int sizeInBytes, bool isDynamic)
         {
-            return new VkVertexBuffer(_device, _physicalDevice, (ulong)sizeInBytes, VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent);
+            return new VkVertexBuffer(
+                _device,
+                _physicalDevice,
+                (ulong)sizeInBytes,
+                VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
+                isDynamic);
         }
 
         public override CompiledShaderCode LoadProcessedShader(byte[] data)

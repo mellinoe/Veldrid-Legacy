@@ -25,7 +25,7 @@ namespace Veldrid.Graphics.Vulkan
 
             VkDescriptorPoolSize* sizes = stackalloc VkDescriptorPoolSize[3];
             sizes[0].type = VkDescriptorType.UniformBuffer;
-            sizes[0].descriptorCount = 1000;
+            sizes[0].descriptorCount = 10000;
             sizes[1].type = VkDescriptorType.SampledImage;
             sizes[1].descriptorCount = 1000;
             sizes[2].type = VkDescriptorType.Sampler;
@@ -289,7 +289,7 @@ namespace Veldrid.Graphics.Vulkan
         public VkRenderPass RenderPass;
         public VkPipelineLayout PipelineLayout;
         public VkBlendState BlendState;
-        public VkFramebufferInfo Framebuffer;
+        public VkFramebufferBase Framebuffer;
         public VkDepthStencilState DepthStencilState;
         public VkRasterizerState RasterizerState;
         public VkPrimitiveTopology PrimitiveTopology;
