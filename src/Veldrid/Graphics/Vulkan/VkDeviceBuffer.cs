@@ -10,10 +10,11 @@ namespace Veldrid.Graphics.Vulkan
     public unsafe class VkDeviceBuffer : DeviceBufferBase
     {
         private readonly VkDevice _device;
+        private readonly VkDeviceMemoryManager _memoryManager;
         private readonly bool _dynamic;
 
         private VkBuffer _buffer;
-        private VkDeviceMemory _memory;
+        private VkMemoryBlock _memory;
         private ulong _bufferCapacity;
         private ulong _bufferDataSize;
         private void* _mappedPtr;
@@ -23,12 +24,14 @@ namespace Veldrid.Graphics.Vulkan
         public VkDeviceBuffer(
             VkDevice device,
             VkPhysicalDevice physicalDevice,
+            VkDeviceMemoryManager memoryManager,
             ulong size,
             VkBufferUsageFlags usage,
             VkMemoryPropertyFlags memoryProperties,
             bool dynamic)
         {
             _device = device;
+            _memoryManager = memoryManager;
             _dynamic = dynamic;
             VkBufferCreateInfo bufferCI = VkBufferCreateInfo.New();
             bufferCI.size = size;
@@ -39,12 +42,11 @@ namespace Veldrid.Graphics.Vulkan
             vkGetBufferMemoryRequirements(device, _buffer, out VkMemoryRequirements memoryRequirements);
             _bufferCapacity = memoryRequirements.size;
             uint memoryType = FindMemoryType(physicalDevice, memoryRequirements.memoryTypeBits, memoryProperties);
-            VkMemoryAllocateInfo memoryAI = VkMemoryAllocateInfo.New();
-            memoryAI.allocationSize = memoryRequirements.size;
-            memoryAI.memoryTypeIndex = memoryType;
-            vkAllocateMemory(device, ref memoryAI, null, out _memory);
-            vkBindBufferMemory(device, _buffer, _memory, 0);
+            VkMemoryBlock memoryToken = memoryManager.Allocate(memoryType, memoryRequirements.size, memoryRequirements.alignment);
+            _memory = memoryToken;
+            vkBindBufferMemory(device, _buffer, _memory.DeviceMemory, _memory.Offset);
 
+            _dynamic = false;
             if (_dynamic)
             {
                 MapBuffer((int)size, true);
@@ -66,7 +68,7 @@ namespace Veldrid.Graphics.Vulkan
             if (!_dynamic || initDynamic)
             {
                 void* mappedPtr;
-                VkResult result = vkMapMemory(_device, _memory, 0, (ulong)numBytes, 0, &mappedPtr);
+                VkResult result = vkMapMemory(_device, _memory.DeviceMemory, _memory.Offset, (ulong)numBytes, 0, &mappedPtr);
                 CheckResult(result);
                 _mappedPtr = mappedPtr;
                 return (IntPtr)mappedPtr;
@@ -92,14 +94,14 @@ namespace Veldrid.Graphics.Vulkan
         {
             if (!_dynamic)
             {
-                vkUnmapMemory(_device, _memory);
+                vkUnmapMemory(_device, _memory.DeviceMemory);
             }
         }
 
         public override void Dispose()
         {
             vkDestroyBuffer(_device, _buffer, null);
-            vkFreeMemory(_device, _memory, null);
+            _memoryManager.Free(_memory);
         }
 
         private void EnsureBufferSize(int dataSizeInBytes)

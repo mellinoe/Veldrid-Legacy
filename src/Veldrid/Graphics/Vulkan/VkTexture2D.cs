@@ -11,10 +11,11 @@ namespace Veldrid.Graphics.Vulkan
     {
         private readonly VkDevice _device;
         private readonly VkPhysicalDevice _physicalDevice;
+        private readonly VkDeviceMemoryManager _memoryManager;
         private readonly VkRenderContext _rc;
 
         private VkImage _image;
-        private VkDeviceMemory _memory;
+        private VkMemoryBlock _memory;
         private PixelFormat _veldridFormat;
         private DeviceTextureCreateOptions _createOptions;
         private VkImageLayout _imageLayout;
@@ -24,6 +25,7 @@ namespace Veldrid.Graphics.Vulkan
         public VkTexture2D(
             VkDevice device,
             VkPhysicalDevice physicalDevice,
+            VkDeviceMemoryManager memoryManager,
             VkRenderContext rc,
             int mipLevels,
             int width,
@@ -33,6 +35,7 @@ namespace Veldrid.Graphics.Vulkan
         {
             _device = device;
             _physicalDevice = physicalDevice;
+            _memoryManager = memoryManager;
             _rc = rc;
 
             MipLevels = mipLevels;
@@ -77,14 +80,15 @@ namespace Veldrid.Graphics.Vulkan
 
             vkGetImageMemoryRequirements(_device, _image, out VkMemoryRequirements memoryRequirements);
 
-            VkMemoryAllocateInfo memoryAI = VkMemoryAllocateInfo.New();
-            memoryAI.allocationSize = memoryRequirements.size;
-            memoryAI.memoryTypeIndex = FindMemoryType(
-                _physicalDevice,
-                memoryRequirements.memoryTypeBits,
-                VkMemoryPropertyFlags.DeviceLocal);
-            vkAllocateMemory(_device, ref memoryAI, null, out _memory);
-            vkBindImageMemory(_device, _image, _memory, 0);
+            VkMemoryBlock memoryToken = memoryManager.Allocate(
+                FindMemoryType(
+                    _physicalDevice,
+                    memoryRequirements.memoryTypeBits,
+                    VkMemoryPropertyFlags.DeviceLocal),
+                memoryRequirements.size,
+                memoryRequirements.alignment);
+            _memory = memoryToken;
+            vkBindImageMemory(_device, _image, _memory.DeviceMemory, _memory.Offset);
         }
 
         public VkTexture2D(
@@ -137,6 +141,7 @@ namespace Veldrid.Graphics.Vulkan
             CreateImage(
                 _device,
                 _physicalDevice,
+                _memoryManager,
                 (uint)width,
                 (uint)height,
                 1,
@@ -145,7 +150,7 @@ namespace Veldrid.Graphics.Vulkan
                 VkImageUsageFlags.TransferSrc,
                 VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
                 out VkImage stagingImage,
-                out VkDeviceMemory stagingMemory);
+                out VkMemoryBlock stagingMemory);
 
             VkImageSubresource subresource = new VkImageSubresource();
             subresource.aspectMask = VkImageAspectFlags.Color;
@@ -155,7 +160,7 @@ namespace Veldrid.Graphics.Vulkan
             ulong rowPitch = stagingLayout.rowPitch;
 
             void* mappedPtr;
-            VkResult result = vkMapMemory(_device, stagingMemory, 0, stagingLayout.size, 0, &mappedPtr);
+            VkResult result = vkMapMemory(_device, stagingMemory.DeviceMemory, stagingMemory.Offset, stagingLayout.size, 0, &mappedPtr);
             CheckResult(result);
 
             if (rowPitch == (ulong)width)
@@ -173,7 +178,7 @@ namespace Veldrid.Graphics.Vulkan
                 }
             }
 
-            vkUnmapMemory(_device, stagingMemory);
+            vkUnmapMemory(_device, stagingMemory.DeviceMemory);
 
             TransitionImageLayout(stagingImage, 1, VkImageLayout.Preinitialized, VkImageLayout.TransferSrcOptimal);
             TransitionImageLayout(_image, (uint)MipLevels, _imageLayout, VkImageLayout.TransferDstOptimal);
@@ -182,14 +187,15 @@ namespace Veldrid.Graphics.Vulkan
             _imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
 
             vkDestroyImage(_device, stagingImage, null);
+            _memoryManager.Free(stagingMemory);
         }
 
         public override void Dispose()
         {
             vkDestroyImage(_device, _image, null);
-            if (_memory != VkDeviceMemory.Null)
+            if (_memory != null)
             {
-                vkFreeMemory(_device, _memory, null);
+                _memoryManager.Free(_memory);
             }
         }
 

@@ -30,6 +30,7 @@ namespace Veldrid.Graphics.Vulkan
             return new VkConstantBuffer(
                 _device,
                 _physicalDevice,
+                RenderContext.MemoryManager,
                 (ulong)sizeInBytes,
                 VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
                 true);
@@ -50,6 +51,7 @@ namespace Veldrid.Graphics.Vulkan
             return new VkCubemapTexture(
                 _device,
                 _physicalDevice,
+                RenderContext.MemoryManager,
                 RenderContext,
                 pixelsFront,
                 pixelsBack,
@@ -72,6 +74,7 @@ namespace Veldrid.Graphics.Vulkan
             return new VkIndexBuffer(
                 _device,
                 _physicalDevice,
+                RenderContext.MemoryManager,
                 (ulong)sizeInBytes,
                 VkMemoryPropertyFlags.HostCoherent | VkMemoryPropertyFlags.HostVisible,
                 isDynamic);
@@ -114,7 +117,16 @@ namespace Veldrid.Graphics.Vulkan
             PixelFormat format,
             DeviceTextureCreateOptions createOptions)
         {
-            return new VkTexture2D(_device, _physicalDevice, RenderContext, mipLevels, width, height, format, createOptions);
+            return new VkTexture2D(
+                _device,
+                _physicalDevice,
+                RenderContext.MemoryManager,
+                RenderContext,
+                mipLevels,
+                width,
+                height,
+                format,
+                createOptions);
         }
 
         public override VertexBuffer CreateVertexBuffer(int sizeInBytes, bool isDynamic)
@@ -122,6 +134,7 @@ namespace Veldrid.Graphics.Vulkan
             return new VkVertexBuffer(
                 _device,
                 _physicalDevice,
+                RenderContext.MemoryManager,
                 (ulong)sizeInBytes,
                 VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
                 isDynamic);

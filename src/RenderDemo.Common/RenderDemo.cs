@@ -447,8 +447,13 @@ namespace Veldrid.RenderDemo
                 var sphere = _ad.LoadAsset<ObjFile>(new AssetID("Models/Sphere.obj")).GetFirstMesh();
                 var pink = new RawTextureDataArray<RgbaFloat>(
                     new RgbaFloat[] { RgbaFloat.Pink }, 1, 1, RgbaFloat.SizeInBytes, PixelFormat.R32_G32_B32_A32_Float);
+                int zz = 0;
                 foreach (var group in atriumFile.MeshGroups)
                 {
+                    if ((++zz % 320) == 0)
+                    {
+
+                    }
                     ConstructedMeshInfo mesh = atriumFile.GetMesh(group);
                     MaterialDefinition materialDef = atriumMtls.Definitions[mesh.MaterialName];
                     TextureData overrideTextureData = null;
@@ -1087,9 +1092,14 @@ https://github.com/mellinoe/veldrid.");
                 }
                 if (_sponzaAtrium != null)
                 {
+                    HashSet<object> seen = new HashSet<object>();
                     foreach (var item in _sponzaAtrium.RenderItems)
                     {
                         ((SwappableRenderItem)item).ChangeRenderContext(_ad, newContext);
+                        if (!seen.Add(item))
+                        {
+
+                        }
                     }
                 }
                 if (_instancingScene != null)

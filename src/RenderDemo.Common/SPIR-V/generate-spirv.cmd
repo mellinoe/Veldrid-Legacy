@@ -24,3 +24,9 @@ glslangvalidator.exe -V simple-2d-frag.glsl -o simple-2d-frag.spv -S frag
 
 glslangvalidator.exe -V instanced-simple-vertex.glsl -o instanced-simple-vertex.spv -S vert
 glslangvalidator.exe -V instanced-simple-frag.glsl -o instanced-simple-frag.spv -S frag
+
+glslangvalidator.exe -V geometry-vertex.glsl -o geometry-vertex.spv -S vert
+glslangvalidator.exe -V geometry-frag.glsl -o geometry-frag.spv -S frag
+
+glslangvalidator.exe -V billboard-geometry.glsl -o billboard-geometry.spv -S geom
+glslangvalidator.exe -V cube-geometry.glsl -o cube-geometry.spv -S geom

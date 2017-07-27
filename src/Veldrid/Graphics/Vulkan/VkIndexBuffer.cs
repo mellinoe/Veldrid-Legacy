@@ -8,10 +8,11 @@ namespace Veldrid.Graphics.Vulkan
         public VkIndexBuffer(
             VkDevice device,
             VkPhysicalDevice physicalDevice,
+            VkDeviceMemoryManager memoryManager,
             ulong size,
             VkMemoryPropertyFlags memoryProperties,
             bool dynamic)
-            : base(device, physicalDevice, size, VkBufferUsageFlags.IndexBuffer, memoryProperties, dynamic)
+            : base(device, physicalDevice, memoryManager, size, VkBufferUsageFlags.IndexBuffer, memoryProperties, dynamic)
         {
         }
 

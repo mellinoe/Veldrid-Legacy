@@ -33,6 +33,7 @@ namespace Veldrid.Graphics.Vulkan
         public static void CreateImage(
             VkDevice device,
             VkPhysicalDevice physicalDevice,
+            VkDeviceMemoryManager memoryManager,
             uint width,
             uint height,
             uint arrayLayers,
@@ -41,7 +42,7 @@ namespace Veldrid.Graphics.Vulkan
             VkImageUsageFlags usage,
             VkMemoryPropertyFlags properties,
             out VkImage image,
-            out VkDeviceMemory memory)
+            out VkMemoryBlock memory)
         {
             VkImageCreateInfo imageCI = VkImageCreateInfo.New();
             imageCI.imageType = VkImageType.Image2D;
@@ -61,13 +62,12 @@ namespace Veldrid.Graphics.Vulkan
             CheckResult(result);
 
             vkGetImageMemoryRequirements(device, image, out VkMemoryRequirements memRequirements);
-            VkMemoryAllocateInfo allocInfo = VkMemoryAllocateInfo.New();
-            allocInfo.allocationSize = memRequirements.size;
-            allocInfo.memoryTypeIndex = FindMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
-            result = vkAllocateMemory(device, ref allocInfo, null, out memory);
-            CheckResult(result);
-
-            result = vkBindImageMemory(device, image, memory, 0);
+            VkMemoryBlock memoryToken = memoryManager.Allocate(
+                FindMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties),
+                memRequirements.size,
+                memRequirements.alignment);
+            memory = memoryToken;
+            result = vkBindImageMemory(device, image, memory.DeviceMemory, memory.Offset);
             CheckResult(result);
         }
     }

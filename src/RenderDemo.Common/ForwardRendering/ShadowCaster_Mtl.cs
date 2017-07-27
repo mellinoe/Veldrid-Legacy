@@ -48,6 +48,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
         private static SamplerState s_shadowMapSampler;
         private static DeviceTexture2D s_blankAlphaMapTexture;
         private static ShaderTextureBinding s_blankAlphaMapTextureBinding;
+        private bool _usesSharedAlphaMap;
 
         public Vector3 Position { get; set; }
         public Quaternion Rotation { get; set; } = Quaternion.Identity;
@@ -85,7 +86,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
             RenderContext rc,
             VertexPositionNormalTexture[] vertices,
             ushort[] indices,
-            TextureData overrideTexture = null)
+            TextureData overrideTexture)
         {
             _vertices = vertices;
             _indices = indices;
@@ -133,7 +134,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
             _inverseTransposeWorldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _mtlPropertiesBuffer = factory.CreateConstantBuffer(ShaderConstantType.Float4);
 
-            _texture = _overrideTextureData.CreateDeviceTexture(factory);
+            _texture = TextureCache.GetCachedTexture(rc, _overrideTextureData);
             _textureBinding = factory.CreateShaderTextureBinding(_texture);
 
             if (_alphaMapNeedsRecreation)
@@ -223,7 +224,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
 
         private void RecreateAlphaMapTextureResources(RenderContext rc)
         {
-            if (_alphaMapTexture != s_blankAlphaMapTexture)
+            if (!_usesSharedAlphaMap)
             {
                 _alphaMapTexture?.Dispose();
                 _alphaMapTextureBinding?.Dispose();
@@ -231,11 +232,13 @@ namespace Veldrid.RenderDemo.ForwardRendering
 
             if (_alphaMapTextureData != null)
             {
+                _usesSharedAlphaMap = false;
                 _alphaMapTexture = _alphaMapTextureData.CreateDeviceTexture(rc.ResourceFactory);
                 _alphaMapTextureBinding = rc.ResourceFactory.CreateShaderTextureBinding(_alphaMapTexture);
             }
             else
             {
+                _usesSharedAlphaMap = true;
                 _alphaMapTexture = s_blankAlphaMapTexture;
                 _alphaMapTextureBinding = s_blankAlphaMapTextureBinding;
             }
@@ -324,10 +327,17 @@ namespace Veldrid.RenderDemo.ForwardRendering
 
         public void Dispose()
         {
-            _texture?.Dispose();
+            // _texture is a shared object -- don't dispose it.
             _textureBinding?.Dispose();
-            _alphaMapTexture?.Dispose();
-            _alphaMapTextureBinding?.Dispose();
+
+            if (!_usesSharedAlphaMap)
+            {
+                _alphaMapTexture.Dispose();
+                _alphaMapTexture = null;
+                _alphaMapTextureBinding.Dispose();
+                _alphaMapTextureBinding = null;
+            }
+
             _alphaMapNeedsRecreation = true;
             _vb.Dispose();
             _ib.Dispose();

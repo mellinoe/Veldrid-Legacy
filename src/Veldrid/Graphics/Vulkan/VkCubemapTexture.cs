@@ -12,15 +12,17 @@ namespace Veldrid.Graphics.Vulkan
         private readonly VkPhysicalDevice _physicalDevice;
         private readonly VkDevice _device;
         private readonly PixelFormat _format;
+        private readonly VkDeviceMemoryManager _memoryManager;
 
         private VkImage _image;
-        private VkDeviceMemory _memory;
+        private VkMemoryBlock _memory;
         private readonly VkFormat _vkFormat;
         private VkImageLayout _imageLayout;
 
         public VkCubemapTexture(
             VkDevice device,
             VkPhysicalDevice physicalDevice,
+            VkDeviceMemoryManager memoryManager,
             VkRenderContext rc,
             IntPtr pixelsFront,
             IntPtr pixelsBack,
@@ -35,6 +37,7 @@ namespace Veldrid.Graphics.Vulkan
             _device = device;
             _physicalDevice = physicalDevice;
             _rc = rc;
+            _memoryManager = memoryManager;
 
             Width = width;
             Height = height;
@@ -60,19 +63,16 @@ namespace Veldrid.Graphics.Vulkan
 
             vkGetImageMemoryRequirements(_device, _image, out VkMemoryRequirements memReqs);
             uint memoryType = FindMemoryType(_physicalDevice, memReqs.memoryTypeBits, VkMemoryPropertyFlags.DeviceLocal);
-            VkMemoryAllocateInfo memoryAI = VkMemoryAllocateInfo.New();
-            memoryAI.allocationSize = memReqs.size;
-            memoryAI.memoryTypeIndex = memoryType;
-            result = vkAllocateMemory(_device, ref memoryAI, null, out _memory);
-            CheckResult(result);
 
-            vkBindImageMemory(_device, _image, _memory, 0);
+            _memory = memoryManager.Allocate(memoryType, memReqs.size, memReqs.alignment);
+            vkBindImageMemory(_device, _image, _memory.DeviceMemory, _memory.Offset);
 
             // Copy data into image.
 
             CreateImage(
                 _device,
                 _physicalDevice,
+                memoryManager,
                 (uint)width,
                 (uint)height,
                 6,
@@ -81,14 +81,14 @@ namespace Veldrid.Graphics.Vulkan
                 VkImageUsageFlags.TransferSrc,
                 VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
                 out VkImage stagingImage,
-                out VkDeviceMemory stagingMemory);
+                out VkMemoryBlock stagingMemory);
 
             int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(_format);
             int dataSizeInBytes = width * height * pixelSizeInBytes;
 
             vkGetImageMemoryRequirements(_device, stagingImage, out VkMemoryRequirements stagingMemReqs);
             void* mappedPtr;
-            result = vkMapMemory(_device, stagingMemory, 0, stagingMemReqs.size, 0, &mappedPtr);
+            result = vkMapMemory(_device, stagingMemory.DeviceMemory, stagingMemory.Offset, stagingMemReqs.size, 0, &mappedPtr);
             CheckResult(result);
 
             StackList<IntPtr, Size6IntPtr> faces = new StackList<IntPtr, Size6IntPtr>();
@@ -125,7 +125,7 @@ namespace Veldrid.Graphics.Vulkan
                 }
             }
 
-            vkUnmapMemory(_device, stagingMemory);
+            vkUnmapMemory(_device, stagingMemory.DeviceMemory);
 
             TransitionImageLayout(stagingImage, 1, VkImageLayout.Preinitialized, VkImageLayout.TransferSrcOptimal);
             TransitionImageLayout(_image, (uint)MipLevels, _imageLayout, VkImageLayout.TransferDstOptimal);
@@ -134,8 +134,7 @@ namespace Veldrid.Graphics.Vulkan
             _imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
 
             vkDestroyImage(_device, stagingImage, null);
-
-
+            _memoryManager.Free(stagingMemory);
         }
 
         public override int Width { get; }
@@ -152,7 +151,8 @@ namespace Veldrid.Graphics.Vulkan
 
         public override void Dispose()
         {
-
+            vkDestroyImage(_device, _image, null);
+            _memoryManager.Free(_memory);
         }
 
         protected void TransitionImageLayout(VkImage image, uint mipLevels, VkImageLayout oldLayout, VkImageLayout newLayout)

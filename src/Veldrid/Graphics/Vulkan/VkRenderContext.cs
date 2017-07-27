@@ -37,6 +37,7 @@ namespace Veldrid.Graphics.Vulkan
         private VkRect2D _scissorRect;
         private VkCommandPool _graphicsCommandPool;
         private VkResourceCache _resourceCache;
+        private VkDeviceMemoryManager _memoryManager;
         private PFN_vkDebugReportCallbackEXT _debugCallback;
 
         // Draw call tracking
@@ -52,6 +53,7 @@ namespace Veldrid.Graphics.Vulkan
         public VkQueue GraphicsQueue => _graphicsQueue;
         public uint GraphicsQueueIndex => _graphicsQueueIndex;
         public VkCommandPool GraphicsCommandPool => _graphicsCommandPool;
+        public VkDeviceMemoryManager MemoryManager => _memoryManager;
 
         public VkRenderContext(VkSurfaceSource surfaceInfo, int width, int height)
         {
@@ -59,6 +61,7 @@ namespace Veldrid.Graphics.Vulkan
             CreateSurface(surfaceInfo);
             CreatePhysicalDevice();
             CreateLogicalDevice();
+            _memoryManager = new VkDeviceMemoryManager(_device, _physicalDevice);
             ResourceFactory = new VkResourceFactory(this);
             _scInfo = new VkSwapchainInfo(_device, _physicalDevice, (VkResourceFactory)ResourceFactory, _surface, _graphicsQueueIndex, _presentQueueIndex, width, height);
             SetFramebuffer(_scInfo);
@@ -153,7 +156,7 @@ namespace Veldrid.Graphics.Vulkan
 
             if (debug)
             {
-                // EnableDebugCallback();
+                EnableDebugCallback( VkDebugReportFlagsEXT.Information | VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error | VkDebugReportFlagsEXT.PerformanceWarning);
             }
         }
 
@@ -235,6 +238,8 @@ namespace Veldrid.Graphics.Vulkan
 
             VkPhysicalDeviceFeatures deviceFeatures = new VkPhysicalDeviceFeatures();
             deviceFeatures.samplerAnisotropy = true;
+            deviceFeatures.fillModeNonSolid = true;
+            deviceFeatures.geometryShader = true;
 
             VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.New();
 
