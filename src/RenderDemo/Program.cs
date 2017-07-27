@@ -99,8 +99,25 @@ namespace Veldrid.RenderDemo
             SDL_SysWMinfo sysWmInfo;
             Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
             Sdl2Native.SDL_GetWMWindowInfo(sdlHandle, &sysWmInfo);
-            Win32WindowInfo w32Info = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info);
-            return new VkRenderContext(VkSurfaceSource.CreateWin32(w32Info.hinstance, w32Info.window), window.Width, window.Height);
+            VkSurfaceSource surfaceSource = GetSurfaceSource(sysWmInfo);
+            return new VkRenderContext(surfaceSource, window.Width, window.Height);
+        }
+
+        private static unsafe VkSurfaceSource GetSurfaceSource(SDL_SysWMinfo sysWmInfo)
+        {
+            switch (sysWmInfo.subsystem)
+            {
+                case SysWMType.Windows:
+                    Win32WindowInfo w32Info = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info);
+                    return VkSurfaceSource.CreateWin32(w32Info.hinstance, w32Info.window);
+                case SysWMType.X11:
+                    X11WindowInfo x11Info = Unsafe.Read<X11WindowInfo>(&sysWmInfo.info);
+                    return VkSurfaceSource.CreateXlib(
+                        (Vulkan.Xlib.Display*)x11Info.display,
+                        new Vulkan.Xlib.Window() { Value = x11Info.window });
+                default:
+                    throw new PlatformNotSupportedException("Cannot create a Vulkan surface for " + sysWmInfo.subsystem + ".");
+            }
         }
 
         private static OpenGLESRenderContext CreateDefaultOpenGLESRenderContext(Sdl2Window window)
