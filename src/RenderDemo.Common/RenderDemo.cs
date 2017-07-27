@@ -1092,14 +1092,9 @@ https://github.com/mellinoe/veldrid.");
                 }
                 if (_sponzaAtrium != null)
                 {
-                    HashSet<object> seen = new HashSet<object>();
                     foreach (var item in _sponzaAtrium.RenderItems)
                     {
                         ((SwappableRenderItem)item).ChangeRenderContext(_ad, newContext);
-                        if (!seen.Add(item))
-                        {
-
-                        }
                     }
                 }
                 if (_instancingScene != null)
