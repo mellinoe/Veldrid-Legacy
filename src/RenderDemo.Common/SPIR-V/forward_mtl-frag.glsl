@@ -3,13 +3,13 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout(binding = 6) uniform LightInfoBuffer
+layout(binding = 4) uniform LightInfoBuffer
 {
     vec3 lightDir;
     float _padding;
 };
 
-layout(binding = 7) uniform CameraInfoBuffer
+layout(binding = 5) uniform CameraInfoBuffer
 {
     vec3 cameraPosition_worldSpace;
     float _padding1;
@@ -27,7 +27,7 @@ struct PointLightInfo
     float _padding;
 };
 
-layout(binding = 8) uniform PointLightsBuffer
+layout(binding = 6) uniform PointLightsBuffer
 {
     int numActiveLights;
     PointLightInfo pointLights[MAX_POINT_LIGHTS];

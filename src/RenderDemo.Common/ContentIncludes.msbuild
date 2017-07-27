@@ -106,6 +106,8 @@
     <ContentItems Include="SPIR-V\skybox-frag.spv" />
     <ContentItems Include="SPIR-V\simple-2d-vertex.spv" />
     <ContentItems Include="SPIR-V\simple-2d-frag.spv" />
+    <ContentItems Include="SPIR-V\instanced-simple-vertex.spv" />
+    <ContentItems Include="SPIR-V\instanced-simple-frag.spv" />
 
     <HlslShader Include="$(MSBuildThisFileDirectory)HLSL\billboard-geometry.hlsl">
       <Profile>gs_5_0</Profile>

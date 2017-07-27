@@ -346,8 +346,17 @@ namespace Veldrid.Graphics.Vulkan
 
         public override RenderCapabilities RenderCapabilities => new RenderCapabilities(true, true);
 
-        public override void DrawIndexedPrimitives(int count, int startingIndex) => DrawIndexedPrimitives(count, startingIndex, 0);
+        public override void DrawIndexedPrimitives(int count, int startingIndex)
+            => DrawPrimitives(count, 1, startingIndex, 0);
         public override void DrawIndexedPrimitives(int count, int startingIndex, int startingVertex)
+            => DrawPrimitives(count, 1, startingIndex, startingVertex);
+
+        public override void DrawInstancedPrimitives(int indexCount, int instanceCount, int startingIndex)
+            => DrawPrimitives(indexCount, instanceCount, startingIndex, 0);
+        public override void DrawInstancedPrimitives(int indexCount, int instanceCount, int startingIndex, int startingVertex)
+            => DrawPrimitives(indexCount, instanceCount, startingIndex, startingVertex);
+
+        private void DrawPrimitives(int indexCount, int instanceCount, int startingIndex, int startingVertex)
         {
             RenderPassInfo renderPassState = GetCurrentRenderPass();
             VkPipelineLayout layout = ShaderResourceBindingSlots.PipelineLayout;
@@ -410,18 +419,10 @@ namespace Veldrid.Graphics.Vulkan
             };
             vkCmdSetViewport(cb, 0, 1, ref viewport);
             vkCmdSetScissor(cb, 0, 1, ref _scissorRect);
-            vkCmdDrawIndexed(cb, (uint)count, 1, (uint)startingIndex, startingVertex, 0);
+            vkCmdDrawIndexed(cb, (uint)indexCount, (uint)instanceCount, (uint)startingIndex, startingVertex, 0);
             vkEndCommandBuffer(cb);
 
             renderPassState.SecondaryCommandBuffers.Add(cb);
-        }
-
-        public override void DrawInstancedPrimitives(int indexCount, int instanceCount, int startingIndex)
-            => DrawInstancedPrimitives(indexCount, instanceCount, startingIndex, 0);
-
-        public override void DrawInstancedPrimitives(int indexCount, int instanceCount, int startingIndex, int startingVertex)
-        {
-            throw new NotImplementedException();
         }
 
         protected override Vector2 GetBottomRightUvCoordinate()

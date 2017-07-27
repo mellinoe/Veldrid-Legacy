@@ -21,3 +21,6 @@ glslangvalidator.exe -V skybox-frag.glsl -o skybox-frag.spv -S frag
 
 glslangvalidator.exe -V simple-2d-vertex.glsl -o simple-2d-vertex.spv -S vert
 glslangvalidator.exe -V simple-2d-frag.glsl -o simple-2d-frag.spv -S frag
+
+glslangvalidator.exe -V instanced-simple-vertex.glsl -o instanced-simple-vertex.spv -S vert
+glslangvalidator.exe -V instanced-simple-frag.glsl -o instanced-simple-frag.spv -S frag
