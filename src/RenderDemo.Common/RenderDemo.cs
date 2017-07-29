@@ -352,8 +352,8 @@ namespace Veldrid.RenderDemo
                 _sceneBoundsRenderer = new BoundingBoxWireframeRenderer(_shadowsScene.OctreeRootNode.GetPreciseBounds(), _ad, _rc);
                 _shadowsScene.AddRenderItem(_sceneBoundsRenderer);
 
-                //var skybox = new Skybox(_rc, _ad);
-                //_shadowsScene.AddRenderItem(skybox);
+                var skybox = new Skybox(_rc, _ad);
+                _shadowsScene.AddRenderItem(skybox);
 
                 _shadowMapPreview = new ShadowMapPreview(_ad, _rc);
                 _shadowsScene.AddRenderItem(_shadowMapPreview);
@@ -497,8 +497,8 @@ namespace Veldrid.RenderDemo
 
                 //_sponzaAtrium.AddRenderItem(new OctreeRenderer<RenderItem>(_sponzaAtrium.Octree, _ad, _rc));
 
-                //var skybox = new Skybox(_rc, _ad);
-                //_sponzaAtrium.AddRenderItem(skybox);
+                var skybox = new Skybox(_rc, _ad);
+                _sponzaAtrium.AddRenderItem(skybox);
 
                 _sponzaAtrium.AddRenderItem(_imguiRenderer);
 
@@ -539,7 +539,7 @@ namespace Veldrid.RenderDemo
             DrawMainMenu();
 
             _fta.AddTime(deltaSeconds);
-            string apiName = (_rc is OpenGLRenderContext) ? "OpenGL" : (_rc is OpenGLESRenderContext) ? "OpenGL ES" : (_rc is VkRenderContext) ? "Vulkan" : "Direct3D";
+            string apiName = GetApiName();
             _window.Title = $"[{apiName}] " + _fta.CurrentAverageFramesPerSecond.ToString("000.0 fps / ") + _fta.CurrentAverageFrameTimeMilliseconds.ToString("#00.00 ms");
             if (InputTracker.GetKeyDown(Key.F4) && (InputTracker.GetKey(Key.AltLeft) || InputTracker.GetKey(Key.AltRight)))
             {
@@ -880,7 +880,7 @@ namespace Veldrid.RenderDemo
 
                     ImGui.Checkbox("Auto-Rotate Light", ref _moveLight);
 
-                    string apiName = (_rc is OpenGLRenderContext) ? "OpenGL" : (_rc is OpenGLESRenderContext) ? "OpenGL ES" : "Direct3D";
+                    string apiName = GetApiName();
                     if (ImGui.BeginMenu($"Renderer: {apiName}"))
                     {
                         foreach (var option in _backendOptions)
@@ -997,7 +997,7 @@ namespace Veldrid.RenderDemo
                 }
                 if (_window.WindowState == WindowState.BorderlessFullScreen)
                 {
-                    string apiName = (_rc is OpenGLRenderContext) ? "OpenGL" : (_rc is OpenGLESRenderContext) ? "OpenGL ES" : "Direct3D";
+                    string apiName = GetApiName();
                     ImGui.Text($"[{apiName}] " + _fta.CurrentAverageFramesPerSecond.ToString("000.0 fps / ") + _fta.CurrentAverageFrameTimeMilliseconds.ToString("#00.00 ms"));
                 }
 
@@ -1012,8 +1012,8 @@ namespace Veldrid.RenderDemo
             if (ImGui.BeginPopup("AboutVeldridPopup"))
             {
                 ImGui.Text(
-@"Veldrid is an experimental renderer with Direct3D
-and OpenGL backends, built with .NET Core.");
+@"Veldrid is an experimental renderer with Direct3D, Vulkan, OpenGL,
+and OpenGL ES backends, built with .NET Core.");
                 ImGui.Text(
 @"Source code is freely available at
 https://github.com/mellinoe/veldrid.");
@@ -1021,10 +1021,21 @@ https://github.com/mellinoe/veldrid.");
 @"OpenGL bindings using OpenTK (https://github.com/opentk/opentk).");
                 ImGui.Text(
 @"Direct3D bindings using SharpDX (https://github.com/sharpdx/sharpdx).");
+                ImGui.Text(
+@"Vulkan bindings using vk (https://github.com/mellinoe/vk).");
                 ImGui.EndPopup();
             }
 
             DrawPreferencesEditor();
+        }
+
+        private static string GetApiName()
+        {
+            return (_rc is OpenGLRenderContext) ? "OpenGL"
+                : (_rc is OpenGLESRenderContext) ? "OpenGL ES"
+                : (_rc is VkRenderContext) ? "Vulkan"
+                : (_rc is D3DRenderContext) ? "Direct3D"
+                : (_rc.GetType().Name);
         }
 
         private static void ChangeScene(VisibiltyManager vm)

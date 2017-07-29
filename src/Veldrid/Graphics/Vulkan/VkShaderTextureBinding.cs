@@ -15,9 +15,9 @@ namespace Veldrid.Graphics.Vulkan
             VkImageViewCreateInfo imageViewCI = VkImageViewCreateInfo.New();
             imageViewCI.format = deviceTexture.Format;
             imageViewCI.image = deviceTexture.DeviceImage;
-            imageViewCI.viewType = VkImageViewType.Image2D;
+            imageViewCI.viewType = deviceTexture is VkTexture2D ? VkImageViewType.Image2D : VkImageViewType.ImageCube;
             imageViewCI.subresourceRange.aspectMask = deviceTexture.CreateOptions == DeviceTextureCreateOptions.DepthStencil ? VkImageAspectFlags.Depth : VkImageAspectFlags.Color;
-            imageViewCI.subresourceRange.layerCount = 1;
+            imageViewCI.subresourceRange.layerCount = deviceTexture is VkTexture2D ? 1u : 6u;
             imageViewCI.subresourceRange.levelCount = (uint)deviceTexture.MipLevels;
 
             VkResult result = vkCreateImageView(_device, ref imageViewCI, null, out VkImageView imageView);

@@ -91,7 +91,7 @@ namespace Veldrid.Graphics.Vulkan
             return cb;
         }
 
-        private void EndOneTimeCommands(VkCommandBuffer cb)
+        public void EndOneTimeCommands(VkCommandBuffer cb, VkFence fence)
         {
             vkEndCommandBuffer(cb);
 
@@ -99,7 +99,7 @@ namespace Veldrid.Graphics.Vulkan
             submitInfo.commandBufferCount = 1;
             submitInfo.pCommandBuffers = &cb;
 
-            vkQueueSubmit(GraphicsQueue, 1, ref submitInfo, VkFence.Null);
+            vkQueueSubmit(GraphicsQueue, 1, ref submitInfo, fence);
             vkQueueWaitIdle(GraphicsQueue);
 
             vkFreeCommandBuffers(_device, GraphicsCommandPool, 1, ref cb);
@@ -156,7 +156,7 @@ namespace Veldrid.Graphics.Vulkan
 
             if (debug)
             {
-                EnableDebugCallback( VkDebugReportFlagsEXT.Information | VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error | VkDebugReportFlagsEXT.PerformanceWarning);
+                EnableDebugCallback(VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error | VkDebugReportFlagsEXT.PerformanceWarning);
             }
         }
 
@@ -240,6 +240,7 @@ namespace Veldrid.Graphics.Vulkan
             deviceFeatures.samplerAnisotropy = true;
             deviceFeatures.fillModeNonSolid = true;
             deviceFeatures.geometryShader = true;
+            deviceFeatures.depthClamp = true;
 
             VkDeviceCreateInfo deviceCreateInfo = VkDeviceCreateInfo.New();
 

@@ -54,9 +54,9 @@ namespace Veldrid.Graphics.Vulkan
             imageCI.mipLevels = 1;
             imageCI.arrayLayers = 6;
             imageCI.samples = VkSampleCountFlags.Count1;
-            imageCI.tiling = VkImageTiling.Optimal;
+            imageCI.tiling = VkImageTiling.Linear;
             imageCI.usage = VkImageUsageFlags.Sampled | VkImageUsageFlags.TransferDst;
-            imageCI.initialLayout = VkImageLayout.Undefined;
+            imageCI.initialLayout = VkImageLayout.Preinitialized;
 
             VkResult result = vkCreateImage(_device, ref imageCI, null, out _image);
             CheckResult(result);
@@ -67,74 +67,90 @@ namespace Veldrid.Graphics.Vulkan
             _memory = memoryManager.Allocate(memoryType, memReqs.size, memReqs.alignment);
             vkBindImageMemory(_device, _image, _memory.DeviceMemory, _memory.Offset);
 
-            // Copy data into image.
-
-            CreateImage(
-                _device,
-                _physicalDevice,
-                memoryManager,
-                (uint)width,
-                (uint)height,
-                6,
-                _vkFormat,
-                VkImageTiling.Linear,
-                VkImageUsageFlags.TransferSrc,
-                VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
-                out VkImage stagingImage,
-                out VkMemoryBlock stagingMemory);
-
             int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(_format);
             int dataSizeInBytes = width * height * pixelSizeInBytes;
 
-            vkGetImageMemoryRequirements(_device, stagingImage, out VkMemoryRequirements stagingMemReqs);
-            void* mappedPtr;
-            result = vkMapMemory(_device, stagingMemory.DeviceMemory, stagingMemory.Offset, stagingMemReqs.size, 0, &mappedPtr);
+            VkBufferCreateInfo bufferCI = VkBufferCreateInfo.New();
+            bufferCI.size = memReqs.size;
+            bufferCI.usage = VkBufferUsageFlags.TransferSrc;
+            vkCreateBuffer(_device, ref bufferCI, null, out VkBuffer stagingBuffer);
+
+            vkGetBufferMemoryRequirements(_device, stagingBuffer, out VkMemoryRequirements stagingMemReqs);
+            VkMemoryBlock stagingMemory = _memoryManager.Allocate(
+                FindMemoryType(
+                    _physicalDevice,
+                    stagingMemReqs.memoryTypeBits,
+                    VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent),
+                stagingMemReqs.size,
+                stagingMemReqs.alignment);
+
+            result = vkBindBufferMemory(_device, stagingBuffer, stagingMemory.DeviceMemory, 0);
             CheckResult(result);
 
             StackList<IntPtr, Size6IntPtr> faces = new StackList<IntPtr, Size6IntPtr>();
-            faces.Add(pixelsFront);
-            faces.Add(pixelsBack);
-            faces.Add(pixelsLeft);
             faces.Add(pixelsRight);
+            faces.Add(pixelsLeft);
             faces.Add(pixelsTop);
             faces.Add(pixelsBottom);
+            faces.Add(pixelsBack);
+            faces.Add(pixelsFront);
 
             for (uint i = 0; i < 6; i++)
             {
                 VkImageSubresource subresource;
-                subresource.mipLevel = 0;
-                subresource.arrayLayer = i;
                 subresource.aspectMask = VkImageAspectFlags.Color;
-                vkGetImageSubresourceLayout(_device, _image, ref subresource, out VkSubresourceLayout layout);
-
-                ulong rowPitch = layout.rowPitch;
-                IntPtr data = faces[i];
-
-                if (rowPitch == (ulong)width)
-                {
-                    Buffer.MemoryCopy(data.ToPointer(), mappedPtr, dataSizeInBytes, dataSizeInBytes);
-                }
-                else
-                {
-                    for (uint yy = 0; yy < height; yy++)
-                    {
-                        byte* dstRowStart = ((byte*)mappedPtr) + (rowPitch * yy);
-                        byte* srcRowStart = ((byte*)data.ToPointer()) + (width * yy * pixelSizeInBytes);
-                        Unsafe.CopyBlock(dstRowStart, srcRowStart, (uint)(width * pixelSizeInBytes));
-                    }
-                }
+                subresource.arrayLayer = i;
+                subresource.mipLevel = 0;
+                vkGetImageSubresourceLayout(_device, _image, ref subresource, out VkSubresourceLayout faceLayout);
+                void* mappedPtr;
+                result = vkMapMemory(_device, stagingMemory.DeviceMemory, faceLayout.offset, faceLayout.size, 0, &mappedPtr);
+                CheckResult(result);
+                Buffer.MemoryCopy((void*)faces[i], mappedPtr, faceLayout.size, faceLayout.size);
+                vkUnmapMemory(_device, stagingMemory.DeviceMemory);
             }
 
-            vkUnmapMemory(_device, stagingMemory.DeviceMemory);
+            StackList<VkBufferImageCopy, Size512Bytes> copyRegions = new StackList<VkBufferImageCopy, Size512Bytes>();
+            for (uint i = 0; i < 6; i++)
+            {
+                VkImageSubresource subres;
+                subres.aspectMask = VkImageAspectFlags.Color;
+                subres.mipLevel = 0;
+                subres.arrayLayer = i;
+                vkGetImageSubresourceLayout(_device, _image, ref subres, out VkSubresourceLayout layout);
 
-            TransitionImageLayout(stagingImage, 1, VkImageLayout.Preinitialized, VkImageLayout.TransferSrcOptimal);
+                VkBufferImageCopy copyRegion;
+                copyRegion.bufferOffset = layout.offset;
+                copyRegion.bufferImageHeight = 0;
+                copyRegion.bufferRowLength = 0;
+                copyRegion.imageExtent.width = (uint)Width;
+                copyRegion.imageExtent.height = (uint)Height;
+                copyRegion.imageExtent.depth = 1;
+                copyRegion.imageOffset.x = 0;
+                copyRegion.imageOffset.y = 0;
+                copyRegion.imageOffset.z = 0;
+                copyRegion.imageSubresource.baseArrayLayer = i;
+                copyRegion.imageSubresource.aspectMask = VkImageAspectFlags.Color;
+                copyRegion.imageSubresource.layerCount = 1;
+                copyRegion.imageSubresource.mipLevel = 0;
+
+                copyRegions.Add(copyRegion);
+            }
+
+            VkFenceCreateInfo fenceCI = VkFenceCreateInfo.New();
+            vkCreateFence(_device, ref fenceCI, null, out VkFence copyFence);
+
             TransitionImageLayout(_image, (uint)MipLevels, _imageLayout, VkImageLayout.TransferDstOptimal);
-            CopyImage(stagingImage, 0, _image, 0, (uint)width, (uint)height);
+
+            VkCommandBuffer copyCmd = _rc.BeginOneTimeCommands();
+            vkCmdCopyBufferToImage(copyCmd, stagingBuffer, _image, VkImageLayout.TransferDstOptimal, copyRegions.Count, (IntPtr)copyRegions.Data);
+            _rc.EndOneTimeCommands(copyCmd, copyFence);
+            vkWaitForFences(_device, 1, ref copyFence, true, ulong.MaxValue);
+
+            vkDestroyBuffer(_device, stagingBuffer, null);
+            _memoryManager.Free(stagingMemory);
+
             TransitionImageLayout(_image, (uint)MipLevels, VkImageLayout.TransferDstOptimal, VkImageLayout.ShaderReadOnlyOptimal);
             _imageLayout = VkImageLayout.ShaderReadOnlyOptimal;
-
-            vkDestroyImage(_device, stagingImage, null);
-            _memoryManager.Free(stagingMemory);
         }
 
         public override int Width { get; }
@@ -169,7 +185,7 @@ namespace Veldrid.Graphics.Vulkan
             barrier.subresourceRange.baseMipLevel = 0;
             barrier.subresourceRange.levelCount = mipLevels;
             barrier.subresourceRange.baseArrayLayer = 0;
-            barrier.subresourceRange.layerCount = 1;
+            barrier.subresourceRange.layerCount = 6;
 
             vkCmdPipelineBarrier(
                 cb,

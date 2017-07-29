@@ -6,8 +6,8 @@
 layout(location = 0) in vec3 TexCoords;
 layout(location = 0) out vec4 color;
 
-layout(location = 2) uniform textureCube Skybox;
-layout(location = 3) uniform sampler SkyboxSampler;
+layout(binding = 2) uniform textureCube Skybox;
+layout(binding = 3) uniform sampler SkyboxSampler;
 
 void main()
 {
