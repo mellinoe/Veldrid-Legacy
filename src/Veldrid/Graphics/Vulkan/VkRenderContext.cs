@@ -157,7 +157,7 @@ namespace Veldrid.Graphics.Vulkan
 
             if (debug)
             {
-                EnableDebugCallback(VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error | VkDebugReportFlagsEXT.PerformanceWarning);
+                EnableDebugCallback(VkDebugReportFlagsEXT.Information | VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error | VkDebugReportFlagsEXT.PerformanceWarning);
             }
         }
 
@@ -404,7 +404,6 @@ namespace Veldrid.Graphics.Vulkan
                 0,
                 IntPtr.Zero);
 
-
             int vbCount = ShaderSet.InputLayout.InputDescriptions.Length;
             StackList<VkBuffer, Size512Bytes> vbs = new StackList<VkBuffer, Size512Bytes>();
             for (int vbIndex = 0; vbIndex < vbCount; vbIndex++)
@@ -640,7 +639,7 @@ namespace Veldrid.Graphics.Vulkan
             }
             _renderPassStates.Clear();
 
-            vkResetCommandPool(_device, _perFrameCommandPool, VkCommandPoolResetFlags.ReleaseResources);
+            vkResetCommandPool(_device, _perFrameCommandPool, VkCommandPoolResetFlags.None);
             vkResetDescriptorPool(_device, _perFrameDescriptorPool, 0);
 
             foreach (VkPipeline pipeline in _framePipelines)

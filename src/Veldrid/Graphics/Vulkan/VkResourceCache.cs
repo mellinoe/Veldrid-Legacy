@@ -246,6 +246,10 @@ namespace Veldrid.Graphics.Vulkan
                             {
                                 descriptorWrites[binding].descriptorType = VkDescriptorType.UniformBuffer;
                                 VkConstantBuffer cb = cacheKey.ConstantBuffers[binding];
+                                if (cb == null)
+                                {
+                                    throw new VeldridException($"No constant buffer bound to required binding slot {binding}.");
+                                }
                                 VkDescriptorBufferInfo* cbInfo = &bufferInfos[binding];
                                 cbInfo->buffer = cb.DeviceBuffer;
                                 cbInfo->offset = 0;
@@ -257,6 +261,10 @@ namespace Veldrid.Graphics.Vulkan
                             {
                                 descriptorWrites[binding].descriptorType = VkDescriptorType.SampledImage;
                                 VkShaderTextureBinding textureBinding = cacheKey.TextureBindings[binding];
+                                if (textureBinding == null)
+                                {
+                                    throw new VeldridException($"No texture bound to required binding slot {binding}.");
+                                }
                                 VkDescriptorImageInfo* imageInfo = &imageInfos[binding];
                                 imageInfo->imageLayout = textureBinding.ImageLayout;
                                 imageInfo->imageView = textureBinding.ImageView;

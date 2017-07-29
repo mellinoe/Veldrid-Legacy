@@ -94,14 +94,14 @@ namespace Veldrid.RenderDemo
 
         public void Render(RenderContext rc, string pipelineStage)
         {
-            float rotationAmount = (float)DateTime.Now.TimeOfDay.TotalMilliseconds / 1000;
-            var mvData =
+            float rotationAmount = (float)DateTime.UtcNow.TimeOfDay.TotalMilliseconds / 1000;
+            Matrix4x4 mvData =
                 Matrix4x4.CreateScale(Scale)
-                * Matrix4x4.CreateRotationX((rotationAmount * .5f) * Position.X)
-                * Matrix4x4.CreateRotationY(rotationAmount)
-                * Matrix4x4.CreateRotationZ((rotationAmount * .33f) * Position.Z)
-                * Matrix4x4.CreateTranslation(Position)
-                * Matrix4x4.CreateTranslation((float)Math.Sin(rotationAmount) * Vector3.UnitY)
+                * Matrix4x4.CreateFromYawPitchRoll(
+                    rotationAmount,
+                    (rotationAmount * .5f) * Position.X,
+                    (rotationAmount * .33f) * Position.Z)
+                * Matrix4x4.CreateTranslation(Position + ((float)Math.Sin(rotationAmount) * Vector3.UnitY))
                 * SharedDataProviders.GetProvider<Matrix4x4>("ViewMatrix").Data;
             _modelViewBuffer.SetData(ref mvData, 64);
             rc.SetVertexBuffer(0, s_vb0);

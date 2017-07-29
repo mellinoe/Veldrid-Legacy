@@ -273,8 +273,10 @@ namespace Veldrid.RenderDemo.Drawers
                     _inverseWorldProvider.SetData(_inverseTransposeWorldBuffer);
                     rc.SetConstantBuffer(6, _inverseTransposeWorldBuffer);
 
-                    rc.SetTexture(0, _textureBinding);
-                    rc.SetTexture(1, SharedTextures.GetTextureBinding("ShadowMap_Preview"));
+                    rc.SetTexture(7, _textureBinding);
+                    rc.SetSamplerState(8, rc.Anisox4Sampler);
+                    rc.SetTexture(9, SharedTextures.GetTextureBinding("ShadowMap_Preview"));
+                    rc.SetSamplerState(10, rc.PointSampler);
                 }
 
                 rc.DrawIndexedPrimitives(_elementCount, 0);
