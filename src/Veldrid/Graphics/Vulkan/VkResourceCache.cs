@@ -284,7 +284,7 @@ namespace Veldrid.Graphics.Vulkan
         }
     }
 
-    internal struct VkPipelineCacheKey
+    internal struct VkPipelineCacheKey : IEquatable<VkPipelineCacheKey>
     {
         public VkRenderPass RenderPass;
         public VkPipelineLayout PipelineLayout;
@@ -294,6 +294,22 @@ namespace Veldrid.Graphics.Vulkan
         public VkRasterizerState RasterizerState;
         public VkPrimitiveTopology PrimitiveTopology;
         public VkShaderSet ShaderSet;
+
+        public bool Equals(VkPipelineCacheKey other)
+        {
+            return RenderPass.Equals(other.RenderPass) && PipelineLayout.Equals(other.PipelineLayout)
+                && BlendState.Equals(other.BlendState) && Framebuffer.Equals(other.Framebuffer)
+                && DepthStencilState.Equals(other.DepthStencilState) && RasterizerState.Equals(other.RasterizerState)
+                && PrimitiveTopology == other.PrimitiveTopology && ShaderSet.Equals(other.ShaderSet);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashHelper.Combine(
+                RenderPass.GetHashCode(), PipelineLayout.GetHashCode(), BlendState.GetHashCode(),
+                Framebuffer.GetHashCode(), DepthStencilState.GetHashCode(), RasterizerState.GetHashCode(),
+                (int)PrimitiveTopology, ShaderSet.GetHashCode());
+        }
     }
 
     internal struct VkDescriptorSetCacheKey : IEquatable<VkDescriptorSetCacheKey>
@@ -331,7 +347,11 @@ namespace Veldrid.Graphics.Vulkan
 
         public override int GetHashCode()
         {
-            return base.GetHashCode();
+            return HashHelper.Combine(
+                ShaderResourceBindingSlots.GetHashCode(),
+                HashHelper.Array(ConstantBuffers),
+                HashHelper.Array(TextureBindings),
+                HashHelper.Array(SamplerStates));
         }
 
         public override bool Equals(object obj) => obj is VkDescriptorSetCacheKey other && Equals(other);

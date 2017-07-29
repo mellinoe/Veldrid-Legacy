@@ -47,6 +47,7 @@ namespace Veldrid.Graphics.Vulkan
         private List<VkPipeline> _framePipelines = new List<VkPipeline>();
         private List<VkPipelineLayout> _framePipelineLayouts = new List<VkPipelineLayout>();
         private bool _framebufferChanged;
+        private List<VkCommandBuffer> _freeSecondaryCommandBuffers = new List<VkCommandBuffer>();
 
         public VkDevice Device => _device;
         public VkPhysicalDevice PhysicalDevice => _physicalDevice;
@@ -634,7 +635,7 @@ namespace Veldrid.Graphics.Vulkan
                 vkFreeCommandBuffers(_device, _perFrameCommandPool, 1, ref rps.PrimaryCommandBuffer);
                 if (rps.SecondaryCommandBuffers.Count > 0)
                 {
-                    vkFreeCommandBuffers(_device, _perFrameCommandPool, rps.SecondaryCommandBuffers.Count, ref rps.SecondaryCommandBuffers[0]);
+                    _freeSecondaryCommandBuffers.AddRange(rps.SecondaryCommandBuffers);
                 }
             }
             _renderPassStates.Clear();
@@ -686,6 +687,14 @@ namespace Veldrid.Graphics.Vulkan
 
         private VkCommandBuffer GetCommandBuffer()
         {
+            if (_freeSecondaryCommandBuffers.Count > 0)
+            {
+                int lastIndex = _freeSecondaryCommandBuffers.Count - 1;
+                VkCommandBuffer freeCB = _freeSecondaryCommandBuffers[lastIndex];
+                _freeSecondaryCommandBuffers.RemoveAt(lastIndex);
+                return freeCB;
+
+            }
             VkCommandBufferAllocateInfo commandBufferAI = VkCommandBufferAllocateInfo.New();
             commandBufferAI.commandBufferCount = 1;
             commandBufferAI.commandPool = _perFrameCommandPool;
