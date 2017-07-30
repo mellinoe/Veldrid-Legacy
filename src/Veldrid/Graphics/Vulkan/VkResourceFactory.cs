@@ -28,9 +28,7 @@ namespace Veldrid.Graphics.Vulkan
         public override ConstantBuffer CreateConstantBuffer(int sizeInBytes)
         {
             return new VkConstantBuffer(
-                _device,
-                _physicalDevice,
-                RenderContext.MemoryManager,
+                RenderContext,
                 (ulong)sizeInBytes,
                 VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
                 true);
@@ -72,9 +70,7 @@ namespace Veldrid.Graphics.Vulkan
         public override IndexBuffer CreateIndexBuffer(int sizeInBytes, bool isDynamic, IndexFormat format)
         {
             return new VkIndexBuffer(
-                _device,
-                _physicalDevice,
-                RenderContext.MemoryManager,
+                RenderContext,
                 (ulong)sizeInBytes,
                 VkMemoryPropertyFlags.HostCoherent | VkMemoryPropertyFlags.HostVisible,
                 isDynamic);
@@ -132,9 +128,7 @@ namespace Veldrid.Graphics.Vulkan
         public override VertexBuffer CreateVertexBuffer(int sizeInBytes, bool isDynamic)
         {
             return new VkVertexBuffer(
-                _device,
-                _physicalDevice,
-                RenderContext.MemoryManager,
+                RenderContext,
                 (ulong)sizeInBytes,
                 VkMemoryPropertyFlags.HostVisible | VkMemoryPropertyFlags.HostCoherent,
                 isDynamic);

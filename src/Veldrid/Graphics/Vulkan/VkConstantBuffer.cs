@@ -5,13 +5,11 @@ namespace Veldrid.Graphics.Vulkan
     public class VkConstantBuffer : VkDeviceBuffer, ConstantBuffer
     {
         public VkConstantBuffer(
-            VkDevice device,
-            VkPhysicalDevice physicalDevice,
-            VkDeviceMemoryManager memoryManager,
+            VkRenderContext rc,
             ulong size,
             VkMemoryPropertyFlags memoryProperties,
             bool dynamic)
-            : base(device, physicalDevice, memoryManager, size, VkBufferUsageFlags.UniformBuffer, memoryProperties, dynamic)
+            : base(rc, size, VkBufferUsageFlags.UniformBuffer, memoryProperties, dynamic)
         {
         }
     }

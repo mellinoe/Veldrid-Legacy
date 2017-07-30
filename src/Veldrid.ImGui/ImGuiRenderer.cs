@@ -68,8 +68,8 @@ namespace Veldrid
         private void InitializeContextObjects(RenderContext rc)
         {
             ResourceFactory factory = rc.ResourceFactory;
-            _vertexBuffer = factory.CreateVertexBuffer(100000, false); // Overkill ?
-            _indexBuffer = factory.CreateIndexBuffer(10000, false);
+            _vertexBuffer = factory.CreateVertexBuffer(1000, true);
+            _indexBuffer = factory.CreateIndexBuffer(500, true);
             _blendState = factory.CreateCustomBlendState(
                 true,
                 Blend.InverseSourceAlpha, Blend.Zero, BlendFunction.Add,

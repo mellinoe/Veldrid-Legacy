@@ -157,7 +157,7 @@ namespace Veldrid.Graphics.Vulkan
 
             if (debug)
             {
-                EnableDebugCallback(VkDebugReportFlagsEXT.Information | VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error | VkDebugReportFlagsEXT.PerformanceWarning);
+                EnableDebugCallback(VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error | VkDebugReportFlagsEXT.PerformanceWarning);
             }
         }
 

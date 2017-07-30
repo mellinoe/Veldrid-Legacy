@@ -7,13 +7,11 @@ namespace Veldrid.Graphics.Vulkan
     public class VkVertexBuffer : VkDeviceBuffer, VertexBuffer
     {
         public VkVertexBuffer(
-            VkDevice device,
-            VkPhysicalDevice physicalDevice,
-            VkDeviceMemoryManager memoryManager,
+            VkRenderContext rc,
             ulong size,
             VkMemoryPropertyFlags memoryProperties,
             bool dynamic)
-            : base(device, physicalDevice, memoryManager, size, VkBufferUsageFlags.VertexBuffer, memoryProperties, dynamic)
+            : base(rc, size, VkBufferUsageFlags.VertexBuffer, memoryProperties, dynamic)
         {
         }
 
