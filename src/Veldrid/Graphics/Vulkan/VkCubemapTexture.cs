@@ -219,7 +219,7 @@ namespace Veldrid.Graphics.Vulkan
 
                 VkImageSubresource subresource;
                 subresource.aspectMask = VkImageAspectFlags.Color;
-                subresource.arrayLayer = i;
+                subresource.arrayLayer = 0;
                 subresource.mipLevel = 0;
 
                 vkGetImageSubresourceLayout(_device, stagingImage, ref subresource, out VkSubresourceLayout stagingLayout);
