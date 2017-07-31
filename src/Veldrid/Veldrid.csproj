@@ -17,7 +17,7 @@
     <PackageReference Include="SharpDX.Direct3D11" Version="4.0.1" />
     <PackageReference Include="SharpDX.DXGI" Version="4.0.1" />
     <PackageReference Include="System.Text.Primitives" Version="0.1.0-e170627-2" />
-    <PackageReference Include="Vk" Version="1.0.3" />
+    <PackageReference Include="Vk" Version="1.0.4" />
     <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
