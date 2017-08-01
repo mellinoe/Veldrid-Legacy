@@ -38,7 +38,8 @@ namespace Veldrid.Graphics.Vulkan
         private VkCommandPool _graphicsCommandPool;
         private VkResourceCache _resourceCache;
         private VkDeviceMemoryManager _memoryManager;
-        private PFN_vkDebugReportCallbackEXT _debugCallback;
+        private PFN_vkDebugReportCallbackEXT _debugCallbackFunc;
+        private VkDebugReportCallbackEXT _debugCallbackHandle;
 
         // Draw call tracking
         private List<RenderPassInfo> _renderPassStates = new List<RenderPassInfo>();
@@ -163,19 +164,16 @@ namespace Veldrid.Graphics.Vulkan
 
         public void EnableDebugCallback(VkDebugReportFlagsEXT flags = VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error)
         {
-            _debugCallback = DebugCallback;
-            IntPtr debugFunctionPtr = Marshal.GetFunctionPointerForDelegate(_debugCallback);
+            _debugCallbackFunc = DebugCallback;
+            IntPtr debugFunctionPtr = Marshal.GetFunctionPointerForDelegate(_debugCallbackFunc);
             VkDebugReportCallbackCreateInfoEXT debugCallbackCI = VkDebugReportCallbackCreateInfoEXT.New();
             debugCallbackCI.flags = flags;
             debugCallbackCI.pfnCallback = debugFunctionPtr;
             FixedUtf8String debugExtFnName = "vkCreateDebugReportCallbackEXT";
             IntPtr createFnPtr = vkGetInstanceProcAddr(_instance, debugExtFnName);
             vkCreateDebugReportCallbackEXT_d createDelegate = Marshal.GetDelegateForFunctionPointer<vkCreateDebugReportCallbackEXT_d>(createFnPtr);
-            VkDebugReportCallbackEXT callback;
-            createDelegate(_instance, &debugCallbackCI, IntPtr.Zero, &callback);
+            createDelegate(_instance, &debugCallbackCI, IntPtr.Zero, out _debugCallbackHandle);
         }
-
-        private delegate VkResult vkCreateDebugReportCallbackEXT_d(VkInstance instance, VkDebugReportCallbackCreateInfoEXT* createInfo, IntPtr allocatorPtr, VkDebugReportCallbackEXT* ret);
 
         private uint DebugCallback(
             uint flags,
@@ -455,6 +453,15 @@ namespace Veldrid.Graphics.Vulkan
         protected override void PlatformDispose()
         {
             _scInfo.Dispose();
+            if (_debugCallbackFunc != null)
+            {
+                _debugCallbackFunc = null;
+                FixedUtf8String debugExtFnName = "vkDestroyDebugReportCallbackEXT";
+                IntPtr destroyFuncPtr = vkGetInstanceProcAddr(_instance, debugExtFnName);
+                vkDestroyDebugReportCallbackEXT_d destroyDel
+                    = Marshal.GetDelegateForFunctionPointer<vkDestroyDebugReportCallbackEXT_d>(destroyFuncPtr);
+                destroyDel.Invoke(_instance, _debugCallbackHandle, null);
+            }
             vkDestroyInstance(_instance, null);
         }
 
@@ -722,4 +729,12 @@ namespace Veldrid.Graphics.Vulkan
         public bool ClearBuffer;
         public RgbaFloat ClearColor;
     }
+
+    internal unsafe delegate VkResult vkCreateDebugReportCallbackEXT_d(
+        VkInstance instance,
+        VkDebugReportCallbackCreateInfoEXT* createInfo,
+        IntPtr allocatorPtr,
+        out VkDebugReportCallbackEXT ret);
+
+    internal unsafe delegate VkResult vkDestroyDebugReportCallbackEXT_d(VkInstance instance, VkDebugReportCallbackEXT callback, VkAllocationCallbacks* pAllocator);
 }
