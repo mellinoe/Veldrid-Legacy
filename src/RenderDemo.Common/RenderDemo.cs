@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using SharpDX.DXGI;
 using System.Threading.Tasks;
 using Veldrid.Graphics.OpenGLES;
+using Veldrid.Graphics.Vulkan;
 
 namespace Veldrid.RenderDemo
 {
@@ -446,8 +447,13 @@ namespace Veldrid.RenderDemo
                 var sphere = _ad.LoadAsset<ObjFile>(new AssetID("Models/Sphere.obj")).GetFirstMesh();
                 var pink = new RawTextureDataArray<RgbaFloat>(
                     new RgbaFloat[] { RgbaFloat.Pink }, 1, 1, RgbaFloat.SizeInBytes, PixelFormat.R32_G32_B32_A32_Float);
+                int zz = 0;
                 foreach (var group in atriumFile.MeshGroups)
                 {
+                    if ((++zz % 320) == 0)
+                    {
+
+                    }
                     ConstructedMeshInfo mesh = atriumFile.GetMesh(group);
                     MaterialDefinition materialDef = atriumMtls.Definitions[mesh.MaterialName];
                     TextureData overrideTextureData = null;
@@ -496,8 +502,8 @@ namespace Veldrid.RenderDemo
 
                 _sponzaAtrium.AddRenderItem(_imguiRenderer);
 
-                _sceneBoundsRenderer = new BoundingBoxWireframeRenderer(_sponzaAtrium.OctreeRootNode.GetPreciseBounds(), _ad, _rc);
-                _sponzaAtrium.AddRenderItem(_sceneBoundsRenderer);
+                //_sceneBoundsRenderer = new BoundingBoxWireframeRenderer(_sponzaAtrium.OctreeRootNode.GetPreciseBounds(), _ad, _rc);
+                //_sponzaAtrium.AddRenderItem(_sceneBoundsRenderer);
 
                 sw.Stop();
                 Console.WriteLine("Total elapsed loading time: " + sw.Elapsed);
@@ -533,7 +539,7 @@ namespace Veldrid.RenderDemo
             DrawMainMenu();
 
             _fta.AddTime(deltaSeconds);
-            string apiName = (_rc is OpenGLRenderContext) ? "OpenGL" : (_rc is OpenGLESRenderContext) ? "OpenGL ES" : "Direct3D";
+            string apiName = GetApiName();
             _window.Title = $"[{apiName}] " + _fta.CurrentAverageFramesPerSecond.ToString("000.0 fps / ") + _fta.CurrentAverageFrameTimeMilliseconds.ToString("#00.00 ms");
             if (InputTracker.GetKeyDown(Key.F4) && (InputTracker.GetKey(Key.AltLeft) || InputTracker.GetKey(Key.AltRight)))
             {
@@ -596,7 +602,7 @@ namespace Veldrid.RenderDemo
             }
             if (_visibilityManager == _shadowsScene || _visibilityManager == _sponzaAtrium)
             {
-                _sceneBoundsRenderer.Box = ((OctreeVisibilityManager)_visibilityManager).OctreeRootNode.GetPreciseBounds();
+                //_sceneBoundsRenderer.Box = ((OctreeVisibilityManager)_visibilityManager).OctreeRootNode.GetPreciseBounds();
             }
             UpdateLightMatrices();
             UpdatePointLights();
@@ -874,7 +880,7 @@ namespace Veldrid.RenderDemo
 
                     ImGui.Checkbox("Auto-Rotate Light", ref _moveLight);
 
-                    string apiName = (_rc is OpenGLRenderContext) ? "OpenGL" : (_rc is OpenGLESRenderContext) ? "OpenGL ES" : "Direct3D";
+                    string apiName = GetApiName();
                     if (ImGui.BeginMenu($"Renderer: {apiName}"))
                     {
                         foreach (var option in _backendOptions)
@@ -991,7 +997,7 @@ namespace Veldrid.RenderDemo
                 }
                 if (_window.WindowState == WindowState.BorderlessFullScreen)
                 {
-                    string apiName = (_rc is OpenGLRenderContext) ? "OpenGL" : (_rc is OpenGLESRenderContext) ? "OpenGL ES" : "Direct3D";
+                    string apiName = GetApiName();
                     ImGui.Text($"[{apiName}] " + _fta.CurrentAverageFramesPerSecond.ToString("000.0 fps / ") + _fta.CurrentAverageFrameTimeMilliseconds.ToString("#00.00 ms"));
                 }
 
@@ -1006,8 +1012,8 @@ namespace Veldrid.RenderDemo
             if (ImGui.BeginPopup("AboutVeldridPopup"))
             {
                 ImGui.Text(
-@"Veldrid is an experimental renderer with Direct3D
-and OpenGL backends, built with .NET Core.");
+@"Veldrid is an experimental renderer with Direct3D, Vulkan, OpenGL,
+and OpenGL ES backends, built with .NET Core.");
                 ImGui.Text(
 @"Source code is freely available at
 https://github.com/mellinoe/veldrid.");
@@ -1015,10 +1021,21 @@ https://github.com/mellinoe/veldrid.");
 @"OpenGL bindings using OpenTK (https://github.com/opentk/opentk).");
                 ImGui.Text(
 @"Direct3D bindings using SharpDX (https://github.com/sharpdx/sharpdx).");
+                ImGui.Text(
+@"Vulkan bindings using vk (https://github.com/mellinoe/vk).");
                 ImGui.EndPopup();
             }
 
             DrawPreferencesEditor();
+        }
+
+        private static string GetApiName()
+        {
+            return (_rc is OpenGLRenderContext) ? "OpenGL"
+                : (_rc is OpenGLESRenderContext) ? "OpenGL ES"
+                : (_rc is VkRenderContext) ? "Vulkan"
+                : (_rc is D3DRenderContext) ? "Direct3D"
+                : (_rc.GetType().Name);
         }
 
         private static void ChangeScene(VisibiltyManager vm)

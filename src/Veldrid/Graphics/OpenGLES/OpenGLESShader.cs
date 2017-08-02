@@ -8,7 +8,7 @@ namespace Veldrid.Graphics.OpenGLES
     {
         public int ShaderID { get; private set; }
 
-        public ShaderType Type { get; }
+        public ShaderStages Type { get; }
 
         public OpenGLESShader(Stream dataStream, OpenTK.Graphics.ES30.ShaderType type)
         {

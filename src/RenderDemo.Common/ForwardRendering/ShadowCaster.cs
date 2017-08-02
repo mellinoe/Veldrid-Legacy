@@ -133,22 +133,19 @@ namespace Veldrid.RenderDemo.ForwardRendering
                 rc.SetConstantBuffer(5, _worldBuffer);
                 rc.SetConstantBuffer(6, _inverseTransposeWorldBuffer);
 
-                rc.SetTexture(0, _surfaceTextureBinding);
-                rc.SetTexture(1, SharedTextures.GetTextureBinding("ShadowMap"));
-                rc.SetSamplerState(0, rc.Anisox4Sampler);
-                rc.SetSamplerState(1, _shadowMapSampler);
+                rc.SetTexture(7, _surfaceTextureBinding);
+                rc.SetSamplerState(8, rc.Anisox4Sampler);
+                rc.SetTexture(9, SharedTextures.GetTextureBinding("ShadowMap"));
+                rc.SetSamplerState(10, _shadowMapSampler);
             }
 
             rc.DrawIndexedPrimitives(_meshData.Indices.Length, 0);
-
-            rc.SetSamplerState(0, rc.PointSampler);
-            rc.SetSamplerState(1, rc.PointSampler);
         }
 
-        private static Material CreateShadowPassMaterial(ResourceFactory factory)
+        public static Material CreateShadowPassMaterial(ResourceFactory factory)
         {
-            Shader vs = factory.CreateShader(ShaderType.Vertex, ShaderHelper.LoadShaderCode("shadowmap-vertex", ShaderType.Vertex, factory));
-            Shader fs = factory.CreateShader(ShaderType.Fragment, ShaderHelper.LoadShaderCode("shadowmap-frag", ShaderType.Fragment, factory));
+            Shader vs = factory.CreateShader(ShaderStages.Vertex, ShaderHelper.LoadShaderCode("shadowmap-vertex", ShaderStages.Vertex, factory));
+            Shader fs = factory.CreateShader(ShaderStages.Fragment, ShaderHelper.LoadShaderCode("shadowmap-frag", ShaderStages.Fragment, factory));
             VertexInputLayout inputLayout = factory.CreateInputLayout(
                 new VertexInputDescription(
                     32,
@@ -156,23 +153,19 @@ namespace Veldrid.RenderDemo.ForwardRendering
                     new VertexInputElement("in_normal", VertexSemanticType.Normal, VertexElementFormat.Float3),
                     new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            ShaderConstantBindingSlots constantSlots = factory.CreateShaderConstantBindingSlots(
+            ShaderResourceBindingSlots constantSlots = factory.CreateShaderResourceBindingSlots(
                 shaderSet,
-                new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4), // Light Projection
-                new ShaderConstantDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4), // Light View
-                new ShaderConstantDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4));
+                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4), // Light Projection
+                new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4), // Light View
+                new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4));
 
-            ShaderTextureBindingSlots textureSlots = factory.CreateShaderTextureBindingSlots(
-                shaderSet,
-                Array.Empty<ShaderTextureInput>());
-
-            return new Material(shaderSet, constantSlots, textureSlots);
+            return new Material(shaderSet, constantSlots);
         }
 
-        private static Material CreateRegularPassMaterial(ResourceFactory factory)
+        public static Material CreateRegularPassMaterial(ResourceFactory factory)
         {
-            Shader vs = factory.CreateShader(ShaderType.Vertex, ShaderHelper.LoadShaderCode("shadow-vertex", ShaderType.Vertex, factory));
-            Shader fs = factory.CreateShader(ShaderType.Fragment, ShaderHelper.LoadShaderCode("shadow-frag", ShaderType.Fragment, factory));
+            Shader vs = factory.CreateShader(ShaderStages.Vertex, ShaderHelper.LoadShaderCode("shadow-vertex", ShaderStages.Vertex, factory));
+            Shader fs = factory.CreateShader(ShaderStages.Fragment, ShaderHelper.LoadShaderCode("shadow-frag", ShaderStages.Fragment, factory));
             VertexInputLayout inputLayout = factory.CreateInputLayout(
                 new VertexInputDescription(
                     32,
@@ -180,22 +173,21 @@ namespace Veldrid.RenderDemo.ForwardRendering
                     new VertexInputElement("in_normal", VertexSemanticType.Normal, VertexElementFormat.Float3),
                     new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            ShaderConstantBindingSlots constantSlots = factory.CreateShaderConstantBindingSlots(
+            ShaderResourceBindingSlots constantSlots = factory.CreateShaderResourceBindingSlots(
                 shaderSet,
-                new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("LightProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("LightViewMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("LightInfoBuffer", ShaderConstantType.Float4),
-                new ShaderConstantDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4));
+                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("LightProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("LightViewMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("LightInfoBuffer", ShaderConstantType.Float4),
+                new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture),
+                new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Sampler),
+                new ShaderResourceDescription("ShadowMap", ShaderResourceType.Texture),
+                new ShaderResourceDescription("ShadowMap", ShaderResourceType.Sampler));
 
-            ShaderTextureBindingSlots textureSlots = factory.CreateShaderTextureBindingSlots(
-                shaderSet,
-                new ShaderTextureInput(0, "SurfaceTexture"),
-                new ShaderTextureInput(1, "ShadowMap"));
-
-            return new Material(shaderSet, constantSlots, textureSlots);
+            return new Material(shaderSet, constantSlots);
         }
 
         public void Dispose()

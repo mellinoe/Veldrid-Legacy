@@ -16,8 +16,6 @@ namespace Veldrid.Graphics.Direct3D
             = ShaderFlags.OptimizationLevel3;
 #endif
 
-        protected override string GetShaderFileExtension() => "hlsl";
-
         protected override GraphicsBackend PlatformGetGraphicsBackend() => GraphicsBackend.Direct3D11;
 
         private readonly Device _device;
@@ -37,78 +35,42 @@ namespace Veldrid.Graphics.Direct3D
             return new D3DFramebuffer(_device);
         }
 
-        public override Framebuffer CreateFramebuffer(int width, int height)
-        {
-            width = Math.Max(1, width);
-            height = Math.Max(1, height);
-
-            D3DTexture2D colorTexture = new D3DTexture2D(_device, new Texture2DDescription()
-            {
-                Format = SharpDX.DXGI.Format.R8G8B8A8_UNorm,
-                ArraySize = 1,
-                MipLevels = 1,
-                Width = width,
-                Height = height,
-                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-                Usage = ResourceUsage.Default,
-                BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
-                CpuAccessFlags = CpuAccessFlags.None,
-                OptionFlags = ResourceOptionFlags.None
-            });
-
-            D3DTexture2D depthTexture = new D3DTexture2D(_device, new Texture2DDescription()
-            {
-                Format = SharpDX.DXGI.Format.R16_Typeless,
-                ArraySize = 1,
-                MipLevels = 1,
-                Width = width,
-                Height = height,
-                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-                Usage = ResourceUsage.Default,
-                BindFlags = BindFlags.DepthStencil | BindFlags.ShaderResource,
-                CpuAccessFlags = CpuAccessFlags.None,
-                OptionFlags = ResourceOptionFlags.None
-            });
-
-            return new D3DFramebuffer(_device, colorTexture, depthTexture);
-        }
-
         public override IndexBuffer CreateIndexBuffer(int sizeInBytes, bool isDynamic, IndexFormat format)
         {
             return new D3DIndexBuffer(_device, sizeInBytes, isDynamic, D3DFormats.VeldridToD3DIndexFormat(format));
         }
 
-        public override CompiledShaderCode ProcessShaderCode(ShaderType type, string shaderCode)
+        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode)
         {
             string entryPoint;
             switch (type)
             {
-                case ShaderType.Vertex:
+                case ShaderStages.Vertex:
                     entryPoint = "VS";
                     break;
-                case ShaderType.Geometry:
+                case ShaderStages.Geometry:
                     entryPoint = "GS";
                     break;
-                case ShaderType.Fragment:
+                case ShaderStages.Fragment:
                     entryPoint = "PS";
                     break;
                 default:
-                    throw Illegal.Value<ShaderType>();
+                    throw Illegal.Value<ShaderStages>();
             }
 
             string profile;
             switch (type)
             {
-                case ShaderType.Vertex:
+                case ShaderStages.Vertex:
                     profile = "vs_5_0";
                     break;
-                case ShaderType.Geometry:
+                case ShaderStages.Geometry:
                     profile = "gs_5_0";
                     break;
-                case ShaderType.Fragment:
+                case ShaderStages.Fragment:
                     profile = "ps_5_0";
                     break;
-                default: throw Illegal.Value<ShaderType>();
+                default: throw Illegal.Value<ShaderStages>();
             }
 
             return new D3DShaderBytecode(shaderCode, entryPoint, profile, DefaultShaderFlags);
@@ -119,19 +81,19 @@ namespace Veldrid.Graphics.Direct3D
             return new D3DShaderBytecode(data);
         }
 
-        public override Shader CreateShader(ShaderType type, CompiledShaderCode compiledShaderCode)
+        public override Shader CreateShader(ShaderStages type, CompiledShaderCode compiledShaderCode)
         {
             D3DShaderBytecode d3dBytecode = (D3DShaderBytecode)compiledShaderCode;
 
             switch (type)
             {
-                case ShaderType.Vertex:
+                case ShaderStages.Vertex:
                     return new D3DVertexShader(_device, d3dBytecode.Bytecode);
-                case ShaderType.Geometry:
+                case ShaderStages.Geometry:
                     return new D3DGeometryShader(_device, d3dBytecode.Bytecode);
-                case ShaderType.Fragment:
+                case ShaderStages.Fragment:
                     return new D3DFragmentShader(_device, d3dBytecode.Bytecode);
-                default: throw Illegal.Value<ShaderType>();
+                default: throw Illegal.Value<ShaderStages>();
             }
         }
 
@@ -150,16 +112,11 @@ namespace Veldrid.Graphics.Direct3D
             return new D3DShaderSet(inputLayout, vertexShader, geometryShader, fragmentShader);
         }
 
-        public override ShaderConstantBindingSlots CreateShaderConstantBindingSlots(
+        public override ShaderResourceBindingSlots CreateShaderResourceBindingSlots(
             ShaderSet shaderSet,
-            ShaderConstantDescription[] constants)
+            ShaderResourceDescription[] constants)
         {
-            return new D3DShaderConstantBindingSlots(_device, shaderSet, constants);
-        }
-
-        public override ShaderTextureBindingSlots CreateShaderTextureBindingSlots(ShaderSet shaderSet, ShaderTextureInput[] textureInputs)
-        {
-            return new D3DShaderTextureBindingSlots((D3DShaderSet)shaderSet, textureInputs);
+            return new D3DShaderResourceBindingSlots(constants);
         }
 
         public override VertexBuffer CreateVertexBuffer(int sizeInBytes, bool isDynamic)
@@ -167,14 +124,37 @@ namespace Veldrid.Graphics.Direct3D
             return new D3DVertexBuffer(_device, sizeInBytes, isDynamic);
         }
 
-        public override DeviceTexture2D CreateTexture(int mipLevels, int width, int height, int pixelSizeInBytes, PixelFormat format)
+        public override DeviceTexture2D CreateTexture(
+            int mipLevels,
+            int width,
+            int height,
+            PixelFormat format,
+            DeviceTextureCreateOptions createOptions)
         {
+            int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(format);
+            SharpDX.DXGI.Format dxgiFormat = D3DFormats.VeldridToD3DPixelFormat(format);
+            BindFlags bindFlags = BindFlags.ShaderResource;
+            if (createOptions == DeviceTextureCreateOptions.DepthStencil)
+            {
+                if (format != PixelFormat.R16_UInt)
+                {
+                    throw new NotImplementedException("R16_UInt is the only supported depth texture format.");
+                }
+
+                dxgiFormat = SharpDX.DXGI.Format.R16_Typeless;
+                bindFlags |= BindFlags.DepthStencil;
+            }
+            else if (createOptions == DeviceTextureCreateOptions.RenderTarget)
+            {
+                bindFlags |= BindFlags.RenderTarget;
+            }
+
             D3DTexture2D texture = new D3DTexture2D(
                 _device,
-                BindFlags.ShaderResource,
+                bindFlags,
                 ResourceUsage.Default,
                 CpuAccessFlags.None,
-                D3DFormats.VeldridToD3DPixelFormat(format),
+                dxgiFormat,
                 mipLevels,
                 width,
                 height,
@@ -195,28 +175,6 @@ namespace Veldrid.Graphics.Direct3D
             int lodBias)
         {
             return new D3DSamplerState(_device, addressU, addressV, addressW, filter, maxAnisotropy, borderColor, comparison, minimumLod, maximumLod, lodBias);
-        }
-
-        public override DeviceTexture2D CreateDepthTexture(int width, int height, int pixelSizeInBytes, PixelFormat format)
-        {
-            if (format != PixelFormat.R16_UInt)
-            {
-                throw new NotImplementedException("R16_UInt is the only supported depth texture format.");
-            }
-
-            return new D3DTexture2D(_device, new Texture2DDescription()
-            {
-                Format = SharpDX.DXGI.Format.R16_Typeless,
-                ArraySize = 1,
-                MipLevels = 1,
-                Width = width,
-                Height = height,
-                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-                Usage = ResourceUsage.Default,
-                BindFlags = BindFlags.DepthStencil | BindFlags.ShaderResource,
-                CpuAccessFlags = CpuAccessFlags.None,
-                OptionFlags = ResourceOptionFlags.None
-            });
         }
 
         public override CubemapTexture CreateCubemapTexture(

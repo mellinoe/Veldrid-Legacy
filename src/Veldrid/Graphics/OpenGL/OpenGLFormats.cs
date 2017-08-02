@@ -22,18 +22,18 @@ namespace Veldrid.Graphics.OpenGL
             }
         }
 
-        public static OpenTK.Graphics.OpenGL.ShaderType VeldridToGLShaderType(ShaderType type)
+        public static OpenTK.Graphics.OpenGL.ShaderType VeldridToGLShaderType(ShaderStages type)
         {
             switch (type)
             {
-                case ShaderType.Vertex:
+                case ShaderStages.Vertex:
                     return OpenTK.Graphics.OpenGL.ShaderType.VertexShader;
-                case ShaderType.Geometry:
+                case ShaderStages.Geometry:
                     return OpenTK.Graphics.OpenGL.ShaderType.GeometryShader;
-                case ShaderType.Fragment:
+                case ShaderStages.Fragment:
                     return OpenTK.Graphics.OpenGL.ShaderType.FragmentShader;
                 default:
-                    throw Illegal.Value<ShaderType>();
+                    throw Illegal.Value<ShaderStages>();
             }
         }
 
@@ -127,16 +127,16 @@ namespace Veldrid.Graphics.OpenGL
             }
         }
 
-        public static ShaderType GLToVeldridShaderType(OpenTK.Graphics.OpenGL.ShaderType type)
+        public static ShaderStages GLToVeldridShaderType(OpenTK.Graphics.OpenGL.ShaderType type)
         {
             switch (type)
             {
                 case OpenTK.Graphics.OpenGL.ShaderType.FragmentShader:
-                    return ShaderType.Fragment;
+                    return ShaderStages.Fragment;
                 case OpenTK.Graphics.OpenGL.ShaderType.VertexShader:
-                    return ShaderType.Vertex;
+                    return ShaderStages.Vertex;
                 case OpenTK.Graphics.OpenGL.ShaderType.GeometryShader:
-                    return ShaderType.Geometry;
+                    return ShaderStages.Geometry;
                 case OpenTK.Graphics.OpenGL.ShaderType.TessEvaluationShader:
                 case OpenTK.Graphics.OpenGL.ShaderType.TessControlShader:
                 case OpenTK.Graphics.OpenGL.ShaderType.ComputeShader:

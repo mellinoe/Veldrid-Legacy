@@ -43,7 +43,7 @@ namespace Veldrid.Graphics
         /// <returns>A new <see cref="VertexBuffer"/> containing the given data.</returns>
         public VertexBuffer CreateVertexBuffer<T>(T[] data, VertexDescriptor descriptor, bool isDynamic) where T : struct
         {
-            VertexBuffer vb = CreateVertexBuffer(descriptor.VertexSizeInBytes * descriptor.ElementCount, isDynamic);
+            VertexBuffer vb = CreateVertexBuffer(descriptor.VertexSizeInBytes * data.Length, isDynamic);
             vb.SetVertexData(data, descriptor);
             return vb;
         }
@@ -92,7 +92,7 @@ namespace Veldrid.Graphics
         /// <returns>A new <see cref="IndexBuffer"/></returns>
         public abstract IndexBuffer CreateIndexBuffer(int sizeInBytes, bool isDynamic, IndexFormat format);
 
-        public abstract CompiledShaderCode ProcessShaderCode(ShaderType type, string shaderCode);
+        public abstract CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode);
 
         public abstract CompiledShaderCode LoadProcessedShader(byte[] data);
 
@@ -103,12 +103,12 @@ namespace Veldrid.Graphics
         /// <param name="shaderCode">The raw text source of the <see cref="Shader"/></param>
         /// <param name="name">The name of the <see cref="Shader"/>, generally used for debugging.</param>
         /// <returns>A new Shader object.</returns>
-        public Shader CreateShader(ShaderType type, string shaderCode)
+        public Shader CreateShader(ShaderStages type, string shaderCode)
         {
             return CreateShader(type, ProcessShaderCode(type, shaderCode));
         }
 
-        public abstract Shader CreateShader(ShaderType type, CompiledShaderCode compiledShaderCode);
+        public abstract Shader CreateShader(ShaderStages type, CompiledShaderCode compiledShaderCode);
 
         /// <summary>
         /// Creates a <see cref="ShaderSet"/> from the given vertex inputs and shaders.
@@ -130,22 +130,14 @@ namespace Veldrid.Graphics
         public abstract ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader geometryShader, Shader fragmentShader);
 
         /// <summary>
-        /// Creates a device-specific representation of the constant buffer slots available to a set of shaders.
+        /// Creates a device-specific representation of the resource slots available to a set of shaders.
         /// </summary>
-        /// <param name="shaderSet">The shader set for which the <see cref="ShaderConstantBindingSlots"/> will be applicable.</param>
-        /// <param name="constants">A description of the constant buffer inputs.</param>
+        /// <param name="shaderSet">The shader set for which the <see cref="ShaderResourceBindingSlots"/> will be applicable.</param>
+        /// <param name="resources">A description of the resources.</param>
         /// <returns></returns>
-        public abstract ShaderConstantBindingSlots CreateShaderConstantBindingSlots(
+        public abstract ShaderResourceBindingSlots CreateShaderResourceBindingSlots(
             ShaderSet shaderSet,
-            params ShaderConstantDescription[] constants);
-
-        /// <summary>
-        /// Creates a new <see cref="ShaderTextureBindingSlots"/> for the given shader set and a device-agnostic description.
-        /// </summary>
-        /// <param name="shaderSet">The <see cref="ShaderSet"/> which the slots will be valid for.</param>
-        /// <param name="textureInputs">The texture slot descriptions.</param>
-        /// <returns>A new <see cref="ShaderTextureBindingSlots"/>.</returns>
-        public abstract ShaderTextureBindingSlots CreateShaderTextureBindingSlots(ShaderSet shaderSet, params ShaderTextureInput[] textureInputs);
+            params ShaderResourceDescription[] resources);
 
         public VertexInputLayout CreateInputLayout(params VertexInputElement[] inputElements)
         {
@@ -196,7 +188,26 @@ namespace Veldrid.Graphics
         /// <param name="width">The width of the color and depth textures.</param>
         /// <param name="height">The height of the color and depth textures.</param>
         /// <returns></returns>
-        public abstract Framebuffer CreateFramebuffer(int width, int height);
+        public Framebuffer CreateFramebuffer(int width, int height)
+        {
+            Framebuffer fb = CreateFramebuffer();
+            DeviceTexture2D colorTexture = CreateTexture(
+                1,
+                width,
+                height,
+                PixelFormat.R8_G8_B8_A8_UInt,
+                DeviceTextureCreateOptions.RenderTarget);
+            DeviceTexture2D depthTexture = CreateTexture(
+                1,
+                width,
+                height,
+                PixelFormat.R16_UInt,
+                DeviceTextureCreateOptions.DepthStencil);
+            fb.ColorTexture = colorTexture;
+            fb.DepthTexture = depthTexture;
+
+            return fb;
+        }
 
         /// <summary>
         /// Creates a new <see cref="DeviceTexture2D"/>.
@@ -208,9 +219,10 @@ namespace Veldrid.Graphics
         /// <param name="pixelSizeInBytes">The total size in bytes of the pixel data.</param>
         /// <param name="format">The format of pixel information.</param>
         /// <returns>A new <see cref="DeviceTexture2D"/> containing the given pixel data.</returns>
-        public DeviceTexture2D CreateTexture<T>(T[] pixelData, int width, int height, int pixelSizeInBytes, PixelFormat format) where T : struct
+        public DeviceTexture2D CreateTexture<T>(T[] pixelData, int width, int height, PixelFormat format) where T : struct
         {
-            DeviceTexture2D tex = CreateTexture(1, width, height, pixelSizeInBytes, format);
+            int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(format);
+            DeviceTexture2D tex = CreateTexture(1, width, height, format);
             GCHandle handle = GCHandle.Alloc(pixelData, GCHandleType.Pinned);
             tex.SetTextureData(0, 0, 0, width, height, handle.AddrOfPinnedObject(), pixelSizeInBytes * width * height);
             handle.Free();
@@ -226,9 +238,10 @@ namespace Veldrid.Graphics
         /// <param name="pixelSizeInBytes">The total size in bytes of the pixel data.</param>
         /// <param name="format">The format of pixel information.</param>
         /// <returns>A new <see cref="DeviceTexture2D"/> containing the given pixel data.</returns>
-        public DeviceTexture2D CreateTexture(IntPtr pixelData, int width, int height, int pixelSizeInBytes, PixelFormat format)
+        public DeviceTexture2D CreateTexture(IntPtr pixelData, int width, int height, PixelFormat format)
         {
-            DeviceTexture2D tex = CreateTexture(1, width, height, pixelSizeInBytes, format);
+            int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(format);
+            DeviceTexture2D tex = CreateTexture(1, width, height, format);
             tex.SetTextureData(0, 0, 0, width, height, pixelData, pixelSizeInBytes * width * height);
             return tex;
         }
@@ -241,8 +254,30 @@ namespace Veldrid.Graphics
         /// <param name="height">The height of the largest mipmap level.</param>
         /// <param name="pixelSizeInBytes">The size of individual pixels, in bytes.</param>
         /// <param name="format">The pixel format of the texture.</param>
+        /// <param name="createOptions">Specifies how the texture will be used.</param>
         /// <returns></returns>
-        public abstract DeviceTexture2D CreateTexture(int mipLevels, int width, int height, int pixelSizeInBytes, PixelFormat format);
+        public DeviceTexture2D CreateTexture(
+            int mipLevels,
+            int width,
+            int height,
+            PixelFormat format) => CreateTexture(mipLevels, width, height, format, DeviceTextureCreateOptions.Default);
+
+        /// <summary>
+        /// Creates a new 2D device texture with the given properties.
+        /// </summary>
+        /// <param name="mipLevels">The number of mipmap levels contained in the texture.</param>
+        /// <param name="width">The width of the largest mipmap level.</param>
+        /// <param name="height">The height of the largest mipmap level.</param>
+        /// <param name="pixelSizeInBytes">The size of individual pixels, in bytes.</param>
+        /// <param name="format">The pixel format of the texture.</param>
+        /// <param name="createOptions">Specifies how the texture will be used.</param>
+        /// <returns></returns>
+        public abstract DeviceTexture2D CreateTexture(
+            int mipLevels,
+            int width,
+            int height,
+            PixelFormat format,
+            DeviceTextureCreateOptions createOptions);
 
         /// <summary>
         /// Creates a new <see cref="SamplerState"/> with the given properties.
@@ -302,16 +337,6 @@ namespace Veldrid.Graphics
         /// <param name="texture">The <see cref="DeviceTexture"/> to associate with the binding.</param>
         /// <returns>A new <see cref="ShaderTextureBinding"/>.</returns>
         public abstract ShaderTextureBinding CreateShaderTextureBinding(DeviceTexture texture);
-
-        /// <summary>
-        /// Creates a new <see cref="DeviceTexture2D"/> which can be bound as a depth texture in a <see cref="Framebuffer"/>.
-        /// </summary>
-        /// <param name="width">The width of the texture.</param>
-        /// <param name="height">The height of the texture.</param>
-        /// <param name="pixelSizeInBytes">The total size in bytes of the depth data.</param>
-        /// <param name="format">The format of the depth data.</param>
-        /// <returns></returns>
-        public abstract DeviceTexture2D CreateDepthTexture(int width, int height, int pixelSizeInBytes, PixelFormat format);
 
         /// <summary>
         /// Creates a new <see cref="CubemapTexture"/> from six pointers containing each cube face's texture data.
@@ -457,8 +482,6 @@ namespace Veldrid.Graphics
             TriangleFillMode fillMode,
             bool isDepthClipEnabled,
             bool isScissorTestEnabled);
-
-        protected abstract string GetShaderFileExtension();
 
         protected abstract GraphicsBackend PlatformGetGraphicsBackend();
     }

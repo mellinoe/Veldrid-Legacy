@@ -7,6 +7,7 @@ namespace Veldrid.Graphics.OpenGL
     public class OpenGLShaderSet : ShaderSet
     {
         private readonly Dictionary<int, OpenGLConstantBuffer> _boundConstantBuffers = new Dictionary<int, OpenGLConstantBuffer>();
+        /// <summary>Maps texture/sampler uniform locations to their curretly bound texture unit.</summary>
         private readonly Dictionary<int, int> _boundUniformLocationSlots = new Dictionary<int, int>();
 
         public OpenGLVertexInputLayout InputLayout { get; }
@@ -80,13 +81,23 @@ namespace Veldrid.Graphics.OpenGL
             GL.DeleteProgram(ProgramID);
         }
 
-        public void UpdateTextureUniform(int uniformLocation, int slot)
+        public void UpdateTextureUniform(int uniformLocation, int textureUnit)
         {
-            if (!_boundUniformLocationSlots.TryGetValue(uniformLocation, out int boundSlot) || boundSlot != slot)
+            if (!_boundUniformLocationSlots.TryGetValue(uniformLocation, out int boundSlot) || boundSlot != textureUnit)
             {
-                GL.Uniform1(uniformLocation, slot);
-                _boundUniformLocationSlots[uniformLocation] = slot;
+                GL.Uniform1(uniformLocation, textureUnit);
+                _boundUniformLocationSlots[uniformLocation] = textureUnit;
             }
+        }
+
+        public int GetTextureUnitForUniformLocation(int uniformLocation)
+        {
+            if (!_boundUniformLocationSlots.TryGetValue(uniformLocation, out int textureUnit))
+            {
+                throw new VeldridException($"Uniform location \"{uniformLocation}\" is not currently bound to a texture unit.");
+            }
+
+            return textureUnit;
         }
     }
 }

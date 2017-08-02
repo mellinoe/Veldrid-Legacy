@@ -25,11 +25,10 @@ namespace Veldrid.Graphics
         private DepthStencilState _depthStencilState;
         private RasterizerState _rasterizerState;
         private ShaderSet _shaderSet;
-        private ShaderConstantBindingSlots _constantBindings;
-        private ShaderTextureBindingSlots _textureBindingSlots;
+        private ShaderResourceBindingSlots _resourceBindingSlots;
 
         protected readonly Dictionary<int, DeviceTexture> _boundTexturesBySlot = new Dictionary<int, DeviceTexture>();
-        protected readonly Dictionary<int, BoundSamplerStateInfo> _boundSamplersBySlot = new Dictionary<int, BoundSamplerStateInfo>();
+        protected readonly Dictionary<int, SamplerState> _boundSamplersBySlot = new Dictionary<int, SamplerState>();
 
         public RenderContext()
         {
@@ -58,16 +57,12 @@ namespace Veldrid.Graphics
 
         public void SetSamplerState(int slot, SamplerState samplerState)
         {
-            if (!_boundSamplersBySlot.TryGetValue(slot, out BoundSamplerStateInfo bssi) || bssi.SamplerState != samplerState)
+            // TODO : Fix state tracking in new resource binding system.
+            // Most likely, this should just be done per-backend.
+            // if (!_boundSamplersBySlot.TryGetValue(slot, out BoundSamplerStateInfo bssi) || bssi.SamplerState != samplerState)
             {
-                bool mipmap = false;
-                if (_boundTexturesBySlot.TryGetValue(slot, out DeviceTexture boundTex) && boundTex != null)
-                {
-                    mipmap = boundTex.MipLevels != 1;
-                }
-
-                PlatformSetSamplerState(slot, samplerState, mipmap);
-                _boundSamplersBySlot[slot] = new BoundSamplerStateInfo(samplerState, mipmap);
+                PlatformSetSamplerState(slot, samplerState);
+                _boundSamplersBySlot[slot] = samplerState;
             }
         }
 
@@ -136,49 +131,38 @@ namespace Veldrid.Graphics
             }
         }
 
-        public ShaderConstantBindingSlots ShaderConstantBindingSlots
+        public ShaderResourceBindingSlots ShaderResourceBindingSlots
         {
-            get { return _constantBindings; }
+            get { return _resourceBindingSlots; }
             set
             {
-                if (_constantBindings != value)
+                if (_resourceBindingSlots != value)
                 {
-                    PlatformSetShaderConstantBindings(value);
-                    _constantBindings = value;
+                    PlatformSetShaderResourceBindingSlots(value);
+                    _resourceBindingSlots = value;
                 }
             }
         }
 
         public void SetConstantBuffer(int slot, ConstantBuffer cb)
         {
-            if (_constantBindings == null)
+            if (_resourceBindingSlots == null)
             {
                 throw new VeldridException(
-                    "Cannot call SetConstantBuffer when ShaderConstantBindingSlots has not been set.");
+                    "Cannot call SetConstantBuffer when ShaderResourceBindingSlots has not been set.");
             }
 
             PlatformSetConstantBuffer(slot, cb);
         }
 
-        public ShaderTextureBindingSlots ShaderTextureBindingSlots
-        {
-            get { return _textureBindingSlots; }
-            set
-            {
-                if (_textureBindingSlots != value)
-                {
-                    PlatformSetShaderTextureBindingSlots(value);
-                    _textureBindingSlots = value;
-                }
-            }
-        }
-
         public void SetTexture(int slot, ShaderTextureBinding textureBinding)
         {
-            if (_textureBindingSlots == null)
+            if (_resourceBindingSlots == null)
             {
                 throw new VeldridException("Cannot call SetTexture when TextureBindingSlots has not been set.");
             }
+
+            _boundTexturesBySlot[slot] = textureBinding.BoundTexture;
 
             PlatformSetTexture(slot, textureBinding);
         }
@@ -482,15 +466,13 @@ namespace Veldrid.Graphics
 
         protected abstract void PlatformSetShaderSet(ShaderSet shaderSet);
 
-        protected abstract void PlatformSetShaderConstantBindings(ShaderConstantBindingSlots shaderConstantBindings);
+        protected abstract void PlatformSetShaderResourceBindingSlots(ShaderResourceBindingSlots shaderConstantBindings);
 
         protected abstract void PlatformSetConstantBuffer(int slot, ConstantBuffer cb);
 
-        protected abstract void PlatformSetShaderTextureBindingSlots(ShaderTextureBindingSlots bindingSlots);
-
         protected abstract void PlatformSetTexture(int slot, ShaderTextureBinding textureBinding);
 
-        protected abstract void PlatformSetSamplerState(int slot, SamplerState samplerState, bool mipmapped);
+        protected abstract void PlatformSetSamplerState(int slot, SamplerState samplerState);
 
         protected abstract void PlatformClearMaterialResourceBindings();
 
@@ -517,19 +499,7 @@ namespace Veldrid.Graphics
             }
 
             _indexBuffer = null;
-            _constantBindings = null;
-        }
-
-        protected struct BoundSamplerStateInfo
-        {
-            public SamplerState SamplerState { get; }
-            public bool Mipmapped { get; }
-
-            public BoundSamplerStateInfo(SamplerState samplerState, bool mipmapped)
-            {
-                SamplerState = samplerState;
-                Mipmapped = mipmapped;
-            }
+            _resourceBindingSlots = null;
         }
     }
 }

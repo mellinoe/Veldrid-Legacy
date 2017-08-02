@@ -83,7 +83,7 @@ namespace Veldrid.Graphics
         {
             fixed (Rgba32* pixelPtr = &Pixels.DangerousGetPinnableReference())
             {
-                return factory.CreateTexture(new IntPtr(pixelPtr), Width, Height, PixelSizeInBytes, Format);
+                return factory.CreateTexture(new IntPtr(pixelPtr), Width, Height, Format);
             }
         }
     }

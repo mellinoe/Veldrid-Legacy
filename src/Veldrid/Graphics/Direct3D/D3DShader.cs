@@ -15,45 +15,45 @@ namespace Veldrid.Graphics.Direct3D
 
         private ShaderReflection _reflection;
 
-        public ShaderType Type { get; }
+        public ShaderStages Type { get; }
         public ShaderBytecode Bytecode { get; }
         public TShader DeviceShader { get; }
         public ShaderReflection Reflection => _reflection ?? (_reflection = new ShaderReflection(Bytecode.Data));
 
-        public D3DShader(Device device, ShaderType type, ShaderBytecode bytecode)
+        public D3DShader(Device device, ShaderStages type, ShaderBytecode bytecode)
         {
             Type = type;
             Bytecode = bytecode;
             DeviceShader = CreateDeviceShader(device, Bytecode);
         }
 
-        private static string GetEntryPoint(ShaderType type)
+        private static string GetEntryPoint(ShaderStages type)
         {
             switch (type)
             {
-                case ShaderType.Vertex:
+                case ShaderStages.Vertex:
                     return "VS";
-                case ShaderType.Geometry:
+                case ShaderStages.Geometry:
                     return "GS";
-                case ShaderType.Fragment:
+                case ShaderStages.Fragment:
                     return "PS";
                 default:
-                    throw Illegal.Value<ShaderType>();
+                    throw Illegal.Value<ShaderStages>();
             }
         }
 
-        private static string GetProfile(ShaderType type)
+        private static string GetProfile(ShaderStages type)
         {
             switch (type)
             {
-                case ShaderType.Vertex:
+                case ShaderStages.Vertex:
                     return "vs_5_0";
-                case ShaderType.Geometry:
+                case ShaderStages.Geometry:
                     return "gs_5_0";
-                case ShaderType.Fragment:
+                case ShaderStages.Fragment:
                     return "ps_5_0";
                 default:
-                    throw Illegal.Value<ShaderType>();
+                    throw Illegal.Value<ShaderStages>();
             }
         }
 
@@ -69,7 +69,7 @@ namespace Veldrid.Graphics.Direct3D
     public class D3DVertexShader : D3DShader<VertexShader>
     {
         public D3DVertexShader(Device device, ShaderBytecode bytecode)
-            : base(device, ShaderType.Vertex, bytecode) { }
+            : base(device, ShaderStages.Vertex, bytecode) { }
 
         protected override VertexShader CreateDeviceShader(Device device, ShaderBytecode bytecode)
         {
@@ -80,7 +80,7 @@ namespace Veldrid.Graphics.Direct3D
     public class D3DGeometryShader : D3DShader<GeometryShader>
     {
         public D3DGeometryShader(Device device, ShaderBytecode bytecode)
-            : base(device, ShaderType.Geometry, bytecode) { }
+            : base(device, ShaderStages.Geometry, bytecode) { }
 
         protected override GeometryShader CreateDeviceShader(Device device, ShaderBytecode bytecode)
         {
@@ -91,7 +91,7 @@ namespace Veldrid.Graphics.Direct3D
     public class D3DFragmentShader : D3DShader<PixelShader>
     {
         public D3DFragmentShader(Device device, ShaderBytecode bytecode)
-            : base(device, ShaderType.Fragment, bytecode) { }
+            : base(device, ShaderStages.Fragment, bytecode) { }
 
         protected override PixelShader CreateDeviceShader(Device device, ShaderBytecode bytecode)
         {

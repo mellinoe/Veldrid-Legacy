@@ -8,7 +8,7 @@ namespace Veldrid.Graphics.OpenGL
     {
         public int ShaderID { get; private set; }
 
-        public ShaderType Type { get; }
+        public ShaderStages Type { get; }
 
         public OpenGLShader(Stream dataStream, OpenTK.Graphics.OpenGL.ShaderType type)
         {

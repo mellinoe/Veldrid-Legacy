@@ -78,24 +78,22 @@ namespace Veldrid.RenderDemo
                     new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)
                 });
 
-            ShaderConstantDescription[] constants = new[]
+            ShaderResourceDescription[] resources = new[]
             {
-                new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("LightBuffer", Unsafe.SizeOf<DirectionalLightBuffer>()),
-                new ShaderConstantDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("LightBuffer", Unsafe.SizeOf<DirectionalLightBuffer>()),
+                new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("InverseTransposeWorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Texture),
+                new ShaderResourceDescription("surfaceTexture", ShaderResourceType.Sampler)
             };
-
-            ShaderTextureInput[] textureInputs = new[] { new ShaderTextureInput(0, "surfaceTexture") };
-
             _material = factory.CreateMaterial(
                 context,
                 VertexShaderSource,
                 FragmentShaderSource,
                 materialInputs,
-                constants,
-                textureInputs);
+                resources);
 
             _worldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _inverseTransposeWorldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
@@ -134,8 +132,8 @@ namespace Veldrid.RenderDemo
             rc.SetConstantBuffer(2, SharedDataProviders.DirectionalLightBuffer);
             rc.SetConstantBuffer(3, _worldBuffer);
             rc.SetConstantBuffer(4, _inverseTransposeWorldBuffer);
-            rc.SetTexture(0, _textureBinding);
-            rc.SetSamplerState(0, rc.PointSampler);
+            rc.SetTexture(5, _textureBinding);
+            rc.SetSamplerState(6, rc.PointSampler);
 
             rc.DrawIndexedPrimitives(_indices.Length, 0);
         }

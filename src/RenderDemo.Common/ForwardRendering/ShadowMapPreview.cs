@@ -27,7 +27,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
         public void ChangeRenderContext(AssetDatabase ad, RenderContext rc)
         {
             var factory = rc.ResourceFactory;
-            _vertexBuffer = factory.CreateVertexBuffer(VertexPositionTexture.SizeInBytes, false);
+            _vertexBuffer = factory.CreateVertexBuffer(VertexPositionTexture.SizeInBytes * 4, false);
             _vertexBuffer.SetVertexData(new VertexPositionTexture[]
             {
                 new VertexPositionTexture(new Vector3(0, 0, 0), new Vector2(0, 0)),
@@ -37,7 +37,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
             }, new VertexDescriptor(VertexPositionTexture.SizeInBytes, VertexPositionTexture.ElementCount, 0, IntPtr.Zero),
             0);
 
-            _indexBuffer = factory.CreateIndexBuffer(sizeof(byte) * 6, false);
+            _indexBuffer = factory.CreateIndexBuffer(sizeof(ushort) * 6, false);
             _indexBuffer.SetIndices(new ushort[] { 0, 1, 2, 0, 2, 3 });
 
             _material = factory.CreateMaterial(
@@ -50,10 +50,11 @@ namespace Veldrid.RenderDemo.ForwardRendering
                     new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)),
                 new[]
                 {
-                    new ShaderConstantDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
-                    new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                },
-                new[] { new ShaderTextureInput(0, "SurfaceTexture") });
+                    new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4),
+                    new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                    new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture),
+                    new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Sampler),
+                });
 
             _worldMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _projectionMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
@@ -90,7 +91,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
             _material.Apply(rc);
             rc.SetConstantBuffer(0, _worldMatrixBuffer);
             rc.SetConstantBuffer(1, _projectionMatrixBuffer);
-            rc.SetTexture(0, SharedTextures.GetTextureBinding("ShadowMap"));
+            rc.SetTexture(2, SharedTextures.GetTextureBinding("ShadowMap"));
             rc.SetDepthStencilState(_depthDisabledState);
             rc.DrawIndexedPrimitives(6, 0);
             rc.SetDepthStencilState(rc.DefaultDepthStencilState);

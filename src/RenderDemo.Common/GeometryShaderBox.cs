@@ -67,20 +67,19 @@ namespace Veldrid.RenderDemo
             ResourceFactory factory = rc.ResourceFactory;
             _vb = factory.CreateVertexBuffer(new[] { new VertexPosition(Vector3.Zero) }, new VertexDescriptor(12, 1), false);
             _ib = factory.CreateIndexBuffer(new ushort[] { 0 }, false);
-            Shader vertexShader = factory.CreateShader(ShaderType.Vertex, ShaderHelper.LoadShaderCode("geometry-vertex", ShaderType.Vertex, rc.ResourceFactory));
-            Shader geometryShader = factory.CreateShader(ShaderType.Geometry, ShaderHelper.LoadShaderCode(_geometryShaderName, ShaderType.Geometry, rc.ResourceFactory));
-            Shader fragmentShader = factory.CreateShader(ShaderType.Fragment, ShaderHelper.LoadShaderCode("geometry-frag", ShaderType.Fragment, rc.ResourceFactory));
+            Shader vertexShader = factory.CreateShader(ShaderStages.Vertex, ShaderHelper.LoadShaderCode("geometry-vertex", ShaderStages.Vertex, rc.ResourceFactory));
+            Shader geometryShader = factory.CreateShader(ShaderStages.Geometry, ShaderHelper.LoadShaderCode(_geometryShaderName, ShaderStages.Geometry, rc.ResourceFactory));
+            Shader fragmentShader = factory.CreateShader(ShaderStages.Fragment, ShaderHelper.LoadShaderCode("geometry-frag", ShaderStages.Fragment, rc.ResourceFactory));
             VertexInputLayout inputLayout = factory.CreateInputLayout(
                 new VertexInputDescription(12, new VertexInputElement("in_position", VertexSemanticType.Position, VertexElementFormat.Float3)));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vertexShader, geometryShader, fragmentShader);
-            ShaderConstantBindingSlots constantBindings = factory.CreateShaderConstantBindingSlots(
+            ShaderResourceBindingSlots constantBindings = factory.CreateShaderResourceBindingSlots(
                 shaderSet,
-                    new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4), // Global
-                    new ShaderConstantDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4), // Global
-                    new ShaderConstantDescription("CameraInfoBuffer", Unsafe.SizeOf<Camera.Info>()), // Global
-                    new ShaderConstantDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4)); // Local
-            ShaderTextureBindingSlots slots = factory.CreateShaderTextureBindingSlots(shaderSet, Array.Empty<ShaderTextureInput>());
-            _material = new Material(shaderSet, constantBindings, slots);
+                    new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4), // Global
+                    new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4), // Global
+                    new ShaderResourceDescription("CameraInfoBuffer", Unsafe.SizeOf<Camera.Info>()), // Global
+                    new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4)); // Local
+            _material = new Material(shaderSet, constantBindings);
             _worldMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
         }
 

@@ -16,7 +16,7 @@ namespace Veldrid.Graphics.OpenGL
         public OpenGLTexture2D(int width, int height, PixelFormat format, IntPtr pixelData)
             : this(1, width, height, format, OpenGLFormats.MapPixelInternalFormat(format), OpenGLFormats.MapPixelFormat(format), OpenGLFormats.MapPixelType(format))
         {
-            SetTextureData(1, 0, 0, width, height, pixelData, FormatHelpers.GetPixelSize(format) * width * height);
+            SetTextureData(1, 0, 0, width, height, pixelData, FormatHelpers.GetPixelSizeInBytes(format) * width * height);
         }
 
         public OpenGLTexture2D(
@@ -61,7 +61,7 @@ namespace Veldrid.Graphics.OpenGL
         public void SetTextureData(int mipLevel, int x, int y, int width, int height, IntPtr data, int dataSizeInBytes)
         {
             Bind();
-            int pixelSize = FormatHelpers.GetPixelSize(_veldridFormat);
+            int pixelSize = FormatHelpers.GetPixelSizeInBytes(_veldridFormat);
             if (pixelSize < 4)
             {
                 GL.PixelStore(PixelStoreParameter.UnpackAlignment, pixelSize);
@@ -94,7 +94,7 @@ namespace Veldrid.Graphics.OpenGL
             GL.PixelStore(PixelStoreParameter.PackAlignment, 1);
 
             // Need to reverse the rows vertically.
-            int pixelSizeInBytes = FormatHelpers.GetPixelSize(_veldridFormat);
+            int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(_veldridFormat);
             int rowBytes = width * pixelSizeInBytes;
             IntPtr stagingRow = Marshal.AllocHGlobal(rowBytes);
             byte* stagingPtr = (byte*)stagingRow.ToPointer();

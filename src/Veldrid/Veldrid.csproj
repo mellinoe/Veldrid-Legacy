@@ -7,6 +7,9 @@
     <DocumentationFile Condition="'$(Configuration)' == 'Release'">$(BinDir)\Veldrid.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="Graphics\Vulkan\VkShaderBytecode.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="ImageSharp" Version="1.0.0-alpha9-00140" />
     <PackageReference Include="OpenTK.NETCore" Version="1.1.2737.6432" />
     <PackageReference Include="SharpDX" Version="4.0.1" />
@@ -14,6 +17,8 @@
     <PackageReference Include="SharpDX.Direct3D11" Version="4.0.1" />
     <PackageReference Include="SharpDX.DXGI" Version="4.0.1" />
     <PackageReference Include="System.Text.Primitives" Version="0.1.0-e170627-2" />
+    <PackageReference Include="Vk" Version="1.0.4" />
+    <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Veldrid.Primitives\Veldrid.Primitives.csproj" />

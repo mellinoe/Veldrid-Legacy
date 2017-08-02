@@ -44,7 +44,12 @@ namespace Veldrid.RenderDemo.ForwardRendering
 
         private void InitializeContextObjects(RenderContext rc)
         {
-            _depthTexture = rc.ResourceFactory.CreateDepthTexture(DepthMapWidth, DepthMapHeight, sizeof(ushort), PixelFormat.R16_UInt);
+            _depthTexture = rc.ResourceFactory.CreateTexture(
+                1,
+                DepthMapWidth,
+                DepthMapHeight,
+                PixelFormat.R16_UInt,
+                DeviceTextureCreateOptions.DepthStencil);
             _depthTextureBinding = rc.ResourceFactory.CreateShaderTextureBinding(_depthTexture);
             _shadowMapFramebuffer = rc.ResourceFactory.CreateFramebuffer();
             _shadowMapFramebuffer.DepthTexture = _depthTexture;

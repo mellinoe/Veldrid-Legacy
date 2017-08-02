@@ -17,7 +17,7 @@ namespace Veldrid.Graphics
             }
         }
 
-        public static int GetPixelSize(PixelFormat veldridFormat)
+        public static int GetPixelSizeInBytes(PixelFormat veldridFormat)
         {
             switch (veldridFormat)
             {

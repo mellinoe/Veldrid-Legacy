@@ -11,7 +11,6 @@ namespace Veldrid.Graphics.OpenGL
 {
     public class OpenGLRenderContext : RenderContext, IDisposable
     {
-
         private readonly OpenGLResourceFactory _resourceFactory;
         private readonly GraphicsContext _openGLGraphicsContext;
         private readonly OpenGLExtensions _extensions;
@@ -19,6 +18,8 @@ namespace Veldrid.Graphics.OpenGL
         private readonly int _maxConstantBufferSlots;
         private readonly OpenGLConstantBuffer[] _constantBuffersBySlot;
         private readonly OpenGLConstantBuffer[] _newConstantBuffersBySlot; // CB's bound during draw call preparation
+        private readonly OpenGLTextureSamplerManager _textureSamplerManager;
+        private int _maxTextureUnits;
         private int _newConstantBuffersCount;
         private readonly int _vertexArrayID;
         private readonly int _maxVertexAttributeSlots;
@@ -28,6 +29,7 @@ namespace Veldrid.Graphics.OpenGL
         private bool _vertexLayoutChanged;
         private Action _swapBufferFunc;
         private DebugProc _debugMessageCallback;
+
 
         public OpenGLRenderContext(Window window, OpenGLPlatformContextInfo platformContext)
         {
@@ -59,9 +61,13 @@ namespace Veldrid.Graphics.OpenGL
             }
             _extensions = new OpenGLExtensions(extensions);
 
+            _textureSamplerManager = new OpenGLTextureSamplerManager(_extensions);
+
             _maxConstantBufferSlots = GL.GetInteger(GetPName.MaxUniformBufferBindings);
             _constantBuffersBySlot = new OpenGLConstantBuffer[_maxConstantBufferSlots];
             _newConstantBuffersBySlot = new OpenGLConstantBuffer[_maxConstantBufferSlots];
+
+            _maxTextureUnits = GL.GetInteger(GetPName.MaxTextureUnits);
 
             _maxVertexAttributeSlots = GL.GetInteger(GetPName.MaxVertexAttribs);
             _vertexAttribDivisors = new int[_maxVertexAttributeSlots];
@@ -228,13 +234,13 @@ namespace Veldrid.Graphics.OpenGL
             _vertexLayoutChanged = true;
         }
 
-        protected override void PlatformSetShaderConstantBindings(ShaderConstantBindingSlots shaderConstantBindings)
+        protected override void PlatformSetShaderResourceBindingSlots(ShaderResourceBindingSlots shaderConstantBindings)
         {
         }
 
         protected override void PlatformSetConstantBuffer(int slot, ConstantBuffer cb)
         {
-            OpenGLShaderConstantBindingSlots.UniformBinding binding = ShaderConstantBindingSlots.GetUniformBindingForSlot(slot);
+            OpenGLUniformBinding binding = ShaderResourceBindingSlots.GetUniformBindingForSlot(slot);
             if (binding.BlockLocation != -1)
             {
                 BindUniformBlock(ShaderSet, slot, binding.BlockLocation, (OpenGLConstantBuffer)cb);
@@ -379,49 +385,19 @@ namespace Veldrid.Graphics.OpenGL
             storageAdapter.SetData((IntPtr)data, dataSizeInBytes);
         }
 
-        protected override void PlatformSetShaderTextureBindingSlots(ShaderTextureBindingSlots bindingSlots)
-        {
-        }
-
         protected override void PlatformSetTexture(int slot, ShaderTextureBinding textureBinding)
         {
-            OpenGLTexture boundTexture = (OpenGLTexture)textureBinding.BoundTexture;
-            if (!_boundTexturesBySlot.TryGetValue(slot, out DeviceTexture oldBoundTexture) || oldBoundTexture != textureBinding.BoundTexture)
-            {
-                if (_extensions.ARB_DirectStateAccess)
-                {
-                    GL.BindTextureUnit(slot, boundTexture.ID);
-                }
-                else
-                {
-                    GL.ActiveTexture(TextureUnit.Texture0 + slot);
-                    boundTexture.Bind();
-                }
-                _boundTexturesBySlot[slot] = boundTexture;
-            }
-
-            int uniformLocation = ShaderTextureBindingSlots.GetUniformLocation(slot);
-            ShaderSet.UpdateTextureUniform(uniformLocation, slot); // Performs internal caching.
-
-            EnsureSamplerMipmapState(slot, boundTexture.MipLevels != 1);
+            OpenGLTextureBinding glTextureBinding = (OpenGLTextureBinding)textureBinding;
+            OpenGLTextureBindingSlotInfo info = ShaderResourceBindingSlots.GetTextureBindingInfo(slot);
+            _textureSamplerManager.SetTexture(info.RelativeIndex, glTextureBinding);
+            ShaderSet.UpdateTextureUniform(info.UniformLocation, info.RelativeIndex);
         }
 
-        protected override void PlatformSetSamplerState(int slot, SamplerState samplerState, bool mipmapped)
+        protected override void PlatformSetSamplerState(int slot, SamplerState samplerState)
         {
-            OpenGLSamplerState glSamplerState = (OpenGLSamplerState)samplerState;
-            glSamplerState.Apply(slot, mipmapped);
-        }
-
-        private void EnsureSamplerMipmapState(int slot, bool mipmap)
-        {
-            if (_boundSamplersBySlot.TryGetValue(slot, out BoundSamplerStateInfo info))
-            {
-                if (info.SamplerState != null && info.Mipmapped != mipmap)
-                {
-                    ((OpenGLSamplerState)info.SamplerState).Apply(slot, mipmap);
-                    _boundSamplersBySlot[slot] = new BoundSamplerStateInfo(info.SamplerState, mipmap);
-                }
-            }
+            OpenGLSamplerState glSampler = (OpenGLSamplerState)samplerState;
+            OpenGLTextureBindingSlotInfo info = ShaderResourceBindingSlots.GetSamplerBindingInfo(slot);
+            _textureSamplerManager.SetSampler(info.RelativeIndex, glSampler);
         }
 
         protected override void PlatformSetFramebuffer(Framebuffer framebuffer)
@@ -529,10 +505,8 @@ namespace Veldrid.Graphics.OpenGL
             _vertexAttributesBound = totalSlotsBound;
         }
 
-        private new OpenGLTextureBindingSlots ShaderTextureBindingSlots => (OpenGLTextureBindingSlots)base.ShaderTextureBindingSlots;
-
-        private new OpenGLShaderConstantBindingSlots ShaderConstantBindingSlots => (OpenGLShaderConstantBindingSlots)base.ShaderConstantBindingSlots;
-
         private new OpenGLShaderSet ShaderSet => (OpenGLShaderSet)base.ShaderSet;
+        private new OpenGLShaderResourceBindingSlots ShaderResourceBindingSlots
+            => (OpenGLShaderResourceBindingSlots)base.ShaderResourceBindingSlots;
     }
 }

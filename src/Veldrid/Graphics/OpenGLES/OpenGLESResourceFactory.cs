@@ -1,15 +1,10 @@
-﻿using OpenTK.Graphics.ES30;
-using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System;
 using System.Text;
 
 namespace Veldrid.Graphics.OpenGLES
 {
     public class OpenGLESResourceFactory : ResourceFactory
     {
-        protected override string GetShaderFileExtension() => "glsl";
-
         public OpenGLESResourceFactory()
         {
         }
@@ -26,31 +21,12 @@ namespace Veldrid.Graphics.OpenGLES
             return new OpenGLESFramebuffer();
         }
 
-        public override Framebuffer CreateFramebuffer(int width, int height)
-        {
-            OpenGLESTexture2D colorTexture = new OpenGLESTexture2D(
-                1,
-                width, height,
-                PixelFormat.R8_G8_B8_A8_UInt,
-                OpenTK.Graphics.ES30.PixelFormat.Rgba,
-                PixelType.UnsignedByte);
-            OpenGLESTexture2D depthTexture = new OpenGLESTexture2D(
-                1,
-                width,
-                height,
-                PixelFormat.R16_UInt,
-                OpenTK.Graphics.ES30.PixelFormat.DepthComponent,
-                PixelType.UnsignedShort);
-
-            return new OpenGLESFramebuffer(colorTexture, depthTexture);
-        }
-
         public override IndexBuffer CreateIndexBuffer(int sizeInBytes, bool isDynamic, IndexFormat format)
         {
             return new OpenGLESIndexBuffer(isDynamic, OpenGLESFormats.MapIndexFormat(format));
         }
 
-        public override CompiledShaderCode ProcessShaderCode(ShaderType type, string shaderCode)
+        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode)
         {
             return new OpenGLESCompiledShaderCode(shaderCode);
         }
@@ -77,7 +53,7 @@ namespace Veldrid.Graphics.OpenGLES
             return new OpenGLESCompiledShaderCode(shaderCode);
         }
 
-        public override Shader CreateShader(ShaderType type, CompiledShaderCode compiledShaderCode)
+        public override Shader CreateShader(ShaderStages type, CompiledShaderCode compiledShaderCode)
         {
             OpenGLESCompiledShaderCode glShaderSource = (OpenGLESCompiledShaderCode)compiledShaderCode;
             return new OpenGLESShader(glShaderSource.ShaderCode, OpenGLESFormats.VeldridToGLShaderType(type));
@@ -93,21 +69,16 @@ namespace Veldrid.Graphics.OpenGLES
             throw new NotSupportedException();
         }
 
-        public override ShaderConstantBindingSlots CreateShaderConstantBindingSlots(
+        public override ShaderResourceBindingSlots CreateShaderResourceBindingSlots(
             ShaderSet shaderSet,
-            ShaderConstantDescription[] constants)
+            ShaderResourceDescription[] resources)
         {
-            return new OpenGLESShaderConstantBindingSlots(shaderSet, constants);
+            return new OpenGLESShaderResourceBindingSlots((OpenGLESShaderSet)shaderSet, resources);
         }
 
         public override VertexInputLayout CreateInputLayout(VertexInputDescription[] vertexInputs)
         {
             return new OpenGLESVertexInputLayout(vertexInputs);
-        }
-
-        public override ShaderTextureBindingSlots CreateShaderTextureBindingSlots(ShaderSet shaderSet, ShaderTextureInput[] textureInputs)
-        {
-            return new OpenGLESTextureBindingSlots(shaderSet, textureInputs);
         }
 
         public override ShaderTextureBinding CreateShaderTextureBinding(DeviceTexture texture)
@@ -122,9 +93,27 @@ namespace Veldrid.Graphics.OpenGLES
             }
         }
 
-        public override DeviceTexture2D CreateTexture(int mipLevels, int width, int height, int pixelSizeInBytes, PixelFormat format)
+        public override DeviceTexture2D CreateTexture(
+            int mipLevels,
+            int width,
+            int height,
+            PixelFormat format,
+            DeviceTextureCreateOptions createOptions)
         {
-            return new OpenGLESTexture2D(mipLevels, width, height, format, OpenGLESFormats.MapPixelFormat(format), OpenGLESFormats.MapPixelType(format));
+            int pixelSizeInBytes = FormatHelpers.GetPixelSizeInBytes(format);
+            OpenTK.Graphics.ES30.PixelFormat pixelFormat = OpenGLESFormats.MapPixelFormat(format);
+
+            if (createOptions == DeviceTextureCreateOptions.DepthStencil)
+            {
+                if (format != PixelFormat.R16_UInt)
+                {
+                    throw new NotImplementedException("R16_UInt is the only supported depth texture format.");
+                }
+
+                pixelFormat = OpenTK.Graphics.ES30.PixelFormat.DepthComponent;
+            }
+
+            return new OpenGLESTexture2D(mipLevels, width, height, format, pixelFormat, OpenGLESFormats.MapPixelType(format));
         }
 
         protected override SamplerState CreateSamplerStateCore(
@@ -140,22 +129,6 @@ namespace Veldrid.Graphics.OpenGLES
             int lodBias)
         {
             return new OpenGLESSamplerState(addressU, addressV, addressW, filter, maxAnisotropy, borderColor, comparison, minimumLod, maximumLod, lodBias);
-        }
-
-        public override DeviceTexture2D CreateDepthTexture(int width, int height, int pixelSizeInBytes, PixelFormat format)
-        {
-            if (format != PixelFormat.R16_UInt)
-            {
-                throw new NotImplementedException("R16_UInt is the only supported depth texture format.");
-            }
-
-            return new OpenGLESTexture2D(
-                1,
-                width,
-                height,
-                PixelFormat.R16_UInt,
-                OpenTK.Graphics.ES30.PixelFormat.DepthComponent,
-                PixelType.UnsignedShort);
         }
 
         public override CubemapTexture CreateCubemapTexture(

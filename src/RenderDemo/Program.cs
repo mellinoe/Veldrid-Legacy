@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Veldrid.Graphics;
 using Veldrid.Graphics.Direct3D;
 using Veldrid.Graphics.OpenGL;
 using Veldrid.Graphics.OpenGLES;
+using Veldrid.Graphics.Vulkan;
 using Veldrid.Platform;
 using Veldrid.Sdl2;
 
@@ -15,24 +17,32 @@ namespace Veldrid.RenderDemo
     {
         public static void Main()
         {
+            bool useVulkan = true;
             bool onWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             var window = new Sdl2Window("Veldrid Render Demo", 100, 100, 960, 540, SDL_WindowFlags.Resizable | SDL_WindowFlags.OpenGL, RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
             RenderContext rc;
-            bool preferOpenGL = Preferences.Instance.PreferOpenGL;
-            if (!preferOpenGL && onWindows)
+            if (useVulkan)
             {
-                rc = CreateDefaultD3dRenderContext(window);
+                rc = CreateVulkanRenderContext(window);
             }
             else
             {
-                bool useGLES = false;
-                if (useGLES)
+                bool preferOpenGL = Preferences.Instance.PreferOpenGL;
+                if (!preferOpenGL && onWindows)
                 {
-                    rc = CreateDefaultOpenGLESRenderContext(window);
+                    rc = CreateDefaultD3dRenderContext(window);
                 }
                 else
                 {
-                    rc = CreateDefaultOpenGLRenderContext(window);
+                    bool useGLES = false;
+                    if (useGLES)
+                    {
+                        rc = CreateDefaultOpenGLESRenderContext(window);
+                    }
+                    else
+                    {
+                        rc = CreateDefaultOpenGLRenderContext(window);
+                    }
                 }
             }
 
@@ -40,6 +50,7 @@ namespace Veldrid.RenderDemo
             var openGLOption = new RenderDemo.RendererOption("OpenGL", () => CreateDefaultOpenGLRenderContext(window));
             var openGLESOption = new RenderDemo.RendererOption("OpenGL ES", () => CreateDefaultOpenGLESRenderContext(window));
             var d3dOption = new RenderDemo.RendererOption("Direct3D", () => CreateDefaultD3dRenderContext(window));
+            var vulkanOption = new RenderDemo.RendererOption("Vulkan", () => CreateVulkanRenderContext(window));
 
             if (onWindows)
             {
@@ -48,12 +59,21 @@ namespace Veldrid.RenderDemo
                     options.Add(openGLOption);
                     options.Add(d3dOption);
                     options.Add(openGLESOption);
+                    options.Add(vulkanOption);
                 }
                 else if (rc is OpenGLESRenderContext)
                 {
                     options.Add(openGLESOption);
                     options.Add(openGLOption);
                     options.Add(d3dOption);
+                    options.Add(vulkanOption);
+                }
+                else if (rc is VkRenderContext)
+                {
+                    options.Add(vulkanOption);
+                    options.Add(d3dOption);
+                    options.Add(openGLOption);
+                    options.Add(openGLESOption);
                 }
                 else
                 {
@@ -66,10 +86,38 @@ namespace Veldrid.RenderDemo
             else
             {
                 options.Add(openGLOption);
+                options.Add(vulkanOption);
                 options.Add(openGLESOption);
             }
 
             RenderDemo.RunDemo(rc, window, options.ToArray());
+        }
+
+        private static unsafe RenderContext CreateVulkanRenderContext(Sdl2Window window)
+        {
+            IntPtr sdlHandle = window.SdlWindowHandle;
+            SDL_SysWMinfo sysWmInfo;
+            Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
+            Sdl2Native.SDL_GetWMWindowInfo(sdlHandle, &sysWmInfo);
+            VkSurfaceSource surfaceSource = GetSurfaceSource(sysWmInfo);
+            return new VkRenderContext(surfaceSource, window.Width, window.Height);
+        }
+
+        private static unsafe VkSurfaceSource GetSurfaceSource(SDL_SysWMinfo sysWmInfo)
+        {
+            switch (sysWmInfo.subsystem)
+            {
+                case SysWMType.Windows:
+                    Win32WindowInfo w32Info = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info);
+                    return VkSurfaceSource.CreateWin32(w32Info.hinstance, w32Info.window);
+                case SysWMType.X11:
+                    X11WindowInfo x11Info = Unsafe.Read<X11WindowInfo>(&sysWmInfo.info);
+                    return VkSurfaceSource.CreateXlib(
+                        (Vulkan.Xlib.Display*)x11Info.display,
+                        new Vulkan.Xlib.Window() { Value = x11Info.window });
+                default:
+                    throw new PlatformNotSupportedException("Cannot create a Vulkan surface for " + sysWmInfo.subsystem + ".");
+            }
         }
 
         private static OpenGLESRenderContext CreateDefaultOpenGLESRenderContext(Sdl2Window window)
@@ -100,7 +148,6 @@ namespace Veldrid.RenderDemo
                 }
             }
 
-            Sdl2Native.SDL_GL_MakeCurrent(sdlHandle, contextHandle);
             OpenGLPlatformContextInfo ci = new OpenGLPlatformContextInfo(
                 contextHandle,
                 Sdl2Native.SDL_GL_GetProcAddress,
@@ -109,7 +156,7 @@ namespace Veldrid.RenderDemo
             var rc = new OpenGLESRenderContext(window, ci);
             if (debugContext)
             {
-                rc.EnableDebugCallback(OpenTK.Graphics.ES30.DebugSeverity.DebugSeverityNotification);
+                rc.EnableDebugCallback(OpenTK.Graphics.ES30.DebugSeverity.DebugSeverityLow);
             }
             return rc;
         }

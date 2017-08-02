@@ -40,19 +40,18 @@ namespace Veldrid.RenderDemo
             _vb = factory.CreateVertexBuffer(1024, true);
             _ib = factory.CreateIndexBuffer(1024, true);
 
-            Shader vs = factory.CreateShader(ShaderType.Vertex, ShaderHelper.LoadShaderCode("wireframe-vertex", ShaderType.Vertex, rc.ResourceFactory));
-            Shader fs = factory.CreateShader(ShaderType.Fragment, ShaderHelper.LoadShaderCode("wireframe-frag", ShaderType.Fragment, rc.ResourceFactory));
+            Shader vs = factory.CreateShader(ShaderStages.Vertex, ShaderHelper.LoadShaderCode("wireframe-vertex", ShaderStages.Vertex, rc.ResourceFactory));
+            Shader fs = factory.CreateShader(ShaderStages.Fragment, ShaderHelper.LoadShaderCode("wireframe-frag", ShaderStages.Fragment, rc.ResourceFactory));
             VertexInputLayout inputLayout = factory.CreateInputLayout(
                 new VertexInputElement("in_position", VertexSemanticType.Position, VertexElementFormat.Float3),
                 new VertexInputElement("in_color", VertexSemanticType.Color, VertexElementFormat.Byte4));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            ShaderConstantBindingSlots cbs = factory.CreateShaderConstantBindingSlots(
+            ShaderResourceBindingSlots cbs = factory.CreateShaderResourceBindingSlots(
                 shaderSet,
-                new ShaderConstantDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderConstantDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4));
-            ShaderTextureBindingSlots tbs = factory.CreateShaderTextureBindingSlots(shaderSet, Array.Empty<ShaderTextureInput>());
-            _material = new Material(shaderSet, cbs, tbs);
+                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("WorldMatrixBuffer", ShaderConstantType.Matrix4x4));
+            _material = new Material(shaderSet, cbs);
 
             _worldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             Matrix4x4 identity = Matrix4x4.Identity;
@@ -94,7 +93,6 @@ namespace Veldrid.RenderDemo
             rc.SetConstantBuffer(1, SharedDataProviders.ViewMatrixBuffer);
             rc.SetConstantBuffer(2, _worldBuffer);
             rc.RasterizerState = _wireframeState;
-            rc.SetSamplerState(0, rc.PointSampler);
             rc.DrawIndexedPrimitives(_indices.Count, 0, PrimitiveTopology.LineList);
             rc.RasterizerState = rasterState;
         }

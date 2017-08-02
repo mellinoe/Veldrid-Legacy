@@ -6,7 +6,7 @@
 
         public override DeviceTexture2D CreateDeviceTexture(ResourceFactory factory)
         {
-            return factory.CreateTexture(PixelData, Width, Height, PixelSizeInBytes, Format);
+            return factory.CreateTexture(PixelData, Width, Height, Format);
         }
 
         public RawTextureDataArray(int width, int height, int pixelSizeInBytes, PixelFormat format)

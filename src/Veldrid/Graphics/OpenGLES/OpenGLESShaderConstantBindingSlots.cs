@@ -4,24 +4,21 @@ using System.Diagnostics;
 
 namespace Veldrid.Graphics.OpenGLES
 {
-    public class OpenGLESShaderConstantBindingSlots : ShaderConstantBindingSlots
+    public class OpenGLESShaderConstantBindingSlots
     {
         private readonly UniformBinding[] _bindings;
 
-        public ShaderConstantDescription[] Constants { get; }
-
         public OpenGLESShaderConstantBindingSlots(
             ShaderSet shaderSet,
-            ShaderConstantDescription[] constants)
+            ShaderResourceDescription[] constants)
         {
-            Constants = constants;
             var programID = ((OpenGLESShaderSet)shaderSet).ProgramID;
             int bindingIndex = 0;
             int constantsCount = constants.Length;
             _bindings = new UniformBinding[constantsCount];
             for (int i = 0; i < constantsCount; i++)
             {
-                ShaderConstantDescription description = Constants[i];
+                ShaderResourceDescription description = constants[i];
 
                 int blockIndex = GL.GetUniformBlockIndex(programID, description.Name);
                 if (blockIndex != -1)

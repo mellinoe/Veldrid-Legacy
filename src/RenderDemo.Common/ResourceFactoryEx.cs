@@ -10,10 +10,9 @@ namespace Veldrid.RenderDemo
             string vertexShaderName,
             string fragmentShaderName,
             VertexInputDescription vertexInputs,
-            ShaderConstantDescription[] constants,
-            ShaderTextureInput[] textureInputs)
+            ShaderResourceDescription[] resources)
         {
-            return CreateMaterial(factory, rc, vertexShaderName, fragmentShaderName, new[] { vertexInputs }, constants, textureInputs);
+            return CreateMaterial(factory, rc, vertexShaderName, fragmentShaderName, new[] { vertexInputs }, resources);
         }
 
         public static Material CreateMaterial(
@@ -23,10 +22,15 @@ namespace Veldrid.RenderDemo
             string fragmentShaderName,
             VertexInputDescription vertexInputs0,
             VertexInputDescription vertexInputs1,
-            ShaderConstantDescription[] constants,
-            ShaderTextureInput[] textureInputs)
+            ShaderResourceDescription[] resources)
         {
-            return CreateMaterial(factory, rc, vertexShaderName, fragmentShaderName, new[] { vertexInputs0, vertexInputs1 }, constants, textureInputs);
+            return CreateMaterial(
+                factory,
+                rc,
+                vertexShaderName,
+                fragmentShaderName,
+                new[] { vertexInputs0, vertexInputs1 },
+                resources);
         }
 
         public static Material CreateMaterial(
@@ -35,17 +39,16 @@ namespace Veldrid.RenderDemo
             string vertexShaderName,
             string fragmentShaderName,
             VertexInputDescription[] vertexInputs,
-            ShaderConstantDescription[] constants,
-            ShaderTextureInput[] textureInputs)
+            ShaderResourceDescription[] resources)
+
         {
-            Shader vs = factory.CreateShader(ShaderType.Vertex, ShaderHelper.LoadShaderCode(vertexShaderName, ShaderType.Vertex, rc.ResourceFactory));
-            Shader fs = factory.CreateShader(ShaderType.Fragment, ShaderHelper.LoadShaderCode(fragmentShaderName, ShaderType.Fragment, rc.ResourceFactory));
+            Shader vs = factory.CreateShader(ShaderStages.Vertex, ShaderHelper.LoadShaderCode(vertexShaderName, ShaderStages.Vertex, rc.ResourceFactory));
+            Shader fs = factory.CreateShader(ShaderStages.Fragment, ShaderHelper.LoadShaderCode(fragmentShaderName, ShaderStages.Fragment, rc.ResourceFactory));
             VertexInputLayout inputLayout = factory.CreateInputLayout(vertexInputs);
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            ShaderConstantBindingSlots constantBindings = factory.CreateShaderConstantBindingSlots(shaderSet, constants);
-            ShaderTextureBindingSlots textureSlots = factory.CreateShaderTextureBindingSlots(shaderSet, textureInputs);
+            ShaderResourceBindingSlots resourceBindings = factory.CreateShaderResourceBindingSlots(shaderSet, resources);
 
-            return new Material(shaderSet, constantBindings, textureSlots);
+            return new Material(shaderSet, resourceBindings);
         }
     }
 }
