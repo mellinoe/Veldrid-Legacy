@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <PackageId>Veldrid</PackageId>
-    <Description>A GPU-accelerated 3D rendering library for .NET, with backends for Direct3D 11, OpenGL 3+, and OpenGL ES 3.</Description>
-    <PackageTags>3D Graphics Render OpenGL DirectX Core Standard Game</PackageTags>
+    <Description>A GPU-accelerated 3D rendering library for .NET, with backends for Direct3D 11, Vulkan, OpenGL 3+, and OpenGL ES 3.</Description>
+    <PackageTags>3D Graphics Render Vulkan OpenGL DirectX Core Standard Game</PackageTags>
   </PropertyGroup>
 </Project>
