@@ -148,7 +148,6 @@ namespace Veldrid.RenderDemo
                 }
             }
 
-            Sdl2Native.SDL_GL_MakeCurrent(sdlHandle, contextHandle);
             OpenGLPlatformContextInfo ci = new OpenGLPlatformContextInfo(
                 contextHandle,
                 Sdl2Native.SDL_GL_GetProcAddress,
@@ -157,7 +156,7 @@ namespace Veldrid.RenderDemo
             var rc = new OpenGLESRenderContext(window, ci);
             if (debugContext)
             {
-                rc.EnableDebugCallback(OpenTK.Graphics.ES30.DebugSeverity.DebugSeverityNotification);
+                rc.EnableDebugCallback(OpenTK.Graphics.ES30.DebugSeverity.DebugSeverityLow);
             }
             return rc;
         }

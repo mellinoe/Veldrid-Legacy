@@ -1,50 +1,44 @@
-﻿using OpenTK.Graphics.OpenGL;
+﻿using OpenTK.Graphics.ES30;
 
-namespace Veldrid.Graphics.OpenGL
+namespace Veldrid.Graphics.OpenGLES
 {
     /// <summary>
     /// A utility class managing the relationships between textures, samplers, and their binding locations.
     /// </summary>
-    internal class OpenGLTextureSamplerManager
+    internal class OpenGLESTextureSamplerManager
     {
-        private readonly bool _dsaAvailable;
         private readonly int _maxTextureUnits;
-        private readonly OpenGLTextureBinding[] _textureUnitTextures;
+        private readonly OpenGLESTextureBinding[] _textureUnitTextures;
         private readonly BoundSamplerStateInfo[] _textureUnitSamplers;
 
-        public OpenGLTextureSamplerManager(OpenGLExtensions extensions)
+        public OpenGLESTextureSamplerManager()
         {
-            _dsaAvailable = extensions.ARB_DirectStateAccess;
-            _maxTextureUnits = GL.GetInteger(GetPName.MaxTextureUnits);
-            _textureUnitTextures = new OpenGLTextureBinding[_maxTextureUnits];
+            _maxTextureUnits = GL.GetInteger(GetPName.MaxCombinedTextureImageUnits);
+            Utilities.CheckLastGLES3Error();
+            _textureUnitTextures = new OpenGLESTextureBinding[_maxTextureUnits];
             _textureUnitSamplers = new BoundSamplerStateInfo[_maxTextureUnits];
         }
 
-        public void SetTexture(int textureUnit, OpenGLTextureBinding texture)
+        public void SetTexture(int textureUnit, OpenGLESTextureBinding texture)
         {
             if (_textureUnitTextures[textureUnit] != texture)
             {
-                if (_dsaAvailable)
-                {
-                    GL.BindTextureUnit(textureUnit, texture.BoundTexture.ID);
-                }
-                else
-                {
-                    GL.ActiveTexture(TextureUnit.Texture0 + textureUnit);
-                    GL.BindTexture(texture.BoundTexture.Target, texture.BoundTexture.ID);
-                }
+                GL.ActiveTexture(TextureUnit.Texture0 + textureUnit);
+                Utilities.CheckLastGLES3Error();
+                GL.BindTexture(texture.BoundTexture.Target, texture.BoundTexture.ID);
+                Utilities.CheckLastGLES3Error();
 
                 EnsureSamplerMipmapState(textureUnit, texture.BoundTexture.MipLevels > 1);
                 _textureUnitTextures[textureUnit] = texture;
             }
         }
 
-        public void SetSampler(int textureUnit, OpenGLSamplerState samplerState)
+        public void SetSampler(int textureUnit, OpenGLESSamplerState samplerState)
         {
             if (_textureUnitSamplers[textureUnit].SamplerState != samplerState)
             {
                 bool mipmapped = false;
-                OpenGLTextureBinding texBinding = _textureUnitTextures[textureUnit];
+                OpenGLESTextureBinding texBinding = _textureUnitTextures[textureUnit];
                 if (texBinding != null)
                 {
                     mipmapped = texBinding.BoundTexture.MipLevels > 1;
@@ -70,10 +64,10 @@ namespace Veldrid.Graphics.OpenGL
 
         private struct BoundSamplerStateInfo
         {
-            public OpenGLSamplerState SamplerState;
+            public OpenGLESSamplerState SamplerState;
             public bool Mipmapped;
 
-            public BoundSamplerStateInfo(OpenGLSamplerState samplerState, bool mipmapped)
+            public BoundSamplerStateInfo(OpenGLESSamplerState samplerState, bool mipmapped)
             {
                 SamplerState = samplerState;
                 Mipmapped = mipmapped;

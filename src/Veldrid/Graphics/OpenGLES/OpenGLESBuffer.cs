@@ -22,7 +22,9 @@ namespace Veldrid.Graphics.OpenGLES
             _bufferSize = 0;
         }
 
-        protected int BufferID => _bufferID;
+        public int BufferSize => _bufferSize;
+
+        public int BufferID => _bufferID;
 
         protected void Bind()
         {

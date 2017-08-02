@@ -20,7 +20,7 @@ namespace BasicDemo
         private static bool s_allowDebugContexts = false;
         public static void Main(string[] args)
         {
-            GraphicsBackend backend = GraphicsBackend.Direct3D11;
+            GraphicsBackend backend = GraphicsBackend.OpenGL;
 
             bool onWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             Sdl2Window window = new Sdl2Window("Veldrid Render Demo", 100, 100, 960, 540, SDL_WindowFlags.Resizable | SDL_WindowFlags.OpenGL, RuntimeInformation.IsOSPlatform(OSPlatform.Windows));

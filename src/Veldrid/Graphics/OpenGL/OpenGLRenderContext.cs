@@ -18,6 +18,7 @@ namespace Veldrid.Graphics.OpenGL
         private readonly int _maxConstantBufferSlots;
         private readonly OpenGLConstantBuffer[] _constantBuffersBySlot;
         private readonly OpenGLConstantBuffer[] _newConstantBuffersBySlot; // CB's bound during draw call preparation
+        private readonly OpenGLTextureSamplerManager _textureSamplerManager;
         private int _maxTextureUnits;
         private int _newConstantBuffersCount;
         private readonly int _vertexArrayID;
@@ -29,7 +30,6 @@ namespace Veldrid.Graphics.OpenGL
         private Action _swapBufferFunc;
         private DebugProc _debugMessageCallback;
 
-        private readonly OpenGLTextureSamplerManager _textureSamplerManager;
 
         public OpenGLRenderContext(Window window, OpenGLPlatformContextInfo platformContext)
         {

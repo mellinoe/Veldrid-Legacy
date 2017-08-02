@@ -48,9 +48,7 @@ namespace BasicDemo
             _shaderSet = factory.CreateShaderSet(inputLayout, vertexShader, fragmentShader);
             _resourceBindings = factory.CreateShaderResourceBindingSlots(
                 _shaderSet,
-                new ShaderResourceDescription("WorldBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("ViewBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("ProjectionBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("WorldViewProjectionBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture, ShaderStages.Fragment),
                 new ShaderResourceDescription("Sampler", ShaderResourceType.Sampler, ShaderStages.Fragment));
             _worldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
@@ -97,7 +95,8 @@ namespace BasicDemo
                 3 + (float)Math.Sin(timeFactor) * 2,
                 (float)(Math.Sin(timeFactor) * circleWidth));
             Vector3 lookDirection = -position;
-            _viewBuffer.SetData(Matrix4x4.CreateLookAt(position, position + lookDirection, Vector3.UnitY));
+            _viewMatrix = Matrix4x4.CreateLookAt(position, position + lookDirection, Vector3.UnitY);
+            _viewBuffer.SetData(_viewMatrix);
         }
 
         public void Draw()
@@ -119,15 +118,20 @@ namespace BasicDemo
                 1f);
             _rc.ClearBuffer(clearColor);
 
+            var worldViewProjection =
+                Matrix4x4.Identity // World
+                * _viewMatrix // View
+                * proj; // Projection
+
+            _worldBuffer.SetData(ref worldViewProjection);
+
             _rc.VertexBuffer = _vb;
             _rc.IndexBuffer = _ib;
             _rc.ShaderSet = _shaderSet;
             _rc.ShaderResourceBindingSlots = _resourceBindings;
             _rc.SetConstantBuffer(0, _worldBuffer);
-            _rc.SetConstantBuffer(1, _viewBuffer);
-            _rc.SetConstantBuffer(2, _projectionBuffer);
-            _rc.SetTexture(3, _textureBinding);
-            _rc.SetSamplerState(4, _rc.LinearSampler);
+            _rc.SetTexture(1, _textureBinding);
+            _rc.SetSamplerState(2, _rc.LinearSampler);
             _rc.DrawIndexedPrimitives(s_cubeIndices.Length);
 
             _rc.SwapBuffers();
@@ -151,6 +155,13 @@ namespace BasicDemo
                         string text = File.ReadAllText(path);
                         CompiledShaderCode bytecode = _rc.ResourceFactory.ProcessShaderCode(vertexShader ? ShaderStages.Vertex : ShaderStages.Fragment, text);
                         return ((Veldrid.Graphics.Direct3D.D3DShaderBytecode)bytecode).Bytecode.Data; // wtf
+                    }
+                case GraphicsBackend.OpenGL:
+                case GraphicsBackend.OpenGLES:
+                    {
+                        name += ".glsl";
+                        string path = Path.Combine(AppContext.BaseDirectory, "Shaders", "GLSL", name);
+                        return File.ReadAllBytes(path);
                     }
                 default:
                     throw new NotImplementedException();
@@ -200,5 +211,6 @@ namespace BasicDemo
             16,17,18, 16,18,19,
             20,21,22, 20,22,23,
         };
+        private Matrix4x4 _viewMatrix;
     }
 }

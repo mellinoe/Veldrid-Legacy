@@ -16,7 +16,7 @@ namespace Veldrid.Graphics.OpenGLES
 
         public void SetVertexData<T>(T[] vertexData, VertexDescriptor descriptor) where T : struct
         {
-            SetData(vertexData, descriptor.VertexSizeInBytes * vertexData.Length);
+            SetData(vertexData);
         }
 
         public void SetVertexData<T>(T[] vertexData, VertexDescriptor descriptor, int destinationOffsetInVertices) where T : struct

@@ -4,6 +4,7 @@ using Veldrid.Platform;
 using OpenTK.Graphics.ES30;
 using System.Runtime.InteropServices;
 using OpenTK;
+using System.Diagnostics;
 
 namespace Veldrid.Graphics.OpenGLES
 {
@@ -11,6 +12,12 @@ namespace Veldrid.Graphics.OpenGLES
     {
         private readonly GraphicsContext _openGLGraphicsContext;
         private readonly OpenGLESDefaultFramebuffer _defaultFramebuffer;
+        private readonly int _maxConstantBufferSlots;
+        private readonly OpenGLESConstantBuffer[] _constantBuffersBySlot;
+        private readonly OpenGLESConstantBuffer[] _newConstantBuffersBySlot; // CB's bound during draw call preparation
+        private readonly OpenGLESTextureSamplerManager _textureSamplerManager;
+
+        private int _newConstantBuffersCount;
         private PrimitiveType _primitiveType = PrimitiveType.Triangles;
         private int _vertexAttributesBound;
         private bool _vertexLayoutChanged;
@@ -34,12 +41,19 @@ namespace Veldrid.Graphics.OpenGLES
             _defaultFramebuffer = new OpenGLESDefaultFramebuffer(window.Width, window.Height);
             OnWindowResized(window.Width, window.Height);
 
+            _textureSamplerManager = new OpenGLESTextureSamplerManager();
+
+            _maxConstantBufferSlots = GL.GetInteger(GetPName.MaxUniformBufferBindings);
+            Utilities.CheckLastGLES3Error();
+            _constantBuffersBySlot = new OpenGLESConstantBuffer[_maxConstantBufferSlots];
+            _newConstantBuffersBySlot = new OpenGLESConstantBuffer[_maxConstantBufferSlots];
+
             SetInitialStates();
 
             PostContextCreated();
         }
 
-        public void EnableDebugCallback() => EnableDebugCallback(DebugSeverity.DebugSeverityNotification);
+        public void EnableDebugCallback() => EnableDebugCallback(DebugSeverity.DebugSeverityLow);
         public void EnableDebugCallback(DebugSeverity minimumSeverity) => EnableDebugCallback(DefaultDebugCallback(minimumSeverity));
         public void EnableDebugCallback(DebugProc callback)
         {
@@ -163,11 +177,8 @@ namespace Veldrid.Graphics.OpenGLES
 
         protected override void PlatformResize(int width, int height)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                // Documentation indicates that this needs to be called on OSX for proper behavior.
-                // _openGLGraphicsContext.Update(((OpenTKWindow)Window).OpenTKWindowInfo);
-            }
+            _defaultFramebuffer.Width = width;
+            _defaultFramebuffer.Height = height;
         }
 
         protected override void PlatformSetViewport(int x, int y, int width, int height)
@@ -228,18 +239,102 @@ namespace Veldrid.Graphics.OpenGLES
 
         protected override void PlatformSetConstantBuffer(int slot, ConstantBuffer cb)
         {
-            var binding = ConstantSlots.GetBindingForSlot(slot);
-            binding.Bind((OpenGLESConstantBuffer)cb);
+            OpenGLESUniformBinding binding = ShaderResourceBindingSlots.GetUniformBindingForSlot(slot);
+
+            ((OpenGLESConstantBuffer)cb).BindToBlock(ShaderSet.ProgramID, binding.BlockLocation, ((OpenGLESConstantBuffer)cb).BufferSize, slot);
+            //if (binding.BlockLocation != -1)
+            //{
+            //    BindUniformBlock(ShaderSet, slot, binding.BlockLocation, (OpenGLESConstantBuffer)cb);
+            //}
+            //else
+            //{
+            //    Debug.Assert(binding.StorageAdapter != null);
+            //    SetUniformLocationDataSlow((OpenGLESConstantBuffer)cb, binding.StorageAdapter);
+            //}
+        }
+
+        private void BindUniformBlock(OpenGLESShaderSet shaderSet, int slot, int blockLocation, OpenGLESConstantBuffer cb)
+        {
+            if (slot > _maxConstantBufferSlots)
+            {
+                throw new VeldridException($"Too many constant buffers used. Limit is {_maxConstantBufferSlots}.");
+            }
+
+            // Bind Constant Buffer to slot
+            if (_constantBuffersBySlot[slot] == cb)
+            {
+                if (_newConstantBuffersBySlot[slot] != null)
+                {
+                    _newConstantBuffersCount -= 1;
+                }
+                _newConstantBuffersBySlot[slot] = null;
+            }
+            else
+            {
+                if (_newConstantBuffersBySlot[slot] == null)
+                {
+                    _newConstantBuffersCount += 1;
+                }
+
+                _newConstantBuffersBySlot[slot] = cb;
+            }
+
+            // Bind slot to uniform block location. Performs internal caching to avoid GL calls.
+            shaderSet.BindConstantBuffer(slot, blockLocation, cb);
+        }
+
+        private void CommitNewConstantBufferBindings()
+        {
+            if (_newConstantBuffersCount > 0)
+            {
+                CommitNewConstantBufferBindings_SingleBind();
+                Array.Clear(_newConstantBuffersBySlot, 0, _newConstantBuffersBySlot.Length);
+                _newConstantBuffersCount = 0;
+            }
+        }
+
+        private void CommitNewConstantBufferBindings_SingleBind()
+        {
+            int remainingBindings = _newConstantBuffersCount;
+            for (int slot = 0; slot < _maxConstantBufferSlots; slot++)
+            {
+                if (remainingBindings == 0)
+                {
+                    return;
+                }
+
+                OpenGLESConstantBuffer cb = _newConstantBuffersBySlot[slot];
+                if (cb != null)
+                {
+                    GL.BindBufferRange(BufferRangeTarget.UniformBuffer, slot, cb.BufferID, IntPtr.Zero, cb.BufferSize);
+                    Utilities.CheckLastGLES3Error();
+                    remainingBindings -= 1;
+                }
+            }
+        }
+
+        private unsafe void SetUniformLocationDataSlow(OpenGLESConstantBuffer cb, OpenGLESUniformStorageAdapter storageAdapter)
+        {
+            // NOTE: This is slow -- avoid using uniform locations in shader code. Prefer uniform blocks.
+            int dataSizeInBytes = cb.BufferSize;
+            byte* data = stackalloc byte[dataSizeInBytes];
+            cb.GetData((IntPtr)data, dataSizeInBytes);
+            storageAdapter.SetData((IntPtr)data, dataSizeInBytes);
         }
 
         protected override void PlatformSetTexture(int slot, ShaderTextureBinding textureBinding)
         {
-            throw new NotImplementedException(); // TODO: Use OpenGLRenderContext implementation.
+            OpenGLESTextureBinding glTextureBinding = (OpenGLESTextureBinding)textureBinding;
+            OpenGLESTextureBindingSlotInfo info = ShaderResourceBindingSlots.GetTextureBindingInfo(slot);
+            _textureSamplerManager.SetTexture(info.RelativeIndex, glTextureBinding);
+            ShaderSet.UpdateTextureUniform(info.UniformLocation, info.RelativeIndex);
         }
 
         protected override void PlatformSetSamplerState(int slot, SamplerState samplerState)
         {
-            throw new NotImplementedException(); // TODO: Use OpenGLRenderContext implementation.
+            OpenGLESSamplerState glSampler = (OpenGLESSamplerState)samplerState;
+            OpenGLESTextureBindingSlotInfo info = ShaderResourceBindingSlots.GetSamplerBindingInfo(slot);
+            _textureSamplerManager.SetSampler(info.RelativeIndex, glSampler);
         }
 
         protected override void PlatformSetFramebuffer(Framebuffer framebuffer)
@@ -310,12 +405,13 @@ namespace Veldrid.Graphics.OpenGLES
                 _vertexAttributesBound = ((OpenGLESVertexInputLayout)ShaderSet.InputLayout).SetVertexAttributes(VertexBuffers, _vertexAttributesBound, _baseVertexOffset);
                 _vertexLayoutChanged = false;
             }
+
+            CommitNewConstantBufferBindings();
         }
 
         private new OpenGLESShaderResourceBindingSlots ShaderResourceBindingSlots
             => (OpenGLESShaderResourceBindingSlots)base.ShaderResourceBindingSlots;
 
-        private OpenGLESTextureBindingSlots TextureSlots => ShaderResourceBindingSlots.TextureSlots;
-        private OpenGLESShaderConstantBindingSlots ConstantSlots => ShaderResourceBindingSlots.ConstantBufferSlots;
+        private new OpenGLESShaderSet ShaderSet => (OpenGLESShaderSet)base.ShaderSet;
     }
 }

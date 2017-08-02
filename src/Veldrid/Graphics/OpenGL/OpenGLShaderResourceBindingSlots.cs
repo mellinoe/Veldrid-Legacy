@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace Veldrid.Graphics.OpenGL
 {
-    public partial class OpenGLShaderResourceBindingSlots : ShaderResourceBindingSlots
+    public class OpenGLShaderResourceBindingSlots : ShaderResourceBindingSlots
     {
         private Dictionary<int, OpenGLTextureBindingSlotInfo> _textureBindings = new Dictionary<int, OpenGLTextureBindingSlotInfo>();
         private Dictionary<int, OpenGLTextureBindingSlotInfo> _samplerBindings = new Dictionary<int, OpenGLTextureBindingSlotInfo>();
