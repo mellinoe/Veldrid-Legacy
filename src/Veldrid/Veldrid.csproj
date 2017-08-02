@@ -1,14 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyVersion>2.0.0</AssemblyVersion>
+    <AssemblyVersion>3.0.0</AssemblyVersion>
     <PackageVersion>$(AssemblyVersion)</PackageVersion>
     <TargetFramework>netstandard1.6</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile Condition="'$(Configuration)' == 'Release'">$(BinDir)\Veldrid.xml</DocumentationFile>
+    <DocumentationFile Condition="'$(Configuration)' == 'Release'">$(BinDir)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
-  <ItemGroup>
-    <None Include="Graphics\Vulkan\VkShaderBytecode.cs" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ImageSharp" Version="1.0.0-alpha9-00140" />
     <PackageReference Include="OpenTK.NETCore" Version="1.1.2737.6432" />

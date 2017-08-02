@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Veldrid.SystemAbstractions</AssemblyName>
     <RootNamespace>Veldrid</RootNamespace>
-    <AssemblyVersion>2.0.0</AssemblyVersion>
+    <AssemblyVersion>3.0.0</AssemblyVersion>
     <PackageVersion>$(AssemblyVersion)</PackageVersion>
     <TargetFramework>netstandard1.6</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
