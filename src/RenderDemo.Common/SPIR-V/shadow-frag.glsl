@@ -37,7 +37,6 @@ void main()
         projCoords.z < 0.0f || projCoords.z > 1.0f)
     {
         outputColor = ambient * surfaceColor;
-        outputColor = vec4(0.74, 0, 0, 1); // DEBUG
         return;
     }
 
@@ -55,20 +54,18 @@ void main()
 
     projCoords.z -= bias;
 
-    //sample shadow map - point sampler
+    // sample shadow map - point sampler
     float shadowMapDepth = texture(sampler2D(ShadowMap, ShadowSampler), projCoords.xy).r;
 
-    //if clip space z value greater than shadow map value then pixel is in shadow
+    // if clip space z value greater than shadow map value then pixel is in shadow
     if (shadowMapDepth < projCoords.z)
     {
         outputColor = ambient * surfaceColor;
-        //outputColor = vec4(0, .85, 0, 1); // DEBUG
         return;
     }
 
-    //otherwise calculate ilumination at fragment
+    // otherwise calculate ilumination at fragment
     ndotl = clamp(ndotl, 0, 1);
     outputColor = ambient * surfaceColor + surfaceColor * ndotl;
-    //outputColor = vec4(0, .1, 0.9, 1); // DEBUG
     return;
 }
