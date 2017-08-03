@@ -1,4 +1,5 @@
 ﻿using OpenTK.Graphics.OpenGL;
+using System;
 
 namespace Veldrid.Graphics.OpenGL
 {
@@ -15,7 +16,8 @@ namespace Veldrid.Graphics.OpenGL
         public OpenGLTextureSamplerManager(OpenGLExtensions extensions)
         {
             _dsaAvailable = extensions.ARB_DirectStateAccess;
-            _maxTextureUnits = GL.GetInteger(GetPName.MaxTextureUnits);
+            _maxTextureUnits = GL.GetInteger(GetPName.MaxCombinedTextureImageUnits);
+            _maxTextureUnits = Math.Max(_maxTextureUnits, 8); // OpenGL spec indicates that implementations must support at least 8.
             _textureUnitTextures = new OpenGLTextureBinding[_maxTextureUnits];
             _textureUnitSamplers = new BoundSamplerStateInfo[_maxTextureUnits];
         }

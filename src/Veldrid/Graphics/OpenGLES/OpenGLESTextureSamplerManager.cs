@@ -1,4 +1,5 @@
 ﻿using OpenTK.Graphics.ES30;
+using System;
 
 namespace Veldrid.Graphics.OpenGLES
 {
@@ -15,6 +16,7 @@ namespace Veldrid.Graphics.OpenGLES
         {
             _maxTextureUnits = GL.GetInteger(GetPName.MaxCombinedTextureImageUnits);
             Utilities.CheckLastGLES3Error();
+            _maxTextureUnits = Math.Max(_maxTextureUnits, 8); // OpenGL spec indicates that implementations must support at least 8.
             _textureUnitTextures = new OpenGLESTextureBinding[_maxTextureUnits];
             _textureUnitSamplers = new BoundSamplerStateInfo[_maxTextureUnits];
         }
