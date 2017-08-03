@@ -114,8 +114,10 @@ void main()
         return;
     }
 
-    // Transform to [0,1] range
-    projCoords = projCoords * 0.5 + 0.5;
+    // Transform to [0,1] range.
+    // NOTE: Vulkan z-range is already [0,1].
+    projCoords.x = projCoords.x * 0.5 + 0.5;
+    projCoords.y = projCoords.y * 0.5 + 0.5;
 
     vec3 L = -1 * normalize(lightDir);
     float diffuseFactor = dot(normalize(out_normal), L);
