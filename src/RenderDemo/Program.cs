@@ -17,33 +17,25 @@ namespace Veldrid.RenderDemo
     {
         public static void Main()
         {
-            bool useVulkan = true;
             bool onWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             var window = new Sdl2Window("Veldrid Render Demo", 100, 100, 960, 540, SDL_WindowFlags.Resizable | SDL_WindowFlags.OpenGL, RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
             RenderContext rc;
-            if (useVulkan)
+            GraphicsBackend preferredBackend = Preferences.Instance.PreferredBackend;
+            if (preferredBackend == GraphicsBackend.Vulkan)
             {
                 rc = CreateVulkanRenderContext(window);
             }
+            else if (preferredBackend == GraphicsBackend.Direct3D11 && onWindows)
+            {
+                rc = CreateDefaultD3dRenderContext(window);
+            }
+            else if (preferredBackend == GraphicsBackend.OpenGLES && onWindows)
+            {
+                rc = CreateDefaultOpenGLESRenderContext(window);
+            }
             else
             {
-                bool preferOpenGL = Preferences.Instance.PreferOpenGL;
-                if (!preferOpenGL && onWindows)
-                {
-                    rc = CreateDefaultD3dRenderContext(window);
-                }
-                else
-                {
-                    bool useGLES = false;
-                    if (useGLES)
-                    {
-                        rc = CreateDefaultOpenGLESRenderContext(window);
-                    }
-                    else
-                    {
-                        rc = CreateDefaultOpenGLRenderContext(window);
-                    }
-                }
+                rc = CreateDefaultOpenGLRenderContext(window);
             }
 
             var options = new List<RenderDemo.RendererOption>();
@@ -85,9 +77,16 @@ namespace Veldrid.RenderDemo
             }
             else
             {
-                options.Add(openGLOption);
-                options.Add(vulkanOption);
-                options.Add(openGLESOption);
+                if (rc is VkRenderContext)
+                {
+                    options.Add(vulkanOption);
+                    options.Add(openGLOption);
+                }
+                else
+                {
+                    options.Add(openGLOption);
+                    options.Add(vulkanOption);
+                }
             }
 
             RenderDemo.RunDemo(rc, window, options.ToArray());

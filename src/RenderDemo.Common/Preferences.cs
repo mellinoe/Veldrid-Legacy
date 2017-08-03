@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Newtonsoft.Json;
+using Veldrid.Graphics;
 
 namespace Veldrid.RenderDemo
 {
@@ -8,7 +10,7 @@ namespace Veldrid.RenderDemo
     {
         public bool AllowOpenGLDebugContexts { get; set; } = false;
         public bool AllowDirect3DDebugDevice { get; set; } = false;
-        public bool PreferOpenGL { get; set; } = false;
+        public GraphicsBackend PreferredBackend { get; set; } = GetPlatformDefaultBackend();
         public string MenuFont { get; set; } = string.Empty;
         public float FontSize { get; set; } = 15;
 
@@ -58,6 +60,18 @@ namespace Veldrid.RenderDemo
                 Directory.CreateDirectory(SpecialFolders.VeldridConfigFolder);
             }
             File.WriteAllText(preferencesFile, json);
+        }
+
+        private static GraphicsBackend GetPlatformDefaultBackend()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return GraphicsBackend.Direct3D11;
+            }
+            else
+            {
+                return GraphicsBackend.OpenGL;
+            }
         }
     }
 }
