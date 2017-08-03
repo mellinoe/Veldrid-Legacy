@@ -109,6 +109,9 @@ namespace Veldrid.Graphics.Vulkan
 
         private void CreateInstance()
         {
+            HashSet<string> availableInstanceLayers = new HashSet<string>(EnumerateInstanceLayers());
+            HashSet<string> availableInstanceExtensions = new HashSet<string>(EnumerateInstanceExtensions());
+
             VkInstanceCreateInfo instanceCI = VkInstanceCreateInfo.New();
             VkApplicationInfo applicationInfo = new VkApplicationInfo();
             applicationInfo.apiVersion = new VkVersion(1, 0, 0);
@@ -122,14 +125,29 @@ namespace Veldrid.Graphics.Vulkan
             StackList<IntPtr, Size64Bytes> instanceExtensions = new StackList<IntPtr, Size64Bytes>();
             StackList<IntPtr, Size64Bytes> instanceLayers = new StackList<IntPtr, Size64Bytes>();
 
+            if (!availableInstanceExtensions.Contains(CommonStrings.VK_KHR_SURFACE_EXTENSION_NAME))
+            {
+                throw new VeldridException($"The required instance extension was not available: {CommonStrings.VK_KHR_SURFACE_EXTENSION_NAME}");
+            }
+
             instanceExtensions.Add(CommonStrings.VK_KHR_SURFACE_EXTENSION_NAME);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
+                if (!availableInstanceExtensions.Contains(CommonStrings.VK_KHR_WIN32_SURFACE_EXTENSION_NAME))
+                {
+                    throw new VeldridException($"The required instance extension was not available: {CommonStrings.VK_KHR_WIN32_SURFACE_EXTENSION_NAME}");
+                }
+
                 instanceExtensions.Add(CommonStrings.VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
+                if (!availableInstanceExtensions.Contains(CommonStrings.VK_KHR_XLIB_SURFACE_EXTENSION_NAME))
+                {
+                    throw new VeldridException($"The required instance extension was not available: {CommonStrings.VK_KHR_XLIB_SURFACE_EXTENSION_NAME}");
+                }
+
                 instanceExtensions.Add(CommonStrings.VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
             }
             else
@@ -141,10 +159,18 @@ namespace Veldrid.Graphics.Vulkan
 #if DEBUG
             debug = true;
 #endif
+            bool debugReportExtensionAvailable = false;
             if (debug)
             {
-                instanceExtensions.Add(CommonStrings.VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-                instanceLayers.Add(CommonStrings.StandardValidationLayerName);
+                if (availableInstanceExtensions.Contains(CommonStrings.VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
+                {
+                    debugReportExtensionAvailable = true;
+                    instanceExtensions.Add(CommonStrings.VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+                }
+                if (availableInstanceLayers.Contains(CommonStrings.StandardValidationLayerName))
+                {
+                    instanceLayers.Add(CommonStrings.StandardValidationLayerName);
+                }
             }
 
             instanceCI.enabledExtensionCount = instanceExtensions.Count;
@@ -156,7 +182,7 @@ namespace Veldrid.Graphics.Vulkan
             VkResult result = vkCreateInstance(ref instanceCI, null, out _instance);
             CheckResult(result);
 
-            if (debug)
+            if (debug && debugReportExtensionAvailable)
             {
                 EnableDebugCallback(VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error | VkDebugReportFlagsEXT.PerformanceWarning);
             }

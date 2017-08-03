@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using Vulkan;
 using static Vulkan.VulkanNative;
 
@@ -69,6 +70,56 @@ namespace Veldrid.Graphics.Vulkan
             memory = memoryToken;
             result = vkBindImageMemory(device, image, memory.DeviceMemory, memory.Offset);
             CheckResult(result);
+        }
+
+        public static string[] EnumerateInstanceLayers()
+        {
+            uint propCount = 0;
+            VkResult result = vkEnumerateInstanceLayerProperties(ref propCount, null);
+            CheckResult(result);
+            if (propCount == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            VkLayerProperties[] props = new VkLayerProperties[propCount];
+            vkEnumerateInstanceLayerProperties(ref propCount, ref props[0]);
+
+            string[] ret = new string[propCount];
+            for (int i = 0; i < propCount; i++)
+            {
+                fixed (byte* layerNamePtr = props[i].layerName)
+                {
+                    ret[i] = Utilities.GetString(layerNamePtr);
+                }
+            }
+
+            return ret;
+        }
+
+        public static string[] EnumerateInstanceExtensions()
+        {
+            uint propCount = 0;
+            VkResult result = vkEnumerateInstanceExtensionProperties((byte*)null, ref propCount, null);
+            CheckResult(result);
+            if (propCount == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            VkExtensionProperties[] props = new VkExtensionProperties[propCount];
+            vkEnumerateInstanceExtensionProperties((byte*)null, ref propCount, ref props[0]);
+
+            string[] ret = new string[propCount];
+            for (int i = 0; i < propCount; i++)
+            {
+                fixed (byte* extensionNamePtr = props[i].extensionName)
+                {
+                    ret[i] = Utilities.GetString(extensionNamePtr);
+                }
+            }
+
+            return ret;
         }
     }
 
