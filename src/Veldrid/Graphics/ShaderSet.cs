@@ -16,6 +16,14 @@ namespace Veldrid.Graphics
         /// </summary>
         Shader VertexShader { get; }
         /// <summary>
+        /// The tessellation control shader. This stage is optional, and may be null.
+        /// </summary>
+        Shader TessellationControlShader { get; }
+        /// <summary>
+        /// The tessellation evaluation shader. This stage is optional, and may be null.
+        /// </summary>
+        Shader TessellationEvaluationShader { get; }
+        /// <summary>
         /// The geometry shader. This stage is optional, and may be null.
         /// </summary>
         Shader GeometryShader { get; }

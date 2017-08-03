@@ -53,15 +53,18 @@ namespace Veldrid.Graphics.OpenGLES
             }
         }
 
-        public static OpenTK.Graphics.ES30.ShaderType VeldridToGLShaderType(ShaderStages type)
+        public static ShaderType VeldridToGLShaderType(ShaderStages type)
         {
             switch (type)
             {
                 case ShaderStages.Vertex:
-                    return OpenTK.Graphics.ES30.ShaderType.VertexShader;
+                    return ShaderType.VertexShader;
                 case ShaderStages.Fragment:
-                    return OpenTK.Graphics.ES30.ShaderType.FragmentShader;
+                    return ShaderType.FragmentShader;
+                case ShaderStages.TessellationControl:
+                case ShaderStages.TessellationEvaluation:
                 case ShaderStages.Geometry:
+                    // NOTE: OpenGL ES 3.2 supports Tessellation and Geometry shaders.
                     throw new NotSupportedException($"Shaders of type {type} are not supported in OpenGL ES.");
                 default:
                     throw Illegal.Value<ShaderStages>();

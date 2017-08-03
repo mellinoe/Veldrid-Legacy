@@ -33,6 +33,10 @@ namespace Veldrid.Graphics.Direct3D
             {
                 case ShaderStages.Vertex:
                     return "VS";
+                case ShaderStages.TessellationControl:
+                    return "HS";
+                case ShaderStages.TessellationEvaluation:
+                    return "DS";
                 case ShaderStages.Geometry:
                     return "GS";
                 case ShaderStages.Fragment:
@@ -48,6 +52,10 @@ namespace Veldrid.Graphics.Direct3D
             {
                 case ShaderStages.Vertex:
                     return "vs_5_0";
+                case ShaderStages.TessellationControl:
+                    return "hs_5_0";
+                case ShaderStages.TessellationEvaluation:
+                    return "ds_5_0";
                 case ShaderStages.Geometry:
                     return "gs_5_0";
                 case ShaderStages.Fragment:
@@ -74,6 +82,28 @@ namespace Veldrid.Graphics.Direct3D
         protected override VertexShader CreateDeviceShader(Device device, ShaderBytecode bytecode)
         {
             return new VertexShader(device, bytecode);
+        }
+    }
+
+    public class D3DTessellationControlShader : D3DShader<HullShader>
+    {
+        public D3DTessellationControlShader(Device device, ShaderBytecode bytecode)
+            : base(device, ShaderStages.TessellationControl, bytecode) { }
+
+        protected override HullShader CreateDeviceShader(Device device, ShaderBytecode bytecode)
+        {
+            return new HullShader(device, bytecode);
+        }
+    }
+
+    public class D3DTessellationEvaluationShader : D3DShader<DomainShader>
+    {
+        public D3DTessellationEvaluationShader(Device device, ShaderBytecode bytecode)
+            : base(device, ShaderStages.TessellationEvaluation, bytecode) { }
+
+        protected override DomainShader CreateDeviceShader(Device device, ShaderBytecode bytecode)
+        {
+            return new DomainShader(device, bytecode);
         }
     }
 

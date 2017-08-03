@@ -14,13 +14,20 @@ namespace Veldrid.Graphics.OpenGLES
 
         public Shader VertexShader { get; }
 
+        public Shader TessellationControlShader { get; }
+
+        public Shader TessellationEvaluationShader { get; }
+
         public Shader GeometryShader => null;
 
         public Shader FragmentShader { get; }
 
         public int ProgramID { get; }
 
-        public OpenGLESShaderSet(OpenGLESVertexInputLayout inputLayout, OpenGLESShader vertexShader, OpenGLESShader fragmentShader)
+        public OpenGLESShaderSet(
+            OpenGLESVertexInputLayout inputLayout,
+            OpenGLESShader vertexShader,
+            OpenGLESShader fragmentShader)
         {
             InputLayout = inputLayout;
             VertexShader = vertexShader;

@@ -22,16 +22,20 @@ namespace Veldrid.Graphics.OpenGL
             }
         }
 
-        public static OpenTK.Graphics.OpenGL.ShaderType VeldridToGLShaderType(ShaderStages type)
+        public static ShaderType VeldridToGLShaderType(ShaderStages type)
         {
             switch (type)
             {
                 case ShaderStages.Vertex:
-                    return OpenTK.Graphics.OpenGL.ShaderType.VertexShader;
+                    return ShaderType.VertexShader;
+                case ShaderStages.TessellationControl:
+                    return ShaderType.TessControlShader;
+                case ShaderStages.TessellationEvaluation:
+                    return ShaderType.TessEvaluationShader;
                 case ShaderStages.Geometry:
-                    return OpenTK.Graphics.OpenGL.ShaderType.GeometryShader;
+                    return ShaderType.GeometryShader;
                 case ShaderStages.Fragment:
-                    return OpenTK.Graphics.OpenGL.ShaderType.FragmentShader;
+                    return ShaderType.FragmentShader;
                 default:
                     throw Illegal.Value<ShaderStages>();
             }

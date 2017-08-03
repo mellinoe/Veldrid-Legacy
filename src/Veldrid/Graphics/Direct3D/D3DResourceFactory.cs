@@ -48,6 +48,12 @@ namespace Veldrid.Graphics.Direct3D
                 case ShaderStages.Vertex:
                     entryPoint = "VS";
                     break;
+                case ShaderStages.TessellationControl:
+                    entryPoint = "HS";
+                    break;
+                case ShaderStages.TessellationEvaluation:
+                    entryPoint = "DS";
+                    break;
                 case ShaderStages.Geometry:
                     entryPoint = "GS";
                     break;
@@ -63,6 +69,12 @@ namespace Veldrid.Graphics.Direct3D
             {
                 case ShaderStages.Vertex:
                     profile = "vs_5_0";
+                    break;
+                case ShaderStages.TessellationControl:
+                    profile = "hs_5_0";
+                    break;
+                case ShaderStages.TessellationEvaluation:
+                    profile = "ds_5_0";
                     break;
                 case ShaderStages.Geometry:
                     profile = "gs_5_0";
@@ -89,6 +101,10 @@ namespace Veldrid.Graphics.Direct3D
             {
                 case ShaderStages.Vertex:
                     return new D3DVertexShader(_device, d3dBytecode.Bytecode);
+                case ShaderStages.TessellationControl:
+                    return new D3DTessellationControlShader(_device, d3dBytecode.Bytecode);
+                case ShaderStages.TessellationEvaluation:
+                    return new D3DTessellationEvaluationShader(_device, d3dBytecode.Bytecode);
                 case ShaderStages.Geometry:
                     return new D3DGeometryShader(_device, d3dBytecode.Bytecode);
                 case ShaderStages.Fragment:
@@ -104,12 +120,23 @@ namespace Veldrid.Graphics.Direct3D
 
         public override ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader fragmentShader)
         {
-            return new D3DShaderSet(inputLayout, vertexShader, null, fragmentShader);
+            return new D3DShaderSet(inputLayout, vertexShader, null, null, null, fragmentShader);
         }
 
         public override ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader geometryShader, Shader fragmentShader)
         {
-            return new D3DShaderSet(inputLayout, vertexShader, geometryShader, fragmentShader);
+            return new D3DShaderSet(inputLayout, vertexShader, null, null, geometryShader, fragmentShader);
+        }
+
+        public override ShaderSet CreateShaderSet(
+            VertexInputLayout inputLayout,
+            Shader vertexShader,
+            Shader tessellationControlShader,
+            Shader tessellationEvaluationShader,
+            Shader geometryShader,
+            Shader fragmentShader)
+        {
+            return new D3DShaderSet(inputLayout, vertexShader, tessellationControlShader, tessellationEvaluationShader, geometryShader, fragmentShader);
         }
 
         public override ShaderResourceBindingSlots CreateShaderResourceBindingSlots(

@@ -69,6 +69,11 @@ namespace Veldrid.Graphics.OpenGLES
             throw new NotSupportedException();
         }
 
+        public override ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader tessellationControlShader, Shader tessellationEvaluationShader, Shader geometryShader, Shader fragmentShader)
+        {
+            throw new NotSupportedException();
+        }
+
         public override ShaderResourceBindingSlots CreateShaderResourceBindingSlots(
             ShaderSet shaderSet,
             ShaderResourceDescription[] resources)

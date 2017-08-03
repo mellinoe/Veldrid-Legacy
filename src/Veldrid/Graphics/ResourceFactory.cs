@@ -130,6 +130,24 @@ namespace Veldrid.Graphics
         public abstract ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader geometryShader, Shader fragmentShader);
 
         /// <summary>
+        /// Creates a <see cref="ShaderSet"/> from the given vertex inputs and shaders.
+        /// </summary>
+        /// <param name="inputLayout">The device-specific vertex input layout of the vertex shader.</param>
+        /// <param name="vertexShader">The vertex shader.</param>
+        /// <param name="tessellationControlShader">The tessellation control shader.</param>
+        /// <param name="tessellationEvaluationShader">The tessellation evaluation shader.</param>
+        /// <param name="geometryShader">The geometry shader.</param>
+        /// <param name="fragmentShader">The fragment shader.</param>
+        /// <returns></returns>
+        public abstract ShaderSet CreateShaderSet(
+            VertexInputLayout inputLayout,
+            Shader vertexShader, 
+            Shader tessellationControlShader,
+            Shader tessellationEvaluationShader,
+            Shader geometryShader, 
+            Shader fragmentShader);
+
+        /// <summary>
         /// Creates a device-specific representation of the resource slots available to a set of shaders.
         /// </summary>
         /// <param name="shaderSet">The shader set for which the <see cref="ShaderResourceBindingSlots"/> will be applicable.</param>

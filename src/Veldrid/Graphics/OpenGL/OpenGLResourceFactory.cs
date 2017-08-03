@@ -64,12 +64,35 @@ namespace Veldrid.Graphics.OpenGL
 
         public override ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader fragmentShader)
         {
-            return new OpenGLShaderSet((OpenGLVertexInputLayout)inputLayout, (OpenGLShader)vertexShader, null, (OpenGLShader)fragmentShader);
+            return new OpenGLShaderSet((OpenGLVertexInputLayout)inputLayout, (OpenGLShader)vertexShader, null, null, null, (OpenGLShader)fragmentShader);
         }
 
         public override ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader geometryShader, Shader fragmentShader)
         {
-            return new OpenGLShaderSet((OpenGLVertexInputLayout)inputLayout, (OpenGLShader)vertexShader, (OpenGLShader)geometryShader, (OpenGLShader)fragmentShader);
+            return new OpenGLShaderSet(
+                (OpenGLVertexInputLayout)inputLayout,
+                (OpenGLShader)vertexShader,
+                null,
+                null,
+                (OpenGLShader)geometryShader,
+                (OpenGLShader)fragmentShader);
+        }
+
+        public override ShaderSet CreateShaderSet(
+            VertexInputLayout inputLayout,
+            Shader vertexShader,
+            Shader tessellationControlShader,
+            Shader tessellationEvaluationShader,
+            Shader geometryShader,
+            Shader fragmentShader)
+        {
+            return new OpenGLShaderSet(
+                (OpenGLVertexInputLayout)inputLayout,
+                (OpenGLShader)vertexShader,
+                (OpenGLShader)tessellationControlShader,
+                (OpenGLShader)tessellationEvaluationShader,
+                (OpenGLShader)geometryShader,
+                (OpenGLShader)fragmentShader);
         }
 
         public override ShaderResourceBindingSlots CreateShaderResourceBindingSlots(
@@ -97,9 +120,9 @@ namespace Veldrid.Graphics.OpenGL
         }
 
         public override DeviceTexture2D CreateTexture(
-            int mipLevels, 
-            int width, 
-            int height, 
+            int mipLevels,
+            int width,
+            int height,
             PixelFormat format,
             DeviceTextureCreateOptions createOptions)
         {

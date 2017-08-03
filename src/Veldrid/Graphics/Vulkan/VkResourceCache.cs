@@ -199,6 +199,24 @@ namespace Veldrid.Graphics.Vulkan
             fragmentStage.pName = CommonStrings.main;
             shaderStageCIs.Add(fragmentStage);
 
+            if (cacheKey.ShaderSet.TessellationControlShader != null)
+            {
+                VkPipelineShaderStageCreateInfo tcStage = VkPipelineShaderStageCreateInfo.New();
+                tcStage.stage = VkShaderStageFlags.TessellationControl;
+                tcStage.module = cacheKey.ShaderSet.TessellationControlShader.ShaderModule;
+                tcStage.pName = CommonStrings.main;
+                shaderStageCIs.Add(tcStage);
+            }
+
+            if (cacheKey.ShaderSet.TessellationEvaluationShader != null)
+            {
+                VkPipelineShaderStageCreateInfo teStage = VkPipelineShaderStageCreateInfo.New();
+                teStage.stage = VkShaderStageFlags.TessellationEvaluation;
+                teStage.module = cacheKey.ShaderSet.TessellationEvaluationShader.ShaderModule;
+                teStage.pName = CommonStrings.main;
+                shaderStageCIs.Add(teStage);
+            }
+
             if (cacheKey.ShaderSet.GeometryShader != null)
             {
                 VkPipelineShaderStageCreateInfo geometryStage = VkPipelineShaderStageCreateInfo.New();

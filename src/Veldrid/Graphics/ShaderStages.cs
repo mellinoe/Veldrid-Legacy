@@ -14,18 +14,20 @@ namespace Veldrid.Graphics
         /// further shader stages.
         /// </summary>
         Vertex = 1 << 0,
+        TessellationControl = 1 << 1,
+        TessellationEvaluation = 1 << 2,
         /// <summary>
         /// An optional shader stage, which performs additional mutation, manipulation, and generation of primitive data.
         /// </summary>
-        Geometry = 1 << 1,
+        Geometry = 1 << 3,
         /// <summary>
         /// The final shader stage, responsible for outputting final image data to the framebuffer.
         /// </summary>
-        Fragment = 1 << 2,
+        Fragment = 1 << 4,
 
         /// <summary>
         /// All shader stages.
         /// </summary>
-        All = Vertex | Geometry | Fragment
+        All = Vertex | TessellationControl | TessellationEvaluation | Geometry | Fragment
     }
 }

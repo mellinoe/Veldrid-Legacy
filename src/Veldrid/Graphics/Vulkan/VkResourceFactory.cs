@@ -93,12 +93,29 @@ namespace Veldrid.Graphics.Vulkan
 
         public override ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader fragmentShader)
         {
-            return new VkShaderSet((VKInputLayout)inputLayout, (VkShader)vertexShader, null, (VkShader)fragmentShader);
+            return new VkShaderSet((VKInputLayout)inputLayout, (VkShader)vertexShader, null, null, null, (VkShader)fragmentShader);
         }
 
         public override ShaderSet CreateShaderSet(VertexInputLayout inputLayout, Shader vertexShader, Shader geometryShader, Shader fragmentShader)
         {
-            return new VkShaderSet((VKInputLayout)inputLayout, (VkShader)vertexShader, (VkShader)geometryShader, (VkShader)fragmentShader);
+            return new VkShaderSet((VKInputLayout)inputLayout, (VkShader)vertexShader, null, null, (VkShader)geometryShader, (VkShader)fragmentShader);
+        }
+
+        public override ShaderSet CreateShaderSet(
+            VertexInputLayout inputLayout,
+            Shader vertexShader,
+            Shader tessellationControlShader,
+            Shader tessellationEvaluationShader,
+            Shader geometryShader,
+            Shader fragmentShader)
+        {
+            return new VkShaderSet(
+                (VKInputLayout)inputLayout,
+                (VkShader)vertexShader,
+                (VkShader)tessellationControlShader,
+                (VkShader)tessellationEvaluationShader,
+                (VkShader)geometryShader,
+                (VkShader)fragmentShader);
         }
 
         public override ShaderTextureBinding CreateShaderTextureBinding(DeviceTexture texture)

@@ -1123,7 +1123,6 @@ https://github.com/mellinoe/veldrid.");
                     }
                 }
 
-                _rc.Dispose();
                 _rc = newContext;
 
                 CreateWireframeRasterizerState();

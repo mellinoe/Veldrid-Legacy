@@ -14,21 +14,41 @@ namespace Veldrid.Graphics.OpenGL
 
         public Shader VertexShader { get; }
 
+        public Shader TessellationControlShader { get; }
+
+        public Shader TessellationEvaluationShader { get; }
+
         public Shader GeometryShader { get; }
 
         public Shader FragmentShader { get; }
 
         public int ProgramID { get; }
 
-        public OpenGLShaderSet(OpenGLVertexInputLayout inputLayout, OpenGLShader vertexShader, OpenGLShader geometryShader, OpenGLShader fragmentShader)
+        public OpenGLShaderSet(
+            OpenGLVertexInputLayout inputLayout,
+            OpenGLShader vertexShader,
+            OpenGLShader tessellationControlShader,
+            OpenGLShader tessellationEvaluationShader,
+            OpenGLShader geometryShader,
+            OpenGLShader fragmentShader)
         {
             InputLayout = inputLayout;
             VertexShader = vertexShader;
+            TessellationControlShader = tessellationControlShader;
+            TessellationEvaluationShader = tessellationEvaluationShader;
             GeometryShader = geometryShader;
             FragmentShader = fragmentShader;
 
             ProgramID = GL.CreateProgram();
             GL.AttachShader(ProgramID, vertexShader.ShaderID);
+            if (tessellationControlShader != null)
+            {
+                GL.AttachShader(ProgramID, tessellationControlShader.ShaderID);
+            }
+            if (tessellationEvaluationShader != null)
+            {
+                GL.AttachShader(ProgramID, tessellationEvaluationShader.ShaderID);
+            }
             if (geometryShader != null)
             {
                 GL.AttachShader(ProgramID, geometryShader.ShaderID);
@@ -76,6 +96,8 @@ namespace Veldrid.Graphics.OpenGL
         {
             InputLayout.Dispose();
             VertexShader.Dispose();
+            TessellationControlShader?.Dispose();
+            TessellationEvaluationShader?.Dispose();
             GeometryShader?.Dispose();
             FragmentShader.Dispose();
             GL.DeleteProgram(ProgramID);

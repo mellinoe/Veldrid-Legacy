@@ -1,6 +1,4 @@
 ﻿using OpenTK.Graphics.OpenGL;
-using System;
-using System.IO;
 
 namespace Veldrid.Graphics.OpenGL
 {
@@ -10,24 +8,12 @@ namespace Veldrid.Graphics.OpenGL
 
         public ShaderStages Type { get; }
 
-        public OpenGLShader(Stream dataStream, OpenTK.Graphics.OpenGL.ShaderType type)
-        {
-            Type = OpenGLFormats.GLToVeldridShaderType(type);
-            string source;
-            using (var sr = new StreamReader(dataStream))
-            {
-                source = sr.ReadToEnd();
-            }
-
-            LoadShader(source, type);
-        }
-
-        public OpenGLShader(string source, OpenTK.Graphics.OpenGL.ShaderType type)
+        public OpenGLShader(string source, ShaderType type)
         {
             LoadShader(source, type);
         }
 
-        private void LoadShader(string source, OpenTK.Graphics.OpenGL.ShaderType type)
+        private void LoadShader(string source, ShaderType type)
         {
             ShaderID = GL.CreateShader(type);
             GL.ShaderSource(ShaderID, source);
