@@ -18,6 +18,8 @@ namespace Veldrid.Graphics.OpenGLES
                     return OpenTK.Graphics.ES30.PixelFormat.RedInteger;
                 case PixelFormat.R8_G8_B8_A8_UInt:
                     return OpenTK.Graphics.ES30.PixelFormat.Rgba;
+                case PixelFormat.B8_G8_R8_A8_UInt:
+                    return OpenTK.Graphics.ES30.PixelFormat.Rgba;
                 default:
                     throw Illegal.Value<PixelFormat>();
             }
@@ -47,6 +49,8 @@ namespace Veldrid.Graphics.OpenGLES
                         return TextureComponentCount.R16ui;
                     case PixelFormat.R8_G8_B8_A8_UInt:
                         return TextureComponentCount.Rgba8;
+                    case PixelFormat.B8_G8_R8_A8_UInt:
+                        return TextureComponentCount.Bgra8Ext;
                     default:
                         throw Illegal.Value<PixelFormat>();
                 }
@@ -223,6 +227,7 @@ namespace Veldrid.Graphics.OpenGLES
                 case PixelFormat.R16_UInt:
                     return PixelType.UnsignedShort;
                 case PixelFormat.R8_G8_B8_A8_UInt:
+                case PixelFormat.B8_G8_R8_A8_UInt:
                     return PixelType.UnsignedByte;
                 default:
                     throw Illegal.Value<PixelFormat>();

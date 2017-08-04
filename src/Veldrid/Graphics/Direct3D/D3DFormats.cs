@@ -18,6 +18,8 @@ namespace Veldrid.Graphics.Direct3D
                     return Format.R16_UInt;
                 case PixelFormat.R8_G8_B8_A8_UInt:
                     return Format.R8G8B8A8_UNorm;
+                case PixelFormat.B8_G8_R8_A8_UInt:
+                    return Format.B8G8R8A8_UNorm;
                 default:
                     throw Illegal.Value<PixelFormat>();
             }
@@ -374,6 +376,16 @@ namespace Veldrid.Graphics.Direct3D
                 case Format.R8G8B8A8_UInt:
                 case Format.R8G8B8A8_SNorm:
                 case Format.R8G8B8A8_SInt:
+                case Format.R9G9B9E5_Sharedexp:
+                case Format.R8G8_B8G8_UNorm:
+                case Format.G8R8_G8B8_UNorm:
+                case Format.B8G8R8A8_UNorm:
+                case Format.B8G8R8X8_UNorm:
+                case Format.R10G10B10_Xr_Bias_A2_UNorm:
+                case Format.B8G8R8A8_Typeless:
+                case Format.B8G8R8A8_UNorm_SRgb:
+                case Format.B8G8R8X8_Typeless:
+                case Format.B8G8R8X8_UNorm_SRgb:
                 case Format.R16G16_Typeless:
                 case Format.R16G16_Float:
                 case Format.R16G16_UNorm:
@@ -412,9 +424,6 @@ namespace Veldrid.Graphics.Direct3D
                     return 1;
                 case Format.R1_UNorm:
                     return 1;
-                case Format.R9G9B9E5_Sharedexp:
-                case Format.R8G8_B8G8_UNorm:
-                case Format.G8R8_G8B8_UNorm:
                 case Format.BC1_Typeless:
                 case Format.BC1_UNorm:
                 case Format.BC1_UNorm_SRgb:
@@ -432,13 +441,6 @@ namespace Veldrid.Graphics.Direct3D
                 case Format.BC5_SNorm:
                 case Format.B5G6R5_UNorm:
                 case Format.B5G5R5A1_UNorm:
-                case Format.B8G8R8A8_UNorm:
-                case Format.B8G8R8X8_UNorm:
-                case Format.R10G10B10_Xr_Bias_A2_UNorm:
-                case Format.B8G8R8A8_Typeless:
-                case Format.B8G8R8A8_UNorm_SRgb:
-                case Format.B8G8R8X8_Typeless:
-                case Format.B8G8R8X8_UNorm_SRgb:
                 case Format.BC6H_Typeless:
                 case Format.BC6H_Uf16:
                 case Format.BC6H_Sf16:

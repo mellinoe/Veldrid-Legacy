@@ -17,6 +17,8 @@ namespace Veldrid.Graphics.OpenGL
                     return OpenTK.Graphics.OpenGL.PixelFormat.RedInteger;
                 case PixelFormat.R8_G8_B8_A8_UInt:
                     return OpenTK.Graphics.OpenGL.PixelFormat.Rgba;
+                case PixelFormat.B8_G8_R8_A8_UInt:
+                    return OpenTK.Graphics.OpenGL.PixelFormat.Bgra;
                 default:
                     throw Illegal.Value<PixelFormat>();
             }
@@ -69,6 +71,8 @@ namespace Veldrid.Graphics.OpenGL
                 case PixelFormat.R16_UInt:
                     return SizedInternalFormat.R16ui;
                 case PixelFormat.R8_G8_B8_A8_UInt:
+                    return SizedInternalFormat.Rgba8ui;
+                case PixelFormat.B8_G8_R8_A8_UInt:
                     return SizedInternalFormat.Rgba8ui;
                 default:
                     throw Illegal.Value<PixelFormat>();
@@ -214,6 +218,7 @@ namespace Veldrid.Graphics.OpenGL
                 case PixelFormat.R16_UInt:
                     return PixelType.UnsignedShort;
                 case PixelFormat.R8_G8_B8_A8_UInt:
+                case PixelFormat.B8_G8_R8_A8_UInt:
                     return PixelType.UnsignedByte;
                 default:
                     throw Illegal.Value<PixelFormat>();
@@ -231,6 +236,8 @@ namespace Veldrid.Graphics.OpenGL
                 case PixelFormat.R16_UInt:
                     return PixelInternalFormat.R16ui;
                 case PixelFormat.R8_G8_B8_A8_UInt:
+                    return PixelInternalFormat.Rgba;
+                case PixelFormat.B8_G8_R8_A8_UInt:
                     return PixelInternalFormat.Rgba;
                 default:
                     throw Illegal.Value<PixelFormat>();

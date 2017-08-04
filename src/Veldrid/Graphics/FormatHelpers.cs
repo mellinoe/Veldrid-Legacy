@@ -26,6 +26,7 @@ namespace Veldrid.Graphics
                 case PixelFormat.R16_UInt:
                     return 2;
                 case PixelFormat.R8_G8_B8_A8_UInt:
+                case PixelFormat.B8_G8_R8_A8_UInt:
                     return 4;
                 case PixelFormat.R8_UInt:
                     return 1;
