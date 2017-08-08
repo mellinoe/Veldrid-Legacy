@@ -75,7 +75,7 @@ namespace Veldrid.Graphics.OpenGLES
             };
         }
 
-        protected override GraphicsBackend PlatformGetGraphicsBackend() => GraphicsBackend.OpenGL;
+        protected override GraphicsBackend PlatformGetGraphicsBackend() => GraphicsBackend.OpenGLES;
 
         public override ResourceFactory ResourceFactory { get; }
 

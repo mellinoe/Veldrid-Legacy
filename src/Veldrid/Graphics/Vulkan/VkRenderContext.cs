@@ -488,6 +488,7 @@ namespace Veldrid.Graphics.Vulkan
                     = Marshal.GetDelegateForFunctionPointer<vkDestroyDebugReportCallbackEXT_d>(destroyFuncPtr);
                 destroyDel.Invoke(_instance, _debugCallbackHandle, null);
             }
+            vkDeviceWaitIdle(_device);
             vkDestroyInstance(_instance, null);
         }
 
