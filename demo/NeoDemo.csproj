@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <RootNamespace>Veldrid.NeoDemo</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid\Veldrid.csproj" />
+    <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.ImGui\Veldrid.ImGui.csproj" />
+    <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.Sdl2\Veldrid.Sdl2.csproj" />
+    <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.StartupUtilities\Veldrid.StartupUtilities.csproj" />
+  </ItemGroup>
+
+</Project>

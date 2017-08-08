@@ -22,10 +22,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid.SystemAbstractions"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BasicDemo", "BasicDemo\BasicDemo.csproj", "{9439A596-250B-4946-87A1-714293DD4A29}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid.StartupUtilities", "Veldrid.StartupUtilities\Veldrid.StartupUtilities.csproj", "{EB4A0033-DD22-48E5-8666-38967D871874}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NeoDemo", "..\demo\NeoDemo.csproj", "{E1C91AA4-1571-4204-A150-49284B4DE6CD}"
+EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
@@ -155,9 +156,36 @@ Global
 		{9439A596-250B-4946-87A1-714293DD4A29}.Release|x64.Build.0 = Release|Any CPU
 		{9439A596-250B-4946-87A1-714293DD4A29}.Release|x86.ActiveCfg = Release|Any CPU
 		{9439A596-250B-4946-87A1-714293DD4A29}.Release|x86.Build.0 = Release|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Debug|x64.Build.0 = Debug|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Debug|x86.Build.0 = Debug|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Release|x64.ActiveCfg = Release|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Release|x64.Build.0 = Release|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Release|x86.ActiveCfg = Release|Any CPU
+		{EB4A0033-DD22-48E5-8666-38967D871874}.Release|x86.Build.0 = Release|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Debug|x64.Build.0 = Debug|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Debug|x86.Build.0 = Debug|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Release|x64.ActiveCfg = Release|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Release|x64.Build.0 = Release|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Release|x86.ActiveCfg = Release|Any CPU
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true

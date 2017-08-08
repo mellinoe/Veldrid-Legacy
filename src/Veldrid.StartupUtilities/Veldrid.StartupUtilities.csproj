@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <PackageVersion>$(AssemblyVersion)</PackageVersion>
+    <TargetFramework>netstandard1.6</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Veldrid.Primitives\Veldrid.Primitives.csproj" />
+    <ProjectReference Include="..\Veldrid\Veldrid.csproj" />
+    <ProjectReference Include="..\Veldrid.Sdl2\Veldrid.Sdl2.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <PackageId>Veldrid.StartupUtilities</PackageId>
+    <PackageVersion>$(AssemblyVersion)</PackageVersion>
+    <Authors>Eric Mellino</Authors>
+    <Description>Utility functions for initializing and managing Veldrid RenderContexts.</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright 2017 (c) Eric Mellino. All rights reserved.</Copyright>
+    <PackageTags>SDL2 Game Graphics Window Input Video</PackageTags>
+    <ProjectUrl>https://github.com/mellinoe/veldrid</ProjectUrl>
+    <RepositoryUrl>https://github.com/mellinoe/veldrid</RepositoryUrl>
+  </PropertyGroup>
+</Project>
