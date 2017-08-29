@@ -185,7 +185,7 @@ namespace Veldrid
         /// <summary>
         /// Renders the ImGui draw list data.
         /// </summary>
-        public unsafe void Render(RenderContext rc, string pipelineStage)
+        public unsafe void Render(RenderContext rc)
         {
             ImGui.Render();
             RenderImDrawData(ImGui.GetDrawData(), rc);

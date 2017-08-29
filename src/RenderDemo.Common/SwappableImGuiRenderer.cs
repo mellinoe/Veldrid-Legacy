@@ -20,5 +20,10 @@ namespace Veldrid.RenderDemo
         {
             SetRenderContext(rc);
         }
+
+        public void Render(RenderContext rc, string pipelineStage)
+        {
+            Render(rc);
+        }
     }
 }
