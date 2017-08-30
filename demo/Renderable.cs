@@ -5,7 +5,7 @@ namespace Veldrid.NeoDemo
 {
     public abstract class Renderable : IDisposable
     {
-        public abstract void Render(RenderContext rc);
+        public abstract void Render(RenderContext rc, SceneContext sc);
         public abstract void CreateDeviceObjects(RenderContext rc);
         public abstract void DestroyDeviceObjects();
 

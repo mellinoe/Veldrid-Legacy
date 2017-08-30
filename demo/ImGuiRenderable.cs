@@ -32,7 +32,7 @@ namespace Veldrid.NeoDemo
             _imguiRenderer.Dispose();
         }
 
-        public override void Render(RenderContext rc)
+        public override void Render(RenderContext rc, SceneContext sc)
         {
             _imguiRenderer.Render(rc);
         }

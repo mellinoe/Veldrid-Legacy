@@ -1,6 +1,7 @@
 ﻿using ImGuiNET;
 using System.Collections.Generic;
 using Veldrid.Graphics;
+using Veldrid.NeoDemo.Objects;
 using Veldrid.Platform;
 using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
@@ -13,6 +14,10 @@ namespace Veldrid.NeoDemo
         private RenderContext _rc;
         private readonly List<Renderable> _renderables = new List<Renderable>();
         private readonly List<IUpdateable> _updateables = new List<IUpdateable>();
+        private readonly ImGuiRenderable _igRenderable;
+        private readonly SceneContext _sc = new SceneContext();
+        private readonly Camera _camera;
+        private bool _windowResized;
 
         public NeoDemo()
         {
@@ -26,11 +31,21 @@ namespace Veldrid.NeoDemo
             RenderContextCreateInfo rcCI = new RenderContextCreateInfo();
 
             VeldridStartup.CreateWindowAndRenderContext(ref windowCI, ref rcCI, out _window, out _rc);
+            _window.Resized += () => _windowResized = true;
 
-            ImGuiRenderable igRenderable = new ImGuiRenderable(_window);
-            igRenderable.CreateDeviceObjects(_rc);
-            _renderables.Add(igRenderable);
-            _updateables.Add(igRenderable);
+            _sc.CreateDeviceObjects(_rc);
+
+            _camera = new Camera(_sc, _window.Width, _window.Height);
+            _updateables.Add(_camera);
+
+            _igRenderable = new ImGuiRenderable(_window);
+            _igRenderable.CreateDeviceObjects(_rc);
+            _renderables.Add(_igRenderable);
+            _updateables.Add(_igRenderable);
+
+            InfiniteGrid grid = new InfiniteGrid();
+            grid.CreateDeviceObjects(_rc);
+            _renderables.Add(grid);
         }
 
         public void Run()
@@ -84,12 +99,19 @@ namespace Veldrid.NeoDemo
 
         private void Draw()
         {
+            if (_windowResized)
+            {
+                _windowResized = false;
+                _rc.ResizeMainWindow(_window.Width, _window.Height);
+                _camera.WindowResized(_window.Width, _window.Height);
+            }
+
             _rc.Viewport = new Viewport(0, 0, _window.Width, _window.Height);
             _rc.ClearBuffer(RgbaFloat.Red);
 
             foreach (Renderable renderable in _renderables)
             {
-                renderable.Render(_rc);
+                renderable.Render(_rc, _sc);
             }
 
             _rc.SwapBuffers();
@@ -97,6 +119,7 @@ namespace Veldrid.NeoDemo
 
         private void ChangeRenderContext(GraphicsBackend backend)
         {
+            _sc.DestroyDeviceObjects();
             foreach (Renderable renderable in _renderables)
             {
                 renderable.DestroyDeviceObjects();
@@ -110,6 +133,7 @@ namespace Veldrid.NeoDemo
             };
             _rc = VeldridStartup.CreateRenderContext(ref rcCI, _window);
 
+            _sc.CreateDeviceObjects(_rc);
             foreach (Renderable renderable in _renderables)
             {
                 renderable.CreateDeviceObjects(_rc);
