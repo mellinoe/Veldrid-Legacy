@@ -9,6 +9,7 @@ namespace Veldrid.NeoDemo
     {
         public ConstantBuffer ProjectionMatrixBuffer { get; private set; }
         public ConstantBuffer ViewMatrixBuffer { get; private set; }
+        public Camera Camera { get; set; }
 
         public SceneContext()
         {

@@ -37,6 +37,7 @@ namespace Veldrid.NeoDemo
 
             _camera = new Camera(_sc, _window.Width, _window.Height);
             _updateables.Add(_camera);
+            _sc.Camera = _camera;
 
             _igRenderable = new ImGuiRenderable(_window);
             _igRenderable.CreateDeviceObjects(_rc);
@@ -46,6 +47,10 @@ namespace Veldrid.NeoDemo
             InfiniteGrid grid = new InfiniteGrid();
             grid.CreateDeviceObjects(_rc);
             _renderables.Add(grid);
+
+            Skybox skybox = Skybox.LoadDefaultSkybox();
+            skybox.CreateDeviceObjects(_rc);
+            _renderables.Add(skybox);
         }
 
         public void Run()
@@ -107,7 +112,7 @@ namespace Veldrid.NeoDemo
             }
 
             _rc.Viewport = new Viewport(0, 0, _window.Width, _window.Height);
-            _rc.ClearBuffer(RgbaFloat.Red);
+            _rc.ClearBuffer(RgbaFloat.CornflowerBlue);
 
             foreach (Renderable renderable in _renderables)
             {
