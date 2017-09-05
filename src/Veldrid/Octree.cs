@@ -19,9 +19,9 @@ namespace Veldrid
 
         private List<OctreeItem<T>> _pendingMoveStage = new List<OctreeItem<T>>();
 
-        public Octree(BoundingBox boundingBox, int maxChildre)
+        public Octree(BoundingBox boundingBox, int maxChildren)
         {
-            _currentRoot = new OctreeNode<T>(boundingBox, maxChildre);
+            _currentRoot = new OctreeNode<T>(boundingBox, maxChildren);
         }
 
         /// <summary>

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Numerics;
 using Veldrid.Graphics;
 using Veldrid.Platform;
 
@@ -32,10 +34,18 @@ namespace Veldrid.NeoDemo
             _imguiRenderer.Dispose();
         }
 
-        public override void Render(RenderContext rc, SceneContext sc)
+        public override RenderOrderKey GetRenderOrderKey(Vector3 cameraPosition)
         {
+            return new RenderOrderKey();
+        }
+
+        public override void Render(RenderContext rc, SceneContext sc, RenderPasses renderPass)
+        {
+            Debug.Assert(renderPass == RenderPasses.Overlay);
             _imguiRenderer.Render(rc);
         }
+
+        public override RenderPasses RenderPasses => RenderPasses.Overlay;
 
         public void Update(float deltaSeconds)
         {

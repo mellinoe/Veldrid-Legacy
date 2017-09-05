@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 using Veldrid.Graphics;
 
 namespace Veldrid.NeoDemo.Objects
@@ -11,6 +12,9 @@ namespace Veldrid.NeoDemo.Objects
         private IndexBuffer _ib;
         private DeviceTexture _gridTexture;
         private ShaderTextureBinding _textureBinding;
+        private RasterizerState _rasterizerState;
+        private readonly BoundingBox _boundingBox
+            = new BoundingBox(new Vector3(-1000, -1, -1000), new Vector3(1000, 1, 1000));
 
         public override void CreateDeviceObjects(RenderContext rc)
         {
@@ -40,9 +44,11 @@ namespace Veldrid.NeoDemo.Objects
                 new ShaderResourceDescription("GridSampler", ShaderResourceType.Sampler));
 
             const int gridSize = 64;
-            RgbaByte[] pixels = CreateGridTexturePixels(gridSize, 2, RgbaByte.White, new RgbaByte());
+            RgbaByte[] pixels = CreateGridTexturePixels(gridSize, 1, RgbaByte.White, new RgbaByte());
             _gridTexture = factory.CreateTexture(pixels, gridSize, gridSize, PixelFormat.R8_G8_B8_A8_UInt);
             _textureBinding = factory.CreateShaderTextureBinding(_gridTexture);
+
+            _rasterizerState = factory.CreateRasterizerState(FaceCullingMode.None, TriangleFillMode.Solid, true, true);
         }
 
         public override void DestroyDeviceObjects()
@@ -52,28 +58,41 @@ namespace Veldrid.NeoDemo.Objects
             _ib.Dispose();
             _gridTexture.Dispose();
             _textureBinding.Dispose();
+            _rasterizerState.Dispose();
         }
 
         public override bool Cull(ref BoundingFrustum visibleFrustum)
         {
-            return false;
+            return visibleFrustum.Contains(_boundingBox) == ContainmentType.Disjoint;
         }
 
-        public override void Render(RenderContext rc, SceneContext sc)
+        public override void Render(RenderContext rc, SceneContext sc, RenderPasses renderPass)
         {
             rc.ShaderSet = _shaderSet;
             rc.ShaderResourceBindingSlots = _resourceBindings;
             rc.SetConstantBuffer(0, sc.ProjectionMatrixBuffer);
             rc.SetConstantBuffer(1, sc.ViewMatrixBuffer);
             rc.SetTexture(2, _textureBinding);
-            rc.SetSamplerState(3, rc.LinearSampler);
+            rc.SetSamplerState(3, rc.PointSampler);
             rc.VertexBuffer = _vb;
             rc.IndexBuffer = _ib;
             BlendState previousBlend = rc.BlendState;
             rc.BlendState = rc.AlphaBlend;
+            RasterizerState previousRS = rc.RasterizerState;
+            rc.RasterizerState = _rasterizerState;
             rc.DrawIndexedPrimitives(6);
             rc.BlendState = previousBlend;
+            rc.RasterizerState = previousRS;
         }
+
+        public override RenderOrderKey GetRenderOrderKey(Vector3 cameraPosition)
+        {
+            return RenderOrderKey.Create(_shaderSet.GetHashCode(), cameraPosition.Length());
+        }
+
+        public override RenderPasses RenderPasses => RenderPasses.AlphaBlend;
+
+        public override BoundingBox BoundingBox => _boundingBox;
 
         private RgbaByte[] CreateGridTexturePixels(int dimensions, int borderPixels, RgbaByte borderColor, RgbaByte backgroundColor)
         {

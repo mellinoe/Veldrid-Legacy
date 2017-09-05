@@ -5,7 +5,7 @@ using Veldrid.Graphics;
 
 namespace Veldrid.NeoDemo.Objects
 {
-    public class Skybox : CullRenderable
+    public class Skybox : Renderable
     {
         private readonly ImageSharpTexture _front;
         private readonly ImageSharpTexture _back;
@@ -108,11 +108,12 @@ namespace Veldrid.NeoDemo.Objects
             _rasterizerState.Dispose();
         }
 
-        public override void Render(RenderContext rc, SceneContext sc)
+        public override void Render(RenderContext rc, SceneContext sc, RenderPasses renderPass)
         {
             rc.VertexBuffer = _vb;
             rc.IndexBuffer = _ib;
             rc.ShaderSet = _shaderSet;
+            rc.ShaderResourceBindingSlots = _resourceSlots;
             rc.SetConstantBuffer(0, sc.ProjectionMatrixBuffer);
             Matrix4x4 viewMat = Utilities.ConvertToMatrix3x3(sc.Camera.ViewMatrix);
             _viewMatrixBuffer.SetData(ref viewMat);
@@ -124,9 +125,9 @@ namespace Veldrid.NeoDemo.Objects
             rc.SetRasterizerState(previousRasterState);
         }
 
-        public override bool Cull(ref BoundingFrustum visibleFrustum)
+        public override RenderOrderKey GetRenderOrderKey(Vector3 cameraPosition)
         {
-            return false;
+            return new RenderOrderKey(ulong.MaxValue);
         }
 
         private static readonly VertexPosition[] s_vertices = new VertexPosition[]

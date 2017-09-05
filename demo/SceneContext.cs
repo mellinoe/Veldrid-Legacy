@@ -26,5 +26,14 @@ namespace Veldrid.NeoDemo
             ProjectionMatrixBuffer.Dispose();
             ViewMatrixBuffer.Dispose();
         }
+
+        public void SetCurrentScene(Scene scene)
+        {
+            Camera = scene.Camera;
+            scene.Camera.ViewChanged += view => ViewMatrixBuffer.SetData(ref view);
+            ViewMatrixBuffer.SetData(scene.Camera.ViewMatrix);
+            scene.Camera.ProjectionChanged += proj => ProjectionMatrixBuffer.SetData(ref proj);
+            ProjectionMatrixBuffer.SetData(scene.Camera.ProjectionMatrix);
+        }
     }
 }

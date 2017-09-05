@@ -12,12 +12,11 @@ namespace Veldrid.NeoDemo
     {
         private Sdl2Window _window;
         private RenderContext _rc;
-        private readonly List<Renderable> _renderables = new List<Renderable>();
-        private readonly List<IUpdateable> _updateables = new List<IUpdateable>();
+        private Scene _scene;
         private readonly ImGuiRenderable _igRenderable;
         private readonly SceneContext _sc = new SceneContext();
-        private readonly Camera _camera;
         private bool _windowResized;
+        private RenderOrderKeyComparer _renderOrderKeyComparer = new RenderOrderKeyComparer();  
 
         public NeoDemo()
         {
@@ -35,22 +34,22 @@ namespace Veldrid.NeoDemo
 
             _sc.CreateDeviceObjects(_rc);
 
-            _camera = new Camera(_sc, _window.Width, _window.Height);
-            _updateables.Add(_camera);
-            _sc.Camera = _camera;
+            _scene = new Scene(_window.Width, _window.Height);
+
+            _sc.SetCurrentScene(_scene);
 
             _igRenderable = new ImGuiRenderable(_window);
             _igRenderable.CreateDeviceObjects(_rc);
-            _renderables.Add(_igRenderable);
-            _updateables.Add(_igRenderable);
+            _scene.AddRenderable(_igRenderable);
+            _scene.AddUpdateable(_igRenderable);
 
             InfiniteGrid grid = new InfiniteGrid();
             grid.CreateDeviceObjects(_rc);
-            _renderables.Add(grid);
+            _scene.AddRenderable(grid);
 
             Skybox skybox = Skybox.LoadDefaultSkybox();
             skybox.CreateDeviceObjects(_rc);
-            _renderables.Add(skybox);
+            _scene.AddRenderable(skybox);
         }
 
         public void Run()
@@ -65,10 +64,7 @@ namespace Veldrid.NeoDemo
 
         private void Update(float deltaSeconds)
         {
-            foreach (IUpdateable updateable in _updateables)
-            {
-                updateable.Update(deltaSeconds);
-            }
+            _scene.Update(deltaSeconds);
 
             if (ImGui.BeginMainMenuBar())
             {
@@ -108,16 +104,15 @@ namespace Veldrid.NeoDemo
             {
                 _windowResized = false;
                 _rc.ResizeMainWindow(_window.Width, _window.Height);
-                _camera.WindowResized(_window.Width, _window.Height);
+                _scene.Camera.WindowResized(_window.Width, _window.Height);
             }
 
             _rc.Viewport = new Viewport(0, 0, _window.Width, _window.Height);
             _rc.ClearBuffer(RgbaFloat.CornflowerBlue);
 
-            foreach (Renderable renderable in _renderables)
-            {
-                renderable.Render(_rc, _sc);
-            }
+            _scene.Render(_rc, _sc, RenderPasses.Standard, null);
+            _scene.Render(_rc, _sc, RenderPasses.AlphaBlend, null);
+            _scene.Render(_rc, _sc, RenderPasses.Overlay, null);
 
             _rc.SwapBuffers();
         }
@@ -125,10 +120,7 @@ namespace Veldrid.NeoDemo
         private void ChangeRenderContext(GraphicsBackend backend)
         {
             _sc.DestroyDeviceObjects();
-            foreach (Renderable renderable in _renderables)
-            {
-                renderable.DestroyDeviceObjects();
-            }
+            _scene.DestroyAllDeviceObjects();
 
             _rc.Dispose();
 
@@ -139,10 +131,7 @@ namespace Veldrid.NeoDemo
             _rc = VeldridStartup.CreateRenderContext(ref rcCI, _window);
 
             _sc.CreateDeviceObjects(_rc);
-            foreach (Renderable renderable in _renderables)
-            {
-                renderable.CreateDeviceObjects(_rc);
-            }
+            _scene.CreateAllDeviceObjects(_rc);
         }
     }
 }
