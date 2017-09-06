@@ -76,7 +76,7 @@ namespace Veldrid.Graphics.Vulkan
                 semaphore,
                 VkFence.Null,
                 ref _scImageIndex);
-            if (result == VkResult.ErrorOutOfDate || result == VkResult.Suboptimal)
+            if (result == VkResult.ErrorOutOfDateKHR || result == VkResult.SuboptimalKHR)
             {
                 // RecreateSwapChain();
             }
@@ -167,13 +167,13 @@ namespace Veldrid.Graphics.Vulkan
             VkSurfaceFormatKHR surfaceFormat = new VkSurfaceFormatKHR();
             if (formats.Length == 1 && formats[0].format == VkFormat.Undefined)
             {
-                surfaceFormat = new VkSurfaceFormatKHR { colorSpace = VkColorSpaceKHR.SrgbNonlinear, format = VkFormat.B8g8r8a8Unorm };
+                surfaceFormat = new VkSurfaceFormatKHR { colorSpace = VkColorSpaceKHR.SrgbNonlinearKHR, format = VkFormat.B8g8r8a8Unorm };
             }
             else
             {
                 foreach (VkSurfaceFormatKHR format in formats)
                 {
-                    if (format.colorSpace == VkColorSpaceKHR.SrgbNonlinear && format.format == VkFormat.B8g8r8a8Unorm)
+                    if (format.colorSpace == VkColorSpaceKHR.SrgbNonlinearKHR && format.format == VkFormat.B8g8r8a8Unorm)
                     {
                         surfaceFormat = format;
                         break;
@@ -190,14 +190,14 @@ namespace Veldrid.Graphics.Vulkan
             VkPresentModeKHR[] presentModes = new VkPresentModeKHR[presentModeCount];
             vkGetPhysicalDeviceSurfacePresentModesKHR(_physicalDevice, _surface, ref presentModeCount, out presentModes[0]);
 
-            VkPresentModeKHR presentMode = VkPresentModeKHR.Fifo;
-            if (presentModes.Contains(VkPresentModeKHR.Mailbox))
+            VkPresentModeKHR presentMode = VkPresentModeKHR.FifoKHR;
+            if (presentModes.Contains(VkPresentModeKHR.MailboxKHR))
             {
-                presentMode = VkPresentModeKHR.Mailbox;
+                presentMode = VkPresentModeKHR.MailboxKHR;
             }
-            else if (presentModes.Contains(VkPresentModeKHR.Immediate))
+            else if (presentModes.Contains(VkPresentModeKHR.ImmediateKHR))
             {
-                presentMode = VkPresentModeKHR.Immediate;
+                presentMode = VkPresentModeKHR.ImmediateKHR;
             }
 
             vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_physicalDevice, _surface, out VkSurfaceCapabilitiesKHR surfaceCapabilities);
@@ -228,7 +228,7 @@ namespace Veldrid.Graphics.Vulkan
             }
 
             swapchainCI.preTransform = surfaceCapabilities.currentTransform;
-            swapchainCI.compositeAlpha = VkCompositeAlphaFlagsKHR.Opaque;
+            swapchainCI.compositeAlpha = VkCompositeAlphaFlagsKHR.OpaqueKHR;
             swapchainCI.clipped = true;
 
             VkSwapchainKHR oldSwapchain = _swapchain;

@@ -87,7 +87,7 @@ namespace Veldrid.Graphics.Vulkan
             colorAttachmentDesc.stencilLoadOp = VkAttachmentLoadOp.DontCare;
             colorAttachmentDesc.stencilStoreOp = VkAttachmentStoreOp.DontCare;
             colorAttachmentDesc.initialLayout = VkImageLayout.Undefined;
-            colorAttachmentDesc.finalLayout = VkImageLayout.PresentSrc;
+            colorAttachmentDesc.finalLayout = VkImageLayout.PresentSrcKHR;
 
             VkAttachmentReference colorAttachmentRef = new VkAttachmentReference();
             colorAttachmentRef.attachment = 0;

@@ -184,11 +184,11 @@ namespace Veldrid.Graphics.Vulkan
 
             if (debug && debugReportExtensionAvailable)
             {
-                EnableDebugCallback(VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error | VkDebugReportFlagsEXT.PerformanceWarning);
+                EnableDebugCallback(VkDebugReportFlagsEXT.WarningEXT | VkDebugReportFlagsEXT.ErrorEXT | VkDebugReportFlagsEXT.PerformanceWarningEXT);
             }
         }
 
-        public void EnableDebugCallback(VkDebugReportFlagsEXT flags = VkDebugReportFlagsEXT.Warning | VkDebugReportFlagsEXT.Error)
+        public void EnableDebugCallback(VkDebugReportFlagsEXT flags = VkDebugReportFlagsEXT.WarningEXT | VkDebugReportFlagsEXT.ErrorEXT)
         {
             _debugCallbackFunc = DebugCallback;
             IntPtr debugFunctionPtr = Marshal.GetFunctionPointerForDelegate(_debugCallbackFunc);
