@@ -44,7 +44,18 @@ namespace Veldrid.Graphics.Vulkan
             _createOptions = createOptions;
             if (createOptions == DeviceTextureCreateOptions.DepthStencil)
             {
-                Format = VkFormat.D16Unorm;
+                if (veldridFormat != PixelFormat.R16_UInt && veldridFormat != PixelFormat.R32_Float)
+                {
+                    throw new NotImplementedException("The only supported depth texture formats are R16_UInt and R32_Float.");
+                }
+                if (veldridFormat == PixelFormat.R16_UInt)
+                {
+                    Format = VkFormat.D16Unorm;
+                }
+                else
+                {
+                    Format = VkFormat.D32Sfloat;
+                }
             }
             else
             {

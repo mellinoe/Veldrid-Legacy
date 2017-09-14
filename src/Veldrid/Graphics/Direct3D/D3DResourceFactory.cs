@@ -163,12 +163,20 @@ namespace Veldrid.Graphics.Direct3D
             BindFlags bindFlags = BindFlags.ShaderResource;
             if (createOptions == DeviceTextureCreateOptions.DepthStencil)
             {
-                if (format != PixelFormat.R16_UInt)
+                if (format != PixelFormat.R16_UInt && format != PixelFormat.R32_Float)
                 {
-                    throw new NotImplementedException("R16_UInt is the only supported depth texture format.");
+                    throw new NotImplementedException("The only supported depth texture formats are R16_UInt and R32_Float.");
                 }
 
-                dxgiFormat = SharpDX.DXGI.Format.R16_Typeless;
+                if (format == PixelFormat.R16_UInt)
+                {
+                    dxgiFormat = SharpDX.DXGI.Format.R16_Typeless;
+                }
+                else
+                {
+                    dxgiFormat = SharpDX.DXGI.Format.R32_Typeless;
+                }
+
                 bindFlags |= BindFlags.DepthStencil;
             }
             else if (createOptions == DeviceTextureCreateOptions.RenderTarget)

@@ -110,9 +110,9 @@ namespace Veldrid.Graphics.OpenGLES
 
             if (createOptions == DeviceTextureCreateOptions.DepthStencil)
             {
-                if (format != PixelFormat.R16_UInt)
+                if (format != PixelFormat.R16_UInt && format != PixelFormat.R32_Float)
                 {
-                    throw new NotImplementedException("R16_UInt is the only supported depth texture format.");
+                    throw new NotImplementedException("The only supported depth texture formats are R16_UInt and R32_Float.");
                 }
 
                 pixelFormat = OpenTK.Graphics.ES30.PixelFormat.DepthComponent;

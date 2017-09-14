@@ -20,6 +20,8 @@ namespace Veldrid.Graphics.OpenGLES
                     return OpenTK.Graphics.ES30.PixelFormat.Rgba;
                 case PixelFormat.B8_G8_R8_A8_UInt:
                     return OpenTK.Graphics.ES30.PixelFormat.Rgba;
+                case PixelFormat.R32_Float:
+                    return OpenTK.Graphics.ES30.PixelFormat.DepthComponent;
                 default:
                     throw Illegal.Value<PixelFormat>();
             }
@@ -229,6 +231,8 @@ namespace Veldrid.Graphics.OpenGLES
                 case PixelFormat.R8_G8_B8_A8_UInt:
                 case PixelFormat.B8_G8_R8_A8_UInt:
                     return PixelType.UnsignedByte;
+                case PixelFormat.R32_Float:
+                    return PixelType.Float;
                 default:
                     throw Illegal.Value<PixelFormat>();
             }

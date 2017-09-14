@@ -131,13 +131,20 @@ namespace Veldrid.Graphics.OpenGL
 
             if (createOptions == DeviceTextureCreateOptions.DepthStencil)
             {
-                if (format != PixelFormat.R16_UInt)
+                if (format != PixelFormat.R16_UInt && format != PixelFormat.R32_Float)
                 {
-                    throw new NotImplementedException("R16_UInt is the only supported depth texture format.");
+                    throw new NotImplementedException("The only supported depth texture formats are R16_UInt and R32_Float.");
                 }
 
-                pixelFormat = OpenTK.Graphics.OpenGL.PixelFormat.DepthComponent;
                 pixelInternalFormat = PixelInternalFormat.DepthComponent16;
+                if (format == PixelFormat.R16_UInt)
+                {
+                    pixelFormat = OpenTK.Graphics.OpenGL.PixelFormat.DepthComponent;
+                }
+                else
+                {
+                    pixelFormat = OpenTK.Graphics.OpenGL.PixelFormat.DepthComponent;
+                }
             }
 
             return new OpenGLTexture2D(
