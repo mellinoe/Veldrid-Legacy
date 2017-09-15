@@ -1,4 +1,4 @@
-﻿using ImageSharp;
+﻿using SixLabors.ImageSharp;
 using System;
 using System.Numerics;
 using Veldrid.Graphics;
@@ -62,12 +62,12 @@ namespace Veldrid.NeoDemo.Objects
 
             _viewMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
 
-            fixed (Rgba32* frontPin = &_front.Pixels.DangerousGetPinnableReference())
-            fixed (Rgba32* backPin = &_back.Pixels.DangerousGetPinnableReference())
-            fixed (Rgba32* leftPin = &_left.Pixels.DangerousGetPinnableReference())
-            fixed (Rgba32* rightPin = &_right.Pixels.DangerousGetPinnableReference())
-            fixed (Rgba32* topPin = &_top.Pixels.DangerousGetPinnableReference())
-            fixed (Rgba32* bottomPin = &_bottom.Pixels.DangerousGetPinnableReference())
+            fixed (Rgba32* frontPin = &_front.FirstPixel)
+            fixed (Rgba32* backPin = &_back.FirstPixel)
+            fixed (Rgba32* leftPin = &_left.FirstPixel)
+            fixed (Rgba32* rightPin = &_right.FirstPixel)
+            fixed (Rgba32* topPin = &_top.FirstPixel)
+            fixed (Rgba32* bottomPin = &_bottom.FirstPixel)
             {
                 _cubemapTexture = factory.CreateCubemapTexture(
                     (IntPtr)frontPin,

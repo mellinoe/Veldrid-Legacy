@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SixLabors.ImageSharp;
+using System;
 using System.Numerics;
 using Veldrid.Assets;
 using Veldrid.Graphics;
@@ -86,10 +87,10 @@ namespace Veldrid.RenderDemo.ForwardRendering
             var cpuDepthTexture = new RawTextureDataArray<ushort>(width, height, sizeof(ushort), PixelFormat.R16_UInt);
             _depthTexture.GetTextureData(0, cpuDepthTexture.PixelData);
 
-            ImageSharp.Image<ImageSharp.Rgba32> image = new ImageSharp.Image<ImageSharp.Rgba32>(width, height);
+            Image<Rgba32> image = new Image<Rgba32>(width, height);
             unsafe
             {
-                fixed (ImageSharp.Rgba32* pixelsPtr = &image.Pixels.DangerousGetPinnableReference())
+                fixed (Rgba32* pixelsPtr = &image.GetReferenceToFirstPixel())
                 {
                     PixelFormatConversion.ConvertPixelsUInt16DepthToRgbaFloat(width * height, cpuDepthTexture.PixelData, pixelsPtr);
                 }
