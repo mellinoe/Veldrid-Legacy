@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.14
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid", "Veldrid\Veldrid.csproj", "{9A3407F9-B3DB-4CC7-8829-73A3E77DD296}"
 EndProject
@@ -25,6 +25,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid.StartupUtilities", "Veldrid.StartupUtilities\Veldrid.StartupUtilities.csproj", "{EB4A0033-DD22-48E5-8666-38967D871874}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NeoDemo", "..\demo\Main\NeoDemo.csproj", "{E1C91AA4-1571-4204-A150-49284B4DE6CD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shaders", "..\demo\Shaders\Shaders.csproj", "{DB4A0E70-E628-4AC6-9A63-241BC31BD697}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "demo", "demo", "{AEA230E8-34C8-43D6-98CB-124708D5990C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -180,9 +184,28 @@ Global
 		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Release|x64.Build.0 = Release|Any CPU
 		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Release|x86.ActiveCfg = Release|Any CPU
 		{E1C91AA4-1571-4204-A150-49284B4DE6CD}.Release|x86.Build.0 = Release|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Debug|x64.Build.0 = Debug|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Debug|x86.Build.0 = Debug|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Release|x64.ActiveCfg = Release|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Release|x64.Build.0 = Release|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Release|x86.ActiveCfg = Release|Any CPU
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E1C91AA4-1571-4204-A150-49284B4DE6CD} = {AEA230E8-34C8-43D6-98CB-124708D5990C}
+		{DB4A0E70-E628-4AC6-9A63-241BC31BD697} = {AEA230E8-34C8-43D6-98CB-124708D5990C}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0A72095D-CA61-4768-966A-0A7D67107E6C}
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
