@@ -24,7 +24,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BasicDemo", "BasicDemo\Basi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid.StartupUtilities", "Veldrid.StartupUtilities\Veldrid.StartupUtilities.csproj", "{EB4A0033-DD22-48E5-8666-38967D871874}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NeoDemo", "..\demo\NeoDemo.csproj", "{E1C91AA4-1571-4204-A150-49284B4DE6CD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NeoDemo", "..\demo\Main\NeoDemo.csproj", "{E1C91AA4-1571-4204-A150-49284B4DE6CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
