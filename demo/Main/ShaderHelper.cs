@@ -14,41 +14,44 @@ namespace Veldrid.NeoDemo
         public static CompiledShaderCode LoadBytecode(ResourceFactory factory, string name, ShaderStages stage)
         {
             GraphicsBackend backend = factory.BackendType;
-            string folder = GetFolderName(backend);
-            string extension = GetExtension(backend);
-            string path = Path.Combine(AppContext.BaseDirectory, "Assets", folder, name + extension);
-            if (backend == GraphicsBackend.Vulkan)
+
+            if (backend == GraphicsBackend.Vulkan || backend == GraphicsBackend.Direct3D11)
             {
-                return factory.LoadProcessedShader(File.ReadAllBytes(path));
+                string bytecodeExtension = GetBytecodeExtension(backend);
+                string bytecodePath = AssetHelper.GetPath(Path.Combine("Shaders.Generated", name + bytecodeExtension));
+                if (File.Exists(bytecodePath))
+                {
+                    return factory.LoadProcessedShader(File.ReadAllBytes(bytecodePath));
+                }
             }
-            else
-            {
-                return factory.ProcessShaderCode(stage, File.ReadAllText(path));
-            }
+
+            string extension = GetSourceExtension(backend);
+            string path = AssetHelper.GetPath(Path.Combine("Shaders.Generated", name + extension));
+            return factory.ProcessShaderCode(stage, File.ReadAllText(path));
         }
 
-        private static string GetFolderName(GraphicsBackend backend)
+        private static string GetBytecodeExtension(GraphicsBackend backend)
         {
             switch (backend)
             {
-                case GraphicsBackend.Direct3D11: return "HLSL";
-                case GraphicsBackend.Vulkan: return "SPIR-V";
+                case GraphicsBackend.Direct3D11: return ".hlsl.bytes";
+                case GraphicsBackend.Vulkan: return ".450.glsl.spv";
                 case GraphicsBackend.OpenGL:
                 case GraphicsBackend.OpenGLES:
-                    return "GLSL";
+                    throw new InvalidOperationException("OpenGL and OpenGLES do not support shader bytecode.");
                 default: throw new InvalidOperationException("Invalid Graphics backend: " + backend);
             }
         }
 
-        private static string GetExtension(GraphicsBackend backend)
+        private static string GetSourceExtension(GraphicsBackend backend)
         {
             switch (backend)
             {
                 case GraphicsBackend.Direct3D11: return ".hlsl";
-                case GraphicsBackend.Vulkan: return ".spv";
+                case GraphicsBackend.Vulkan: return ".450.glsl";
                 case GraphicsBackend.OpenGL:
                 case GraphicsBackend.OpenGLES:
-                    return ".glsl";
+                    return ".330.glsl";
                 default: throw new InvalidOperationException("Invalid Graphics backend: " + backend);
             }
         }

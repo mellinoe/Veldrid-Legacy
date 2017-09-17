@@ -2,16 +2,16 @@
 using System.Numerics;
 using static ShaderGen.ShaderBuiltins;
 
-[assembly:ShaderSet("Grid", "Shaders.Grid.VS", "Shaders.Grid.FS")]
+[assembly: ShaderSet("Skybox", "Shaders.Skybox.VS", "Shaders.Skybox.FS")]
 
 namespace Shaders
 {
-    public class Grid
+    public class Skybox
     {
         public Matrix4x4 Projection;
         public Matrix4x4 View;
-        public Texture2DResource GridTexture;
-        public SamplerResource GridSampler;
+        public TextureCubeResource CubeTexture;
+        public SamplerResource CubeSampler;
 
         public struct VSInput
         {
@@ -21,15 +21,16 @@ namespace Shaders
         public struct FSInput
         {
             [PositionSemantic] public Vector4 Position;
-            [PositionSemantic] public Vector3 WorldPosition;
+            [TextureCoordinateSemantic] public Vector3 TexCoord;
         }
 
         [VertexShader]
         public FSInput VS(VSInput input)
         {
             FSInput output;
-            output.Position = Mul(View, Mul(Projection, new Vector4(input.Position, 1)));
-            output.WorldPosition = input.Position;
+            var pos = Mul(Projection, Mul(View, new Vector4(input.Position, 1.0f)));
+            output.Position = new Vector4(pos.X, pos.Y, pos.W, pos.W);
+            output.TexCoord = input.Position;
             return output;
         }
 
@@ -37,9 +38,9 @@ namespace Shaders
         public Vector4 FS(FSInput input)
         {
             return Sample(
-                GridTexture,
-                GridSampler,
-                new Vector2(input.WorldPosition.X, input.WorldPosition.Z) / 10.0f);
+                CubeTexture,
+                CubeSampler,
+                input.TexCoord);
         }
     }
 }

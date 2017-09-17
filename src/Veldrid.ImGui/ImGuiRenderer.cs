@@ -88,7 +88,7 @@ namespace Veldrid
                 new VertexInputDescription(20, new VertexInputElement[]
                 {
                     new VertexInputElement("in_position", VertexSemanticType.Position, VertexElementFormat.Float2),
-                    new VertexInputElement("in_texcoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2),
+                    new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2),
                     new VertexInputElement("in_color", VertexSemanticType.Color, VertexElementFormat.Byte4)
                 }));
 

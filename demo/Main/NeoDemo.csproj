@@ -5,56 +5,20 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <RootNamespace>Veldrid.NeoDemo</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssetsDir>$(MSBuildThisFileDirectory)..\Assets</AssetsDir>
+    <ShaderOutputPath>$(AssetsDir)\Shaders.Generated</ShaderOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Assets\HLSL\grid-frag.hlsl" />
-    <None Remove="Assets\HLSL\grid-vertex.hlsl" />
-    <None Remove="Assets\HLSL\skybox-frag.hlsl" />
-    <None Remove="Assets\HLSL\skybox-vertex.hlsl" />
-    <None Remove="Assets\Textures\cloudtop\cloudtop_bk.png" />
-    <None Remove="Assets\Textures\cloudtop\cloudtop_dn.png" />
-    <None Remove="Assets\Textures\cloudtop\cloudtop_ft.png" />
-    <None Remove="Assets\Textures\cloudtop\cloudtop_lf.png" />
-    <None Remove="Assets\Textures\cloudtop\cloudtop_rt.png" />
-    <None Remove="Assets\Textures\cloudtop\cloudtop_up.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Assets\HLSL\grid-frag.hlsl">
+    <Content Include="$(AssetsDir)\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\HLSL\grid-vertex.hlsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\HLSL\skybox-frag.hlsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\HLSL\skybox-vertex.hlsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Textures\cloudtop\cloudtop_bk.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Textures\cloudtop\cloudtop_dn.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Textures\cloudtop\cloudtop_ft.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Textures\cloudtop\cloudtop_lf.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Textures\cloudtop\cloudtop_rt.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\Textures\cloudtop\cloudtop_up.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Assets\%(RecursiveDir)\%(FileName)%(Extension)</Link>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepositoryRootDirectory)\demo\Shaders\Shaders.csproj" />
+    <PackageReference Include="ShaderGen.Primitives" Version="1.0.0" />
+    <PackageReference Include="ShaderGen.Build" Version="1.0.0" PrivateAssets="All" />
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid\Veldrid.csproj" />
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.ImGui\Veldrid.ImGui.csproj" />
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.Sdl2\Veldrid.Sdl2.csproj" />

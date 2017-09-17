@@ -22,24 +22,24 @@ namespace Veldrid.NeoDemo.Objects
             _vb = factory.CreateVertexBuffer(
                 new VertexPosition[]
                 {
-                    new VertexPosition(new System.Numerics.Vector3(-1000, 0, -1000)),
-                    new VertexPosition(new System.Numerics.Vector3(+1000, 0, -1000)),
-                    new VertexPosition(new System.Numerics.Vector3(+1000, 0, +1000)),
-                    new VertexPosition(new System.Numerics.Vector3(-1000, 0, +1000)),
+                    new VertexPosition(new Vector3(-1000, 0, -1000)),
+                    new VertexPosition(new Vector3(+1000, 0, -1000)),
+                    new VertexPosition(new Vector3(+1000, 0, +1000)),
+                    new VertexPosition(new Vector3(-1000, 0, +1000)),
                 },
                 new VertexDescriptor(VertexPosition.SizeInBytes, VertexPosition.ElementCount),
                 false);
             _ib = factory.CreateIndexBuffer(new ushort[] { 0, 1, 2, 0, 2, 3 }, false);
 
-            Shader vs = ShaderHelper.LoadShader(factory, "grid-vertex", ShaderStages.Vertex);
-            Shader fs = ShaderHelper.LoadShader(factory, "grid-frag", ShaderStages.Fragment);
+            Shader vs = ShaderHelper.LoadShader(factory, "Grid-vertex", ShaderStages.Vertex);
+            Shader fs = ShaderHelper.LoadShader(factory, "Grid-fragment", ShaderStages.Fragment);
             VertexInputLayout inputLayout = factory.CreateInputLayout(
                 new VertexInputDescription(VertexPosition.SizeInBytes, new VertexInputElement("vsin_position", VertexSemanticType.Position, VertexElementFormat.Float3)));
             _shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
             _resourceBindings = factory.CreateShaderResourceBindingSlots(
                 _shaderSet,
-                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ProjectionBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ViewBuffer", ShaderConstantType.Matrix4x4),
                 new ShaderResourceDescription("GridTexture", ShaderResourceType.Texture),
                 new ShaderResourceDescription("GridSampler", ShaderResourceType.Sampler));
 

@@ -46,19 +46,19 @@ namespace Veldrid.NeoDemo.Objects
             _ib = factory.CreateIndexBuffer(s_indices.Length * sizeof(int), false);
             _ib.SetIndices(s_indices);
 
-            Shader vs = ShaderHelper.LoadShader(factory, "skybox-vertex", ShaderStages.Vertex);
-            Shader fs = ShaderHelper.LoadShader(factory, "skybox-frag", ShaderStages.Fragment);
+            Shader vs = ShaderHelper.LoadShader(factory, "Skybox-vertex", ShaderStages.Vertex);
+            Shader fs = ShaderHelper.LoadShader(factory, "Skybox-fragment", ShaderStages.Fragment);
             VertexInputLayout inputLayout = factory.CreateInputLayout(
                 new VertexInputDescription(
                     12,
-                    new VertexInputElement("in_position", VertexSemanticType.Position, VertexElementFormat.Float3)));
+                    new VertexInputElement("Position", VertexSemanticType.Position, VertexElementFormat.Float3)));
             _shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
             _resourceSlots = factory.CreateShaderResourceBindingSlots(
                 _shaderSet,
-                new ShaderResourceDescription("ProjectionMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("ViewMatrixBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("Skybox", ShaderResourceType.Texture),
-                new ShaderResourceDescription("Skybox", ShaderResourceType.Sampler));
+                new ShaderResourceDescription("ProjectionBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("ViewBuffer", ShaderConstantType.Matrix4x4),
+                new ShaderResourceDescription("CubeTexture", ShaderResourceType.Texture),
+                new ShaderResourceDescription("CubeSampler", ShaderResourceType.Sampler));
 
             _viewMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
 
@@ -89,12 +89,12 @@ namespace Veldrid.NeoDemo.Objects
         public static Skybox LoadDefaultSkybox()
         {
             return new Skybox(
-                new ImageSharpTexture("Assets/Textures/cloudtop/cloudtop_ft.png"),
-                new ImageSharpTexture("Assets/Textures/cloudtop/cloudtop_bk.png"),
-                new ImageSharpTexture("Assets/Textures/cloudtop/cloudtop_lf.png"),
-                new ImageSharpTexture("Assets/Textures/cloudtop/cloudtop_rt.png"),
-                new ImageSharpTexture("Assets/Textures/cloudtop/cloudtop_up.png"),
-                new ImageSharpTexture("Assets/Textures/cloudtop/cloudtop_dn.png"));
+                new ImageSharpTexture(AssetHelper.GetPath("Textures/cloudtop/cloudtop_ft.png")),
+                new ImageSharpTexture(AssetHelper.GetPath("Textures/cloudtop/cloudtop_bk.png")),
+                new ImageSharpTexture(AssetHelper.GetPath("Textures/cloudtop/cloudtop_lf.png")),
+                new ImageSharpTexture(AssetHelper.GetPath("Textures/cloudtop/cloudtop_rt.png")),
+                new ImageSharpTexture(AssetHelper.GetPath("Textures/cloudtop/cloudtop_up.png")),
+                new ImageSharpTexture(AssetHelper.GetPath("Textures/cloudtop/cloudtop_dn.png")));
         }
 
         public override void DestroyDeviceObjects()

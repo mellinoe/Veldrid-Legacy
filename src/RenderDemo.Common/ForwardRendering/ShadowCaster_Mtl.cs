@@ -175,10 +175,8 @@ namespace Veldrid.RenderDemo.ForwardRendering
             Shader fs = factory.CreateShader(ShaderStages.Fragment, ShaderHelper.LoadShaderCode("shadowmap-frag", ShaderStages.Fragment, factory));
             VertexInputLayout inputLayout = factory.CreateInputLayout(
                 new VertexInputDescription(
-                    32,
-                    new VertexInputElement("in_position", VertexSemanticType.Position, VertexElementFormat.Float3),
-                    new VertexInputElement("in_normal", VertexSemanticType.Normal, VertexElementFormat.Float3),
-                    new VertexInputElement("in_texCoord", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)));
+                    12,
+                    new VertexInputElement("in_position", VertexSemanticType.Position, VertexElementFormat.Float3)));
             ShaderSet shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
             ShaderResourceBindingSlots constantSlots = factory.CreateShaderResourceBindingSlots(
                 shaderSet,

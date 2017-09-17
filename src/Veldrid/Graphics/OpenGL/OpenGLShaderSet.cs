@@ -56,7 +56,7 @@ namespace Veldrid.Graphics.OpenGL
             GL.AttachShader(ProgramID, fragmentShader.ShaderID);
 
             int slot = 0;
-            foreach (var input in inputLayout.InputDescriptions)
+            foreach (VertexInputDescription input in inputLayout.InputDescriptions)
             {
                 for (int i = 0; i < input.Elements.Length; i++)
                 {
@@ -66,6 +66,22 @@ namespace Veldrid.Graphics.OpenGL
             }
 
             GL.LinkProgram(ProgramID);
+
+#if DEBUG
+            slot = 0;
+            foreach (VertexInputDescription input in inputLayout.InputDescriptions)
+            {
+                for (int i = 0; i < input.Elements.Length; i++)
+                {
+                    int location = GL.GetAttribLocation(ProgramID, input.Elements[i].Name);
+                    if (location == -1)
+                    {
+                        throw new VeldridException("There was no attribute variable with the name " + input.Elements[i].Name);
+                    }
+                    slot += 1;
+                }
+            }
+#endif
 
             int linkStatus;
             GL.GetProgram(ProgramID, GetProgramParameterName.LinkStatus, out linkStatus);
