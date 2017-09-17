@@ -474,7 +474,8 @@ namespace Veldrid.Graphics.OpenGL
             for (int i = 0; i < inputlayout.VBLayoutsBySlot.Length; i++)
             {
                 OpenGLVertexInput input = inputlayout.VBLayoutsBySlot[i];
-                ((OpenGLVertexBuffer)vertexBuffers[i]).Apply();
+                OpenGLVertexBuffer vb = ((OpenGLVertexBuffer)vertexBuffers[i]);
+                vb.Apply();
                 for (int slot = 0; slot < input.Elements.Length; slot++)
                 {
                     ref OpenGLVertexInputElement element = ref input.Elements[slot]; // Large structure -- use by reference.
@@ -483,8 +484,7 @@ namespace Veldrid.Graphics.OpenGL
                     {
                         GL.EnableVertexAttribArray(actualSlot);
                     }
-
-                    GL.VertexAttribPointer(actualSlot, element.ElementCount, element.Type, element.Normalized, input.VertexSizeInBytes, element.Offset);
+                    GL.VertexAttribPointer(actualSlot, element.ElementCount, element.Type, element.Normalized, vb.Stride, element.Offset);
 
                     int stepRate = element.InstanceStepRate;
                     if (_vertexAttribDivisors[actualSlot] != stepRate)

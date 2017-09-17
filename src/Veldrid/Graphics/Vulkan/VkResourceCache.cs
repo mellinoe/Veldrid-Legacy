@@ -46,6 +46,9 @@ namespace Veldrid.Graphics.Vulkan
             if (!_pipelines.TryGetValue(cacheKey, out VkPipeline ret))
             {
                 ret = CreateNewGraphicsPipeline(ref cacheKey);
+
+                // Very efficient
+                cacheKey.VertexBindings = (VertexBuffer[])cacheKey.VertexBindings.Clone();
                 _pipelines.Add(cacheKey, ret);
             }
 
@@ -155,7 +158,7 @@ namespace Veldrid.Graphics.Vulkan
                 {
                     binding = (uint)binding,
                     inputRate = (inputDesc.Elements[0].StorageClassifier == VertexElementInputClass.PerInstance) ? VkVertexInputRate.Instance : VkVertexInputRate.Vertex,
-                    stride = (uint)inputDesc.VertexSizeInBytes
+                    stride = ((VkVertexBuffer)cacheKey.VertexBindings[binding]).Stride
                 };
 
                 uint currentOffset = 0;
@@ -320,13 +323,15 @@ namespace Veldrid.Graphics.Vulkan
         public VkRasterizerState RasterizerState;
         public VkPrimitiveTopology PrimitiveTopology;
         public VkShaderSet ShaderSet;
+        public VertexBuffer[] VertexBindings; // Needed for vertex stride.
 
         public bool Equals(VkPipelineCacheKey other)
         {
             return RenderPass.Equals(other.RenderPass) && PipelineLayout.Equals(other.PipelineLayout)
                 && BlendState.Equals(other.BlendState) && Framebuffer.Equals(other.Framebuffer)
                 && DepthStencilState.Equals(other.DepthStencilState) && RasterizerState.Equals(other.RasterizerState)
-                && PrimitiveTopology == other.PrimitiveTopology && ShaderSet.Equals(other.ShaderSet);
+                && PrimitiveTopology == other.PrimitiveTopology && ShaderSet.Equals(other.ShaderSet)
+                && ArrayEquals(VertexBindings, other.VertexBindings);
         }
 
         public override int GetHashCode()
@@ -334,7 +339,7 @@ namespace Veldrid.Graphics.Vulkan
             return HashHelper.Combine(
                 RenderPass.GetHashCode(), PipelineLayout.GetHashCode(), BlendState.GetHashCode(),
                 Framebuffer.GetHashCode(), DepthStencilState.GetHashCode(), RasterizerState.GetHashCode(),
-                (int)PrimitiveTopology, ShaderSet.GetHashCode());
+                (int)PrimitiveTopology, ShaderSet.GetHashCode(), HashHelper.Array(VertexBindings));
         }
     }
 
@@ -352,25 +357,6 @@ namespace Veldrid.Graphics.Vulkan
                 && ArrayEquals(TextureBindings, other.TextureBindings)
                 && ArrayEquals(SamplerStates, other.SamplerStates);
         }
-
-        private static bool ArrayEquals<T>(T[] left, T[] right)
-        {
-            if (left.Length != right.Length)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < left.Length; i++)
-            {
-                if (!ReferenceEquals(left[i], right[i]))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         public override int GetHashCode()
         {
             return HashHelper.Combine(

@@ -125,7 +125,6 @@ namespace Veldrid.RenderDemo.ForwardRendering
                 new VertexDescriptor(
                     VertexPositionNormalTexture.SizeInBytes,
                     VertexPositionNormalTexture.ElementCount,
-                    0,
                     IntPtr.Zero));
             _ib = factory.CreateIndexBuffer(sizeof(int) * _indices.Length, false);
             _ib.SetIndices(_indices);

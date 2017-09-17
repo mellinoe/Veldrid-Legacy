@@ -34,7 +34,7 @@ namespace Veldrid.RenderDemo.ForwardRendering
                 new VertexPositionTexture(new Vector3(1, 0, 0), new Vector2(1, 0)),
                 new VertexPositionTexture(new Vector3(1, 1, 0), new Vector2(1, 1)),
                 new VertexPositionTexture(new Vector3(0, 1, 0), new Vector2(0, 1)),
-            }, new VertexDescriptor(VertexPositionTexture.SizeInBytes, VertexPositionTexture.ElementCount, 0, IntPtr.Zero),
+            }, new VertexDescriptor(VertexPositionTexture.SizeInBytes, VertexPositionTexture.ElementCount, IntPtr.Zero),
             0);
 
             _indexBuffer = factory.CreateIndexBuffer(sizeof(ushort) * 6, false);

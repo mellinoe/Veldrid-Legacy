@@ -296,7 +296,7 @@ namespace Veldrid
 
         private unsafe void RenderImDrawData(DrawData* draw_data, RenderContext rc)
         {
-            VertexDescriptor descriptor = new VertexDescriptor((byte)sizeof(DrawVert), 3, 0, IntPtr.Zero);
+            VertexDescriptor descriptor = new VertexDescriptor((byte)sizeof(DrawVert), 3, IntPtr.Zero);
 
             int vertexOffsetInVertices = 0;
             int indexOffsetInElements = 0;

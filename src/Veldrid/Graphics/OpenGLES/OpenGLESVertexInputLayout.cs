@@ -20,7 +20,8 @@ namespace Veldrid.Graphics.OpenGLES
             for (int i = 0; i < VBLayoutsBySlot.Length; i++)
             {
                 OpenGLESMaterialVertexInput input = VBLayoutsBySlot[i];
-                ((OpenGLESVertexBuffer)vertexBuffers[i]).Apply();
+                OpenGLESVertexBuffer vb = ((OpenGLESVertexBuffer)vertexBuffers[i]);
+                vb.Apply();
                 for (int slot = 0; slot < input.Elements.Length; slot++)
                 {
                     OpenGLESMaterialVertexInputElement element = input.Elements[slot];
@@ -28,7 +29,7 @@ namespace Veldrid.Graphics.OpenGLES
                     GL.EnableVertexAttribArray(actualSlot);
                     Utilities.CheckLastGLES3Error();
                     int baseVertexOffsetBytes = baseVertexOffset * input.VertexSizeInBytes;
-                    GL.VertexAttribPointer(actualSlot, element.ElementCount, element.Type, element.Normalized, input.VertexSizeInBytes, element.Offset + baseVertexOffsetBytes);
+                    GL.VertexAttribPointer(actualSlot, element.ElementCount, element.Type, element.Normalized, vb.Stride, element.Offset + baseVertexOffsetBytes);
                     Utilities.CheckLastGLES3Error();
                     GL.VertexAttribDivisor(actualSlot, element.InstanceStepRate);
                     Utilities.CheckLastGLES3Error();

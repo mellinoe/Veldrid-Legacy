@@ -52,11 +52,11 @@ namespace Veldrid.RenderDemo
             ResourceFactory factory = context.ResourceFactory;
 
             s_vb0 = factory.CreateVertexBuffer(12 * s_cubeVertices.Length, false);
-            VertexDescriptor desc = new VertexDescriptor(12, 1, 0, IntPtr.Zero);
+            VertexDescriptor desc = new VertexDescriptor(12, 1, IntPtr.Zero);
             s_vb0.SetVertexData(s_cubeVertices.Select(vpc => vpc.Position).ToArray(), desc);
 
             s_vb1 = factory.CreateVertexBuffer(16 * s_cubeVertices.Length, false);
-            VertexDescriptor desc2 = new VertexDescriptor(16, 1, 0, IntPtr.Zero);
+            VertexDescriptor desc2 = new VertexDescriptor(16, 1, IntPtr.Zero);
             s_vb1.SetVertexData(s_cubeVertices.Select(vpc => vpc.Color).ToArray(), desc2);
 
             s_ib = factory.CreateIndexBuffer(s_cubeIndices, false);

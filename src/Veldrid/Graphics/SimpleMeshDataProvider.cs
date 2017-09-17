@@ -20,7 +20,7 @@ namespace Veldrid.Graphics
         public VertexBuffer CreateVertexBuffer(ResourceFactory factory)
         {
             var vb = factory.CreateVertexBuffer(Vertices.Length * VertexPositionNormalTexture.SizeInBytes, false);
-            vb.SetVertexData(Vertices, new VertexDescriptor(VertexPositionNormalTexture.SizeInBytes, 3, 0, IntPtr.Zero));
+            vb.SetVertexData(Vertices, new VertexDescriptor(VertexPositionNormalTexture.SizeInBytes, 3, IntPtr.Zero));
             return vb;
         }
 

@@ -139,7 +139,10 @@ namespace Veldrid.RenderDemo.Drawers
                 VertexBuffer vb = _rc.ResourceFactory.CreateVertexBuffer(vertices.Length * VertexPositionNormalTexture.SizeInBytes, false);
                 vb.SetVertexData(
                     vertices,
-                    new VertexDescriptor(VertexPositionNormalTexture.SizeInBytes, VertexPositionNormalTexture.ElementCount, 0, IntPtr.Zero));
+                    new VertexDescriptor(
+                        VertexPositionNormalTexture.SizeInBytes,
+                        VertexPositionNormalTexture.ElementCount,
+                        IntPtr.Zero));
 
                 IndexBuffer ib = _rc.ResourceFactory.CreateIndexBuffer(indices.Length * sizeof(ushort), false);
                 ib.SetIndices(indices);

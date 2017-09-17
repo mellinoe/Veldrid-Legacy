@@ -116,7 +116,6 @@ namespace Veldrid.RenderDemo
                 new VertexDescriptor(
                     WireframeVertex.SizeInBytes,
                     WireframeVertex.ElementCount,
-                    0,
                     IntPtr.Zero));
             // TODO: The index buffer should not need to be recreated every frame.
             _ib = factory.CreateIndexBuffer(sizeof(ushort) * _indices.Count, false);

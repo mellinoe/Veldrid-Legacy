@@ -400,6 +400,7 @@ namespace Veldrid.Graphics.Vulkan
             pipelineCacheKey.RasterizerState = (VkRasterizerState)RasterizerState;
             pipelineCacheKey.PrimitiveTopology = _primitiveTopology;
             pipelineCacheKey.ShaderSet = ShaderSet;
+            pipelineCacheKey.VertexBindings = VertexBuffers;
             VkPipeline graphicsPipeline = _resourceCache.GetGraphicsPipeline(ref pipelineCacheKey);
 
             VkDescriptorSetCacheKey descriptorSetCacheKey = new VkDescriptorSetCacheKey();

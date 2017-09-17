@@ -52,7 +52,7 @@ namespace Veldrid.RenderDemo
             var mesh = LoadTeapotMesh();
 
             _vertexBuffer = factory.CreateVertexBuffer(mesh.Vertices.Length * VertexPositionNormalTexture.SizeInBytes, false);
-            _vertexBuffer.SetVertexData(mesh.Vertices, new VertexDescriptor(VertexPositionNormalTexture.SizeInBytes, 3, 0, IntPtr.Zero));
+            _vertexBuffer.SetVertexData(mesh.Vertices, new VertexDescriptor(VertexPositionNormalTexture.SizeInBytes, 3, IntPtr.Zero));
 
             _indexBuffer = factory.CreateIndexBuffer(mesh.Indices.Length * sizeof(int), false);
             _indexBuffer.SetIndices(mesh.Indices);

@@ -31,6 +31,12 @@ namespace Veldrid
             return Combine(value1, Combine(value2, Combine(value3, Combine(value4, Combine(value5, Combine(value6, Combine(value7, value8)))))));
         }
 
+        public static int Combine(int value1, int value2, int value3, int value4, int value5, int value6, int value7, int value8, int value9)
+        {
+            return Combine(value1, Combine(value2, Combine(value3, Combine(value4, Combine(value5, Combine(value6, Combine(value7, Combine(value8, value9))))))));
+        }
+
+
         public static int Array<T>(T[] items)
         {
             int hash = items[0]?.GetHashCode() ?? 0;

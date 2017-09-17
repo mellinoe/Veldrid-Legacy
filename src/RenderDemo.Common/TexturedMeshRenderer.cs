@@ -63,7 +63,10 @@ namespace Veldrid.RenderDemo
             ResourceFactory factory = context.ResourceFactory;
 
             _vb = factory.CreateVertexBuffer(VertexPositionNormalTexture.SizeInBytes * _vertices.Length, false);
-            VertexDescriptor desc = new VertexDescriptor(VertexPositionNormalTexture.SizeInBytes, VertexPositionNormalTexture.ElementCount, 0, IntPtr.Zero);
+            VertexDescriptor desc = new VertexDescriptor(
+                VertexPositionNormalTexture.SizeInBytes,
+                VertexPositionNormalTexture.ElementCount,
+                IntPtr.Zero);
             _vb.SetVertexData(_vertices, desc);
 
             _ib = factory.CreateIndexBuffer(sizeof(ushort) * _indices.Length, false);
