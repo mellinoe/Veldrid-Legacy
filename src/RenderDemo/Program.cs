@@ -18,7 +18,7 @@ namespace Veldrid.RenderDemo
         public static void Main()
         {
             bool onWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-            var window = new Sdl2Window("Veldrid Render Demo", 100, 100, 960, 540, SDL_WindowFlags.Resizable | SDL_WindowFlags.OpenGL, RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
+            var window = new Sdl2Window("Veldrid Render Demo", 100, 100, 960, 540, SDL_WindowFlags.Resizable | SDL_WindowFlags.OpenGL | SDL_WindowFlags.Shown, RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
             RenderContext rc;
             GraphicsBackend preferredBackend = Preferences.Instance.PreferredBackend;
             if (preferredBackend == GraphicsBackend.Vulkan)

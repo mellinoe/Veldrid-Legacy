@@ -40,33 +40,44 @@ namespace Veldrid
         private bool _shiftDown;
         private bool _altDown;
 
+        private int _windowWidth;
+        private int _windowHeight;
+        private Vector2 _scaleFactor = Vector2.One;
+
         /// <summary>
         /// Constructs a new ImGuiRenderer.
         /// </summary>
-        public ImGuiRenderer(RenderContext rc, Window window)
+        public ImGuiRenderer(RenderContext rc, int width, int height)
         {
             _rc = rc;
             _assembly = typeof(ImGuiRenderer).GetTypeInfo().Assembly;
+            _windowWidth = width;
+            _windowHeight = height;
 
             ImGui.GetIO().FontAtlas.AddDefaultFont();
 
-            InitializeContextObjects(rc);
+            CreateDeviceResources(rc);
             SetOpenTKKeyMappings();
 
-            SetPerFrameImGuiData(window, 1f / 60f);
+            SetPerFrameImGuiData(1f / 60f);
 
             ImGui.NewFrame();
         }
 
-        public void SetRenderContext(RenderContext rc)
+        public void WindowResized(int width, int height)
         {
-            Dispose();
-            _rc = rc;
-            InitializeContextObjects(rc);
+            _windowWidth = width;
+            _windowHeight = height;
         }
 
-        private void InitializeContextObjects(RenderContext rc)
+        public void DestroyDeviceObjects()
         {
+            Dispose();
+        }
+
+        public void CreateDeviceResources(RenderContext rc)
+        {
+            _rc = rc;
             ResourceFactory factory = rc.ResourceFactory;
             _vertexBuffer = factory.CreateVertexBuffer(1000, true);
             _indexBuffer = factory.CreateIndexBuffer(500, true);
@@ -194,22 +205,22 @@ namespace Veldrid
         /// <summary>
         /// Updates ImGui input and IO configuration state.
         /// </summary>
-        public void Update(Window window, float deltaSeconds)
+        public void Update(float deltaSeconds)
         {
-            SetPerFrameImGuiData(window, deltaSeconds);
+            SetPerFrameImGuiData(deltaSeconds);
         }
 
         /// <summary>
         /// Sets per-frame data based on the RenderContext and window.
         /// This is called by Update(float).
         /// </summary>
-        private unsafe void SetPerFrameImGuiData(Window window, float deltaSeconds)
+        private unsafe void SetPerFrameImGuiData(float deltaSeconds)
         {
             IO io = ImGui.GetIO();
-            io.DisplaySize = new System.Numerics.Vector2(
-                window.Width / window.ScaleFactor.X,
-                window.Height / window.ScaleFactor.Y);
-            io.DisplayFramebufferScale = window.ScaleFactor;
+            io.DisplaySize = new Vector2(
+                _windowWidth / _scaleFactor.X,
+                _windowHeight / _scaleFactor.Y);
+            io.DisplayFramebufferScale = _scaleFactor;
             io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
         }
 
@@ -217,13 +228,13 @@ namespace Veldrid
         /// Updates the current input state tracked by ImGui.
         /// This calls ImGui.NewFrame().
         /// </summary>
-        public void OnInputUpdated(Window window, InputSnapshot snapshot)
+        public void OnInputUpdated(InputSnapshot snapshot)
         {
-            UpdateImGuiInput(window, snapshot);
+            UpdateImGuiInput(snapshot);
             ImGui.NewFrame();
         }
 
-        private unsafe void UpdateImGuiInput(Window window, InputSnapshot snapshot)
+        private unsafe void UpdateImGuiInput(InputSnapshot snapshot)
         {
             IO io = ImGui.GetIO();
 
@@ -406,7 +417,6 @@ namespace Veldrid
             _depthDisabledState.Dispose();
             _blendState.Dispose();
             _fontTextureBinding.Dispose();
-
             _shaderSet.Dispose();
         }
 

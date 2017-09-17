@@ -20,7 +20,7 @@ namespace Shaders
 
         public struct FSInput
         {
-            [PositionSemantic] public Vector4 Position;
+            [PositionSemantic] public Vector4 FragPosition;
             [PositionSemantic] public Vector3 WorldPosition;
         }
 
@@ -28,7 +28,7 @@ namespace Shaders
         public FSInput VS(VSInput input)
         {
             FSInput output;
-            output.Position = Mul(Projection, Mul(View, new Vector4(input.Position, 1)));
+            output.FragPosition = Mul(Projection, Mul(View, new Vector4(input.Position, 1)));
             output.WorldPosition = input.Position;
             return output;
         }

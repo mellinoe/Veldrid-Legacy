@@ -34,7 +34,7 @@ namespace Veldrid.NeoDemo.Objects
             Shader vs = ShaderHelper.LoadShader(factory, "Grid-vertex", ShaderStages.Vertex);
             Shader fs = ShaderHelper.LoadShader(factory, "Grid-fragment", ShaderStages.Fragment);
             VertexInputLayout inputLayout = factory.CreateInputLayout(
-                new VertexInputDescription(VertexPosition.SizeInBytes, new VertexInputElement("vsin_position", VertexSemanticType.Position, VertexElementFormat.Float3)));
+                new VertexInputDescription(VertexPosition.SizeInBytes, new VertexInputElement("Position", VertexSemanticType.Position, VertexElementFormat.Float3)));
             _shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
             _resourceBindings = factory.CreateShaderResourceBindingSlots(
                 _shaderSet,

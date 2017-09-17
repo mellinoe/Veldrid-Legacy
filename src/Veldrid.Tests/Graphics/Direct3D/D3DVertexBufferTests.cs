@@ -27,7 +27,7 @@ namespace Veldrid.Graphics.Direct3D
             D3DVertexBuffer vb = (D3DVertexBuffer)_factory.CreateVertexBuffer(1, false);
 
             float[] vertexData = Enumerable.Range(0, 150).Select(i => (float)i).ToArray();
-            vb.SetVertexData(vertexData, new VertexDescriptor(sizeof(float), 1, 0, IntPtr.Zero));
+            vb.SetVertexData(vertexData, new VertexDescriptor(sizeof(float), 1, IntPtr.Zero));
 
             float[] returned = new float[vertexData.Length];
             vb.GetData(returned);
@@ -40,7 +40,7 @@ namespace Veldrid.Graphics.Direct3D
             D3DVertexBuffer vb = (D3DVertexBuffer)_factory.CreateVertexBuffer(1, false);
 
             float[] vertexData = Enumerable.Range(0, 150).Select(i => (float)i).ToArray();
-            vb.SetVertexData(vertexData, new VertexDescriptor(sizeof(float), 1, 0, IntPtr.Zero), 250);
+            vb.SetVertexData(vertexData, new VertexDescriptor(sizeof(float), 1, IntPtr.Zero), 250);
 
             float[] returned = new float[vertexData.Length + 250];
             vb.GetData(returned);
@@ -62,7 +62,7 @@ namespace Veldrid.Graphics.Direct3D
             float[] vertexData = Enumerable.Range(0, 150).Select(i => (float)i).ToArray();
             fixed (float* dataPtr = vertexData)
             {
-                vb.SetVertexData(new IntPtr(dataPtr), new VertexDescriptor(4, 1, 0, IntPtr.Zero), 150, 250);
+                vb.SetVertexData(new IntPtr(dataPtr), new VertexDescriptor(4, 1, IntPtr.Zero), 150, 250);
             }
             float[] returned = new float[vertexData.Length + 250];
             vb.GetData(returned);

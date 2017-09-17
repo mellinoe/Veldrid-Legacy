@@ -534,8 +534,8 @@ namespace Veldrid.RenderDemo
                 _lightDirection = Vector3.Normalize(-position);
             }
 
-            _imguiRenderer.Update(_window, (float)deltaSeconds);
-            _imguiRenderer.OnInputUpdated(_window, snapshot);
+            _imguiRenderer.Update((float)deltaSeconds);
+            _imguiRenderer.OnInputUpdated(snapshot);
             DrawMainMenu();
 
             _fta.AddTime(deltaSeconds);
@@ -1141,7 +1141,10 @@ https://github.com/mellinoe/veldrid.");
             if (s_needsResizing)
             {
                 s_needsResizing = false;
-                _rc.ResizeMainWindow(_window.Width, _window.Height);
+                int width = _window.Width;
+                int height = _window.Height;
+                _rc.ResizeMainWindow(width, height);
+                _imguiRenderer.WindowResized(width, height);
             }
 
             SharedDataProviders.UpdateBuffers();

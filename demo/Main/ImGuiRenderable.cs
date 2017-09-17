@@ -8,24 +8,27 @@ namespace Veldrid.NeoDemo
 {
     public class ImGuiRenderable : Renderable, IUpdateable
     {
-        private readonly Window _window;
-
         private ImGuiRenderer _imguiRenderer;
+        private int _width;
+        private int _height;
 
-        public ImGuiRenderable(Window window)
+        public ImGuiRenderable(int width, int height)
         {
-            _window = window;
+            _width = width;
+            _height = height;
         }
+
+        public void WindowResized(int width, int height) => _imguiRenderer.WindowResized(width, height);
 
         public override void CreateDeviceObjects(RenderContext rc)
         {
             if (_imguiRenderer == null)
             {
-                _imguiRenderer = new ImGuiRenderer(rc, _window);
+                _imguiRenderer = new ImGuiRenderer(rc, _width, _height);
             }
             else
             {
-                _imguiRenderer.SetRenderContext(rc);
+                _imguiRenderer.CreateDeviceResources(rc);
             }
         }
 
@@ -49,8 +52,8 @@ namespace Veldrid.NeoDemo
 
         public void Update(float deltaSeconds)
         {
-            _imguiRenderer.Update(_window, deltaSeconds);
-            _imguiRenderer.OnInputUpdated(_window, InputTracker.FrameSnapshot);
+            _imguiRenderer.Update(deltaSeconds);
+            _imguiRenderer.OnInputUpdated(InputTracker.FrameSnapshot);
         }
     }
 }

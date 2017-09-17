@@ -13,21 +13,26 @@ namespace Veldrid.StartupUtilities
 {
     public static class VeldridStartup
     {
-        public static void CreateWindowAndRenderContext(ref WindowCreateInfo windowCI, ref RenderContextCreateInfo contextCI, out Sdl2Window window, out RenderContext rc)
+        public static void CreateWindowAndRenderContext(
+            ref WindowCreateInfo windowCI,
+            ref RenderContextCreateInfo contextCI,
+            out Sdl2Window window,
+            out RenderContext rc)
         {
             window = CreateWindow(ref windowCI);
             rc = CreateRenderContext(ref contextCI, window);
         }
 
-        private static Sdl2Window CreateWindow(ref WindowCreateInfo windowCI)
+        public static Sdl2Window CreateWindow(ref WindowCreateInfo windowCI)
         {
             Sdl2Window window = new Sdl2Window(
                 windowCI.WindowTitle,
-                50,
-                50,
+                windowCI.X,
+                windowCI.Y,
                 windowCI.WindowWidth,
                 windowCI.WindowHeight,
-                SDL_WindowFlags.OpenGL | SDL_WindowFlags.Shown | SDL_WindowFlags.Resizable | GetWindowFlags(windowCI.WindowInitialState),
+                SDL_WindowFlags.OpenGL | SDL_WindowFlags.Shown | SDL_WindowFlags.Resizable
+                    | GetWindowFlags(windowCI.WindowInitialState),
                 RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
 
             return window;

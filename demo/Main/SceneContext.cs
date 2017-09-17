@@ -19,6 +19,11 @@ namespace Veldrid.NeoDemo
         {
             ProjectionMatrixBuffer = rc.ResourceFactory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             ViewMatrixBuffer = rc.ResourceFactory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
+            if (Camera != null)
+            {
+                ProjectionMatrixBuffer.SetData(Camera.ProjectionMatrix);
+                ViewMatrixBuffer.SetData(Camera.ViewMatrix);
+            }
         }
 
         public void DestroyDeviceObjects()

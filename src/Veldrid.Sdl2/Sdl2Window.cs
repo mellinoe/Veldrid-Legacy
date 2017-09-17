@@ -32,6 +32,11 @@ namespace Veldrid.Sdl2
         private int _currentMouseY;
         private bool[] _currentMouseButtonStates = new bool[13];
 
+        // Cached window state (for threaded processing)
+        private BufferedValue<Point> _cachedPosition = new BufferedValue<Point>();
+        private BufferedValue<Point> _cachedSize = new BufferedValue<Point>();
+        private bool _continuousResizeReceived;
+
         public Sdl2Window(string title, int x, int y, int width, int height, SDL_WindowFlags flags, bool threadedProcessing)
         {
             _threadedProcessing = threadedProcessing;
@@ -52,18 +57,17 @@ namespace Veldrid.Sdl2
 
                     Task.Factory.StartNew(WindowOwnerRoutine, wp, TaskCreationOptions.LongRunning);
                     mre.WaitOne();
-                    _exists = true;
                 }
             }
             else
             {
                 _window = SDL_CreateWindow(title, x, y, width, height, flags);
-                _exists = true;
+                PostWindowCreated(flags);
             }
         }
 
-        public int X { get => GetWindowPosition().X; set => SetWindowPosition(value, Y); }
-        public int Y { get => GetWindowPosition().X; set => SetWindowPosition(X, value); }
+        public int X { get => _cachedPosition.Value.X; set => SetWindowPosition(value, Y); }
+        public int Y { get => _cachedPosition.Value.Y; set => SetWindowPosition(X, value); }
 
         public int Width { get => GetWindowSize().X; set => SetWindowSize(value, Height); }
         public int Height { get => GetWindowSize().Y; set => SetWindowSize(Width, value); }
@@ -141,7 +145,7 @@ namespace Veldrid.Sdl2
 
         public Vector2 ScaleFactor => Vector2.One;
 
-        public Rectangle Bounds => new Rectangle(GetWindowPosition(), GetWindowSize());
+        public Rectangle Bounds => new Rectangle(_cachedPosition, GetWindowSize());
 
         public bool CursorVisible { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
@@ -169,7 +173,7 @@ namespace Veldrid.Sdl2
 
         public Point ClientToScreen(Point p)
         {
-            Point position = GetWindowPosition();
+            Point position = _cachedPosition;
             return new Point(p.X + position.X, p.Y + position.Y);
         }
 
@@ -197,6 +201,7 @@ namespace Veldrid.Sdl2
         {
             WindowParams wp = (WindowParams)state;
             _window = SDL_CreateWindow(wp.Title, wp.X, wp.Y, wp.Width, wp.Height, wp.WindowFlags);
+            PostWindowCreated(wp.WindowFlags);
             wp.ResetEvent.Set();
 
             double previousPollTimeMs = 0;
@@ -208,6 +213,7 @@ namespace Veldrid.Sdl2
                 if (_shouldClose)
                 {
                     CloseCore();
+                    return;
                 }
 
                 double currentTick = sw.ElapsedTicks;
@@ -222,6 +228,17 @@ namespace Veldrid.Sdl2
                     ProcessEvents();
                 }
             }
+        }
+
+        private void PostWindowCreated(SDL_WindowFlags flags)
+        {
+            RefreshCachedPosition();
+            RefreshCachedSize();
+            if ((flags & SDL_WindowFlags.Shown) == SDL_WindowFlags.Shown)
+            {
+                SDL_ShowWindow(_window);
+            }
+            _exists = true;
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -250,7 +267,12 @@ namespace Veldrid.Sdl2
 
         private void ProcessEvents()
         {
-            SDL_PumpEvents();
+            if (_continuousResizeReceived)
+            {
+                _continuousResizeReceived = false;
+                RefreshCachedSize();
+            }
+
             SDL_Event ev;
             while (SDL_PollEvent(&ev) != 0)
             {
@@ -711,19 +733,11 @@ namespace Veldrid.Sdl2
             switch (windowEvent.@event)
             {
                 case SDL_WindowEventID.Resized:
-                    Resized?.Invoke();
-                    break;
                 case SDL_WindowEventID.SizeChanged:
-                    Resized?.Invoke();
-                    break;
                 case SDL_WindowEventID.Minimized:
-                    Resized?.Invoke();
-                    break;
                 case SDL_WindowEventID.Maximized:
-                    Resized?.Invoke();
-                    break;
                 case SDL_WindowEventID.Restored:
-                    Resized?.Invoke();
+                    HandleResizedMessage();
                     break;
                 case SDL_WindowEventID.FocusGained:
                     FocusGained?.Invoke();
@@ -750,12 +764,33 @@ namespace Veldrid.Sdl2
                     Exposed?.Invoke();
                     break;
                 case SDL_WindowEventID.Moved:
+                    _cachedPosition.Value = new Point(windowEvent.data1, windowEvent.data2);
                     Moved?.Invoke(new Point(windowEvent.data1, windowEvent.data2));
                     break;
                 default:
                     Debug.WriteLine("Unhandled SDL WindowEvent: " + windowEvent.@event);
                     break;
             }
+        }
+
+        private void HandleResizedMessage()
+        {
+            RefreshCachedSize();
+            Resized?.Invoke();
+        }
+
+        private void RefreshCachedSize()
+        {
+            int w, h;
+            SDL_GetWindowSize(_window, &w, &h);
+            _cachedSize.Value = new Point(w, h);
+        }
+
+        private void RefreshCachedPosition()
+        {
+            int x, y;
+            SDL_GetWindowPosition(_window, &x, &y);
+            _cachedPosition.Value = new Point(x, y);
         }
 
         private MouseState GetCurrentMouseState()
@@ -773,27 +808,18 @@ namespace Veldrid.Sdl2
 
         public Point ScreenToClient(Point p)
         {
-            Point position = GetWindowPosition();
+            Point position = _cachedPosition;
             return new Point(p.X - position.X, p.Y - position.Y);
-        }
-
-        private Point GetWindowPosition()
-        {
-            int x, y;
-            SDL_GetWindowPosition(_window, &x, &y);
-            return new Point(x, y);
         }
 
         private void SetWindowPosition(int x, int y)
         {
-            SDL_SetWindowPosition(_window, x, y);
+            throw new NotImplementedException();
         }
 
         private Point GetWindowSize()
         {
-            int w, h;
-            SDL_GetWindowSize(_window, &w, &h);
-            return new Point(w, h);
+            return _cachedSize;
         }
 
         private void SetWindowSize(int width, int height)
@@ -975,6 +1001,32 @@ namespace Veldrid.Sdl2
         {
             State = mouseState;
             MousePosition = mousePosition;
+        }
+    }
+
+    [DebuggerDisplay("{DebuggerDisplayString,nq}")]
+    public class BufferedValue<T> where T : struct
+    {
+        public T Value
+        {
+            get => Current.Value;
+            set
+            {
+                Back.Value = value;
+                Back = Interlocked.Exchange(ref Current, Back);
+            }
+        }
+
+        private ValueHolder Current = new ValueHolder();
+        private ValueHolder Back = new ValueHolder();
+
+        public static implicit operator T(BufferedValue<T> bv) => bv.Value;
+
+        private string DebuggerDisplayString => $"{Current.Value}";
+
+        private class ValueHolder
+        {
+            public T Value;
         }
     }
 }

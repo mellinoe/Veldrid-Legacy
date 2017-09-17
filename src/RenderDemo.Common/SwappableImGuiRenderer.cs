@@ -7,7 +7,7 @@ namespace Veldrid.RenderDemo
 {
     public class SwappableImGuiRenderer : ImGuiRenderer, SwappableRenderItem
     {
-        public SwappableImGuiRenderer(RenderContext rc, Window window) : base(rc, window)
+        public SwappableImGuiRenderer(RenderContext rc, Window window) : base(rc, window.Width, window.Height)
         {
         }
 
@@ -18,7 +18,7 @@ namespace Veldrid.RenderDemo
 
         public void ChangeRenderContext(AssetDatabase ad, RenderContext rc)
         {
-            SetRenderContext(rc);
+            CreateDeviceResources(rc);
         }
 
         public void Render(RenderContext rc, string pipelineStage)

@@ -13,9 +13,15 @@ namespace Veldrid.Sdl2
         private delegate int SDL_PollEvent_t(SDL_Event* @event);
         private static SDL_PollEvent_t s_sdl_pollEvent = LoadFunction<SDL_PollEvent_t>("SDL_PollEvent");
         public static int SDL_PollEvent(SDL_Event* @event) => s_sdl_pollEvent(@event);
+
+        private delegate void SDL_AddEventWatch_t(SDL_EventFilter filter, void* userdata);
+        private static SDL_AddEventWatch_t s_sdl_addEventWatch = LoadFunction<SDL_AddEventWatch_t>("SDL_AddEventWatch");
+        public static void SDL_AddEventWatch(SDL_EventFilter filter, void* userdata) => s_sdl_addEventWatch(filter, userdata);
     }
 
-    [StructLayout(LayoutKind.Explicit)]
+    public unsafe delegate int SDL_EventFilter(void* userdata, SDL_Event* @event);
+
+[StructLayout(LayoutKind.Explicit)]
     public struct SDL_Event
     {
         [FieldOffset(0)]

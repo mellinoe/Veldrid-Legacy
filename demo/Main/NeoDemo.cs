@@ -1,4 +1,5 @@
 ﻿using ImGuiNET;
+using System;
 using System.Collections.Generic;
 using Veldrid.Graphics;
 using Veldrid.NeoDemo.Objects;
@@ -16,18 +17,23 @@ namespace Veldrid.NeoDemo
         private readonly ImGuiRenderable _igRenderable;
         private readonly SceneContext _sc = new SceneContext();
         private bool _windowResized;
-        private RenderOrderKeyComparer _renderOrderKeyComparer = new RenderOrderKeyComparer();  
+        private RenderOrderKeyComparer _renderOrderKeyComparer = new RenderOrderKeyComparer();
+
+        private event Action<int, int> _resizeHandled;
 
         public NeoDemo()
         {
             WindowCreateInfo windowCI = new WindowCreateInfo
             {
+                X = 50,
+                Y = 50,
                 WindowWidth = 960,
                 WindowHeight = 540,
                 WindowInitialState = WindowState.Normal,
                 WindowTitle = "Veldrid NeoDemo"
             };
             RenderContextCreateInfo rcCI = new RenderContextCreateInfo();
+            rcCI.Backend = GraphicsBackend.Direct3D11; // TODO REMOVE
 
             VeldridStartup.CreateWindowAndRenderContext(ref windowCI, ref rcCI, out _window, out _rc);
             _window.Resized += () => _windowResized = true;
@@ -38,7 +44,8 @@ namespace Veldrid.NeoDemo
 
             _sc.SetCurrentScene(_scene);
 
-            _igRenderable = new ImGuiRenderable(_window);
+            _igRenderable = new ImGuiRenderable(_window.Width, _window.Height);
+            _resizeHandled += (w, h) => _igRenderable.WindowResized(w, h);
             _igRenderable.CreateDeviceObjects(_rc);
             _scene.AddRenderable(_igRenderable);
             _scene.AddUpdateable(_igRenderable);
@@ -100,14 +107,18 @@ namespace Veldrid.NeoDemo
 
         private void Draw()
         {
+            int width = _window.Width;
+            int height = _window.Height;
+
             if (_windowResized)
             {
                 _windowResized = false;
-                _rc.ResizeMainWindow(_window.Width, _window.Height);
-                _scene.Camera.WindowResized(_window.Width, _window.Height);
+                _rc.ResizeMainWindow(width, height);
+                _scene.Camera.WindowResized(width, height);
+                _resizeHandled?.Invoke(width, height);
             }
 
-            _rc.Viewport = new Viewport(0, 0, _window.Width, _window.Height);
+            _rc.Viewport = new Viewport(0, 0, width, height);
             _rc.ClearBuffer(RgbaFloat.CornflowerBlue);
 
             _scene.Render(_rc, _sc, RenderPasses.Standard, null);
@@ -124,11 +135,24 @@ namespace Veldrid.NeoDemo
 
             _rc.Dispose();
 
+            WindowCreateInfo windowCI = new WindowCreateInfo
+            {
+                X = _window.X,
+                Y  = _window.Y,
+                WindowWidth = _window.Width,
+                WindowHeight = _window.Height,
+                WindowInitialState = _window.WindowState,
+                WindowTitle = "Veldrid NeoDemo"
+            };
+
+            _window.Close();
+
             RenderContextCreateInfo rcCI = new RenderContextCreateInfo
             {
                 Backend = backend
             };
-            _rc = VeldridStartup.CreateRenderContext(ref rcCI, _window);
+            VeldridStartup.CreateWindowAndRenderContext(ref windowCI, ref rcCI, out _window, out _rc);
+            _window.Resized += () => _windowResized = true;
 
             _sc.CreateDeviceObjects(_rc);
             _scene.CreateAllDeviceObjects(_rc);
