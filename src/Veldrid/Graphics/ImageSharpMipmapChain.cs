@@ -1,6 +1,7 @@
-﻿using ImageSharp;
-using ImageSharp.PixelFormats;
-using ImageSharp.Processing;
+﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System;
 using System.Diagnostics;
 
@@ -71,7 +72,7 @@ namespace Veldrid.Graphics
             for (int level = 0; level < MipLevels; level++)
             {
                 Image<Rgba32> image = Images[level];
-                fixed (void* pin = &image.Pixels.DangerousGetPinnableReference())
+                fixed (void* pin = &image.DangerousGetPinnableReferenceToPixelBuffer())
                 {
                     tex.SetTextureData(level, 0, 0, image.Width, image.Height, (IntPtr)pin, PixelSizeInBytes * Width * Height);
                 }
@@ -92,7 +93,7 @@ namespace Veldrid.Graphics
             {
                 int newWidth = Math.Max(1, baseImage.Width / 2);
                 int newHeight = Math.Max(1, baseImage.Height / 2);
-                Image<T> newImage = new Image<T>(baseImage).Resize(newWidth, newHeight, s_resampler);
+                Image<T> newImage = baseImage.Clone(context => context.Resize(newWidth, newHeight, s_resampler));
                 Debug.Assert(i < mipLevelCount);
                 mipLevels[i] = newImage;
 

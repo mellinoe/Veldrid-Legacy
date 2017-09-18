@@ -1,4 +1,5 @@
-﻿using ImageSharp;
+﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
 using System;
 using System.Numerics;
 using Veldrid.Graphics;
@@ -62,12 +63,12 @@ namespace Veldrid.NeoDemo.Objects
 
             _viewMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
 
-            fixed (Rgba32* frontPin = &_front.Pixels.DangerousGetPinnableReference())
-            fixed (Rgba32* backPin = &_back.Pixels.DangerousGetPinnableReference())
-            fixed (Rgba32* leftPin = &_left.Pixels.DangerousGetPinnableReference())
-            fixed (Rgba32* rightPin = &_right.Pixels.DangerousGetPinnableReference())
-            fixed (Rgba32* topPin = &_top.Pixels.DangerousGetPinnableReference())
-            fixed (Rgba32* bottomPin = &_bottom.Pixels.DangerousGetPinnableReference())
+            fixed (Rgba32* frontPin = &_front.ISImage.DangerousGetPinnableReferenceToPixelBuffer())
+            fixed (Rgba32* backPin = &_back.ISImage.DangerousGetPinnableReferenceToPixelBuffer())
+            fixed (Rgba32* leftPin = &_left.ISImage.DangerousGetPinnableReferenceToPixelBuffer())
+            fixed (Rgba32* rightPin = &_right.ISImage.DangerousGetPinnableReferenceToPixelBuffer())
+            fixed (Rgba32* topPin = &_top.ISImage.DangerousGetPinnableReferenceToPixelBuffer())
+            fixed (Rgba32* bottomPin = &_bottom.ISImage.DangerousGetPinnableReferenceToPixelBuffer())
             {
                 _cubemapTexture = factory.CreateCubemapTexture(
                     (IntPtr)frontPin,

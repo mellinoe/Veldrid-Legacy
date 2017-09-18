@@ -1,4 +1,6 @@
-﻿using ImageSharp;
+﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
+using SixLabors.ImageSharp.Formats.Png;
 using System;
 using System.IO;
 
@@ -14,11 +16,6 @@ namespace Veldrid.Graphics
         /// The ImageSharp image.
         /// </summary>
         public Image<Rgba32> ISImage { get; }
-
-        /// <summary>
-        /// The raw pixel data, stored in RGBA format, where each element is a byte (32 bits per pixel).
-        /// </summary>
-        public Span<Rgba32> Pixels => ISImage.Pixels;
 
         /// <summary>
         /// The width of the texture.
@@ -70,7 +67,7 @@ namespace Veldrid.Graphics
         {
             using (FileStream fs = File.OpenWrite(path))
             {
-                ISImage.Save(fs);
+                ISImage.Save(fs, new PngEncoder());
             }
         }
 
@@ -81,7 +78,7 @@ namespace Veldrid.Graphics
         /// <returns>A new <see cref="DeviceTexture2D"/> containing this image's pixel data.</returns>
         public unsafe DeviceTexture2D CreateDeviceTexture(ResourceFactory factory)
         {
-            fixed (Rgba32* pixelPtr = &Pixels.DangerousGetPinnableReference())
+            fixed (Rgba32* pixelPtr = &ISImage.DangerousGetPinnableReferenceToPixelBuffer())
             {
                 return factory.CreateTexture(new IntPtr(pixelPtr), Width, Height, Format);
             }

@@ -10,9 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="$(AssetsDir)\**">
+    <Content Include="$(AssetsDir)\Textures\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>Assets\%(RecursiveDir)\%(FileName)%(Extension)</Link>
+      <Link>Assets\Textures\%(RecursiveDir)\%(FileName)%(Extension)</Link>
     </Content>
   </ItemGroup>
 
@@ -24,5 +24,15 @@
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.Sdl2\Veldrid.Sdl2.csproj" />
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.StartupUtilities\Veldrid.StartupUtilities.csproj" />
   </ItemGroup>
+
+  <Target Name="IncludeGeneratedShaderContent" AfterTargets="AssignTargetPaths">
+    <Message Importance="high" Text="@(GeneratedShader)" />
+    <ItemGroup>
+      <ContentWithTargetPath Include="@(GeneratedShader)">
+        <TargetPath>Assets\Shaders.Generated\%(FileName)%(Extension)</TargetPath>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </ContentWithTargetPath>
+    </ItemGroup>
+  </Target>
 
 </Project>
