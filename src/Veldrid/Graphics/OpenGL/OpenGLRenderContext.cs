@@ -67,7 +67,7 @@ namespace Veldrid.Graphics.OpenGL
             _constantBuffersBySlot = new OpenGLConstantBuffer[_maxConstantBufferSlots];
             _newConstantBuffersBySlot = new OpenGLConstantBuffer[_maxConstantBufferSlots];
 
-            _maxTextureUnits = GL.GetInteger(GetPName.MaxTextureUnits);
+            _maxTextureUnits = GL.GetInteger(GetPName.MaxTextureImageUnits);
 
             _maxVertexAttributeSlots = GL.GetInteger(GetPName.MaxVertexAttribs);
             _vertexAttribDivisors = new int[_maxVertexAttributeSlots];
