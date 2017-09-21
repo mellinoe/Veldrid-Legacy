@@ -34,7 +34,6 @@ namespace Veldrid.NeoDemo
                 WindowTitle = "Veldrid NeoDemo"
             };
             RenderContextCreateInfo rcCI = new RenderContextCreateInfo();
-            rcCI.Backend = GraphicsBackend.Direct3D11; // TODO REMOVE
 
             VeldridStartup.CreateWindowAndRenderContext(ref windowCI, ref rcCI, out _window, out _rc);
             _window.Resized += () => _windowResized = true;
