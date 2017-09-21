@@ -6,13 +6,14 @@ namespace Veldrid.NeoDemo
 {
     public static class ShaderHelper
     {
-        public static Shader LoadShader(ResourceFactory factory, string name, ShaderStages stage)
+        public static Shader LoadShader(ResourceFactory factory, string setName, ShaderStages stage)
         {
-            return factory.CreateShader(stage, LoadBytecode(factory, name, stage));
+            return factory.CreateShader(stage, LoadBytecode(factory, setName, stage));
         }
 
-        public static CompiledShaderCode LoadBytecode(ResourceFactory factory, string name, ShaderStages stage)
+        public static CompiledShaderCode LoadBytecode(ResourceFactory factory, string setName, ShaderStages stage)
         {
+            string name = setName + "-" + stage.ToString().ToLower();
             GraphicsBackend backend = factory.BackendType;
 
             if (backend == GraphicsBackend.Vulkan || backend == GraphicsBackend.Direct3D11)
@@ -54,6 +55,13 @@ namespace Veldrid.NeoDemo
                     return ".330.glsl";
                 default: throw new InvalidOperationException("Invalid Graphics backend: " + backend);
             }
+        }
+
+        public static ShaderSet LoadSet(ResourceFactory factory, string setName, VertexInputLayout inputLayout)
+        {
+            Shader vertexShader = LoadShader(factory, setName, ShaderStages.Vertex);
+            Shader fragmentShader = LoadShader(factory, setName, ShaderStages.Fragment);
+            return factory.CreateShaderSet(inputLayout, vertexShader, fragmentShader);
         }
     }
 }

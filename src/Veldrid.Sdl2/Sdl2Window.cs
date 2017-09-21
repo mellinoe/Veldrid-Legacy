@@ -36,6 +36,8 @@ namespace Veldrid.Sdl2
         private BufferedValue<Point> _cachedPosition = new BufferedValue<Point>();
         private BufferedValue<Point> _cachedSize = new BufferedValue<Point>();
         private bool _continuousResizeReceived;
+        private string _cachedWindowTitle;
+        private bool _newWindowTitleReceived;
 
         public Sdl2Window(string title, int x, int y, int width, int height, SDL_WindowFlags flags, bool threadedProcessing)
         {
@@ -74,7 +76,14 @@ namespace Veldrid.Sdl2
 
         public IntPtr Handle => GetUnderlyingWindowHandle();
 
-        public string Title { get => SDL_GetWindowTitle(_window); set => SDL_SetWindowTitle(_window, value); }
+        public string Title { get => _cachedWindowTitle; set => SetWindowTitle(value); }
+
+        private void SetWindowTitle(string value)
+        {
+            _cachedWindowTitle = value;
+            _newWindowTitleReceived = true;
+        }
+
         public WindowState WindowState
         {
             get
@@ -271,6 +280,12 @@ namespace Veldrid.Sdl2
             {
                 _continuousResizeReceived = false;
                 RefreshCachedSize();
+            }
+
+            if (_newWindowTitleReceived)
+            {
+                _newWindowTitleReceived = false;
+                SDL_SetWindowTitle(_window, _cachedWindowTitle);
             }
 
             SDL_Event ev;

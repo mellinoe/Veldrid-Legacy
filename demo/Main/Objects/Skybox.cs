@@ -47,8 +47,8 @@ namespace Veldrid.NeoDemo.Objects
             _ib = factory.CreateIndexBuffer(s_indices.Length * sizeof(int), false);
             _ib.SetIndices(s_indices);
 
-            Shader vs = ShaderHelper.LoadShader(factory, "Skybox-vertex", ShaderStages.Vertex);
-            Shader fs = ShaderHelper.LoadShader(factory, "Skybox-fragment", ShaderStages.Fragment);
+            Shader vs = ShaderHelper.LoadShader(factory, "Skybox", ShaderStages.Vertex);
+            Shader fs = ShaderHelper.LoadShader(factory, "Skybox", ShaderStages.Fragment);
             VertexInputLayout inputLayout = factory.CreateInputLayout(
                 new VertexInputDescription(
                     12,

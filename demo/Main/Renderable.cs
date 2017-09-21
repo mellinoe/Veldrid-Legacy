@@ -20,7 +20,11 @@ namespace Veldrid.NeoDemo
 
     public abstract class CullRenderable : Renderable
     {
-        public abstract bool Cull(ref BoundingFrustum visibleFrustum);
+        public bool Cull(ref BoundingFrustum visibleFrustum)
+        {
+            return visibleFrustum.Contains(BoundingBox) == ContainmentType.Disjoint;
+        }
+
         public abstract BoundingBox BoundingBox { get; }
     }
 }

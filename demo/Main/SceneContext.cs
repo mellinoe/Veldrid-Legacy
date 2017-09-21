@@ -9,6 +9,7 @@ namespace Veldrid.NeoDemo
     {
         public ConstantBuffer ProjectionMatrixBuffer { get; private set; }
         public ConstantBuffer ViewMatrixBuffer { get; private set; }
+        public ConstantBuffer LightInfoBuffer { get; private set; }
         public Camera Camera { get; set; }
 
         public SceneContext()
@@ -19,6 +20,7 @@ namespace Veldrid.NeoDemo
         {
             ProjectionMatrixBuffer = rc.ResourceFactory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             ViewMatrixBuffer = rc.ResourceFactory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
+            LightInfoBuffer = rc.ResourceFactory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             if (Camera != null)
             {
                 ProjectionMatrixBuffer.SetData(Camera.ProjectionMatrix);

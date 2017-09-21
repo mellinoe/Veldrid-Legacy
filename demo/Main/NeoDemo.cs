@@ -1,6 +1,7 @@
 ﻿using ImGuiNET;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using Veldrid.Graphics;
 using Veldrid.NeoDemo.Objects;
 using Veldrid.Platform;
@@ -57,6 +58,14 @@ namespace Veldrid.NeoDemo
             Skybox skybox = Skybox.LoadDefaultSkybox();
             skybox.CreateDeviceObjects(_rc);
             _scene.AddRenderable(skybox);
+
+            ImageSharpTexture texData = new ImageSharpTexture(AssetHelper.GetPath("Textures/cloudtop/cloudtop_up.png"));
+            TexturedMesh cube = new TexturedMesh(
+                new SimpleMeshDataProvider(CubeModel.Vertices, CubeModel.Indices),
+                texData);
+            cube.Transform.Scale = new Vector3(10);
+            cube.CreateDeviceObjects(_rc);
+            _scene.AddRenderable(cube);
         }
 
         public void Run()

@@ -31,10 +31,12 @@ namespace Veldrid.NeoDemo.Objects
                 false);
             _ib = factory.CreateIndexBuffer(new ushort[] { 0, 1, 2, 0, 2, 3 }, false);
 
-            Shader vs = ShaderHelper.LoadShader(factory, "Grid-vertex", ShaderStages.Vertex);
-            Shader fs = ShaderHelper.LoadShader(factory, "Grid-fragment", ShaderStages.Fragment);
+            Shader vs = ShaderHelper.LoadShader(factory, "Grid", ShaderStages.Vertex);
+            Shader fs = ShaderHelper.LoadShader(factory, "Grid", ShaderStages.Fragment);
             VertexInputLayout inputLayout = factory.CreateInputLayout(
-                new VertexInputDescription(VertexPosition.SizeInBytes, new VertexInputElement("Position", VertexSemanticType.Position, VertexElementFormat.Float3)));
+                new VertexInputDescription(
+                    VertexPosition.SizeInBytes,
+                    new VertexInputElement("Position", VertexSemanticType.Position, VertexElementFormat.Float3)));
             _shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
             _resourceBindings = factory.CreateShaderResourceBindingSlots(
                 _shaderSet,
@@ -44,7 +46,8 @@ namespace Veldrid.NeoDemo.Objects
                 new ShaderResourceDescription("GridSampler", ShaderResourceType.Sampler));
 
             const int gridSize = 64;
-            RgbaByte[] pixels = CreateGridTexturePixels(gridSize, 1, RgbaByte.White, new RgbaByte());
+            RgbaByte borderColor = new RgbaByte(255, 255, 255, 150);
+            RgbaByte[] pixels = CreateGridTexturePixels(gridSize, 1, borderColor, new RgbaByte());
             _gridTexture = factory.CreateTexture(pixels, gridSize, gridSize, PixelFormat.R8_G8_B8_A8_UInt);
             _textureBinding = factory.CreateShaderTextureBinding(_gridTexture);
 
@@ -59,11 +62,6 @@ namespace Veldrid.NeoDemo.Objects
             _gridTexture.Dispose();
             _textureBinding.Dispose();
             _rasterizerState.Dispose();
-        }
-
-        public override bool Cull(ref BoundingFrustum visibleFrustum)
-        {
-            return visibleFrustum.Contains(_boundingBox) == ContainmentType.Disjoint;
         }
 
         public override void Render(RenderContext rc, SceneContext sc, RenderPasses renderPass)
