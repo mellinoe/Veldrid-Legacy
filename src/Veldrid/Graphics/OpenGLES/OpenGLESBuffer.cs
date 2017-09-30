@@ -12,14 +12,14 @@ namespace Veldrid.Graphics.OpenGLES
         private int _bufferID;
         private int _bufferSize;
 
-        public OpenGLESBuffer(BufferTarget target) : this(target, BufferUsageHint.DynamicDraw) { }
-        public OpenGLESBuffer(BufferTarget target, BufferUsageHint bufferUsage)
+        public OpenGLESBuffer(BufferTarget target) : this(target, 0, BufferUsageHint.DynamicDraw) { }
+        public OpenGLESBuffer(BufferTarget target, int sizeInBytes, BufferUsageHint bufferUsage)
         {
             _bufferID = GL.GenBuffer();
             Utilities.CheckLastGLES3Error();
             _bufferUsage = bufferUsage;
             _target = target;
-            _bufferSize = 0;
+            EnsureBufferSize(sizeInBytes);
         }
 
         public int BufferSize => _bufferSize;

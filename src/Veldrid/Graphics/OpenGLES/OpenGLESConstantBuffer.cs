@@ -5,12 +5,9 @@ namespace Veldrid.Graphics.OpenGLES
 {
     public class OpenGLESConstantBuffer : OpenGLESBuffer, ConstantBuffer
     {
-        public OpenGLESConstantBuffer() : base(BufferTarget.UniformBuffer) { }
-
-        public OpenGLESConstantBuffer(ConstantBufferDataProvider dataProvider) : base(BufferTarget.UniformBuffer)
-        {
-            dataProvider.SetData(this);
-        }
+        public OpenGLESConstantBuffer(int sizeInBytes)
+            : base(BufferTarget.UniformBuffer, sizeInBytes, BufferUsageHint.DynamicDraw)
+        { }
 
         internal void BindToBlock(int program, int uniformBlockIndex, int dataSize, int uniformBindingIndex)
         {

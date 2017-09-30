@@ -13,7 +13,7 @@ namespace Veldrid.Graphics.OpenGLES
 
         public override ConstantBuffer CreateConstantBuffer(int sizeInBytes)
         {
-            return new OpenGLESConstantBuffer();
+            return new OpenGLESConstantBuffer(sizeInBytes);
         }
 
         public override Framebuffer CreateFramebuffer()
