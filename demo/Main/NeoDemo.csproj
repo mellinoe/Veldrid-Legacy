@@ -7,6 +7,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssetsDir>$(MSBuildThisFileDirectory)..\Assets</AssetsDir>
     <ShaderOutputPath>$(AssetsDir)\Shaders.Generated</ShaderOutputPath>
+    <ProcessedShaderSetDir>$(ShaderOutputPath)</ProcessedShaderSetDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,13 +18,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ShaderGen.Primitives" Version="1.0.2" />
-    <PackageReference Include="ShaderGen.Build" Version="1.0.3" PrivateAssets="All" />
+    <PackageReference Include="ShaderGen.Primitives" Version="1.0.3" />
+    <PackageReference Include="ShaderGen.Build" Version="1.0.6" PrivateAssets="All" />
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid\Veldrid.csproj" />
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.ImGui\Veldrid.ImGui.csproj" />
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.Sdl2\Veldrid.Sdl2.csproj" />
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.StartupUtilities\Veldrid.StartupUtilities.csproj" />
   </ItemGroup>
+
+  <Import Project="$(RepositoryRootDirectory)\src\Veldrid.ShaderGen\Veldrid.ShaderGen.SourceRef.targets" />
 
   <Target Name="IncludeGeneratedShaderContent" AfterTargets="AssignTargetPaths">
     <Message Importance="high" Text="@(GeneratedShader)" />

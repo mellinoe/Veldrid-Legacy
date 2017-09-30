@@ -24,6 +24,21 @@ namespace Veldrid.Graphics
         /// <summary>
         /// Constructs a new MaterialVertexInput.
         /// </summary>
+        public VertexInputDescription(params VertexInputElement[] elements)
+        {
+            Elements = elements;
+            int totalSIze = 0;
+            foreach (VertexInputElement element in elements)
+            {
+                totalSIze += element.SizeInBytes;
+            }
+
+            VertexSizeInBytes = totalSIze;
+        }
+
+        /// <summary>
+        /// Constructs a new MaterialVertexInput.
+        /// </summary>
         public VertexInputDescription(int vertexSizeInBytes, params VertexInputElement[] elements)
         {
             VertexSizeInBytes = vertexSizeInBytes;

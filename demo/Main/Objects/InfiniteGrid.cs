@@ -31,19 +31,11 @@ namespace Veldrid.NeoDemo.Objects
                 false);
             _ib = factory.CreateIndexBuffer(new ushort[] { 0, 1, 2, 0, 2, 3 }, false);
 
-            Shader vs = ShaderHelper.LoadShader(factory, "Grid", ShaderStages.Vertex);
-            Shader fs = ShaderHelper.LoadShader(factory, "Grid", ShaderStages.Fragment);
-            VertexInputLayout inputLayout = factory.CreateInputLayout(
-                new VertexInputDescription(
-                    VertexPosition.SizeInBytes,
-                    new VertexInputElement("Position", VertexSemanticType.Position, VertexElementFormat.Float3)));
-            _shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            _resourceBindings = factory.CreateShaderResourceBindingSlots(
-                _shaderSet,
-                new ShaderResourceDescription("ProjectionBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("ViewBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("GridTexture", ShaderResourceType.Texture),
-                new ShaderResourceDescription("GridSampler", ShaderResourceType.Sampler));
+            GridSetInfo.CreateAll(
+                factory,
+                ShaderHelper.LoadBytecode(factory, "Grid", ShaderStages.Vertex),
+                ShaderHelper.LoadBytecode(factory, "Grid", ShaderStages.Fragment),
+                out _shaderSet, out _resourceBindings);
 
             const int gridSize = 64;
             RgbaByte borderColor = new RgbaByte(255, 255, 255, 150);

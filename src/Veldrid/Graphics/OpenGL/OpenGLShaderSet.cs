@@ -67,7 +67,7 @@ namespace Veldrid.Graphics.OpenGL
 
             GL.LinkProgram(ProgramID);
 
-#if DEBUG
+#if DEBUG && GL_VALIDATE_VERTEX_INPUT_ELEMENTS
             slot = 0;
             foreach (VertexInputDescription input in inputLayout.InputDescriptions)
             {

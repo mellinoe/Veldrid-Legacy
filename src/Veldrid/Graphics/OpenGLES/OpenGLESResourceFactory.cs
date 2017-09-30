@@ -26,7 +26,7 @@ namespace Veldrid.Graphics.OpenGLES
             return new OpenGLESIndexBuffer(isDynamic, OpenGLESFormats.MapIndexFormat(format));
         }
 
-        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode)
+        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode, string entryPoint)
         {
             return new OpenGLESCompiledShaderCode(shaderCode);
         }

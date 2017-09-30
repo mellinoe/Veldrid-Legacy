@@ -8,7 +8,7 @@
 Texture2D FontTexture : register(t0);
 sampler FontSampler : register(s0);
 
-float4 PS(PS_INPUT input) : SV_Target
+float4 FS(PS_INPUT input) : SV_Target
 {
     float4 out_col = input.col * FontTexture.Sample(FontSampler, input.uv);
     return out_col;

@@ -39,25 +39,12 @@ namespace Veldrid.NeoDemo.Objects
             _vb = _meshData.CreateVertexBuffer(factory);
             _ib = _meshData.CreateIndexBuffer(factory, out _indexCount);
 
-            VertexInputLayout inputLayout = factory.CreateInputLayout(new VertexInputDescription(
-                VertexPositionNormalTexture.SizeInBytes,
-                new VertexInputElement[]
-                {
-                    new VertexInputElement("Position", VertexSemanticType.Position, VertexElementFormat.Float3),
-                    new VertexInputElement("Normal", VertexSemanticType.Normal, VertexElementFormat.Float3),
-                    new VertexInputElement("TexCoords", VertexSemanticType.TextureCoordinate, VertexElementFormat.Float2)
-                }));
-            _shaderSet = ShaderHelper.LoadSet(factory, "TexturedMesh", inputLayout);
-
-            _resourceSlots = factory.CreateShaderResourceBindingSlots(
-                _shaderSet,
-                new ShaderResourceDescription("ProjectionBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("ViewBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("WorldBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("InverseTransposeWorldBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("LightInfoBuffer", Unsafe.SizeOf<LightInfo>()),
-                new ShaderResourceDescription("SurfaceTexture", ShaderResourceType.Texture),
-                new ShaderResourceDescription("SurfaceSampler", ShaderResourceType.Sampler));
+            TexturedMeshSetInfo.CreateAll(
+                factory,
+                ShaderHelper.LoadBytecode(factory, "TexturedMesh", ShaderStages.Vertex),
+                ShaderHelper.LoadBytecode(factory, "TexturedMesh", ShaderStages.Fragment),
+                out _shaderSet,
+                out _resourceSlots);
 
             _worldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _inverseTransposeWorldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);

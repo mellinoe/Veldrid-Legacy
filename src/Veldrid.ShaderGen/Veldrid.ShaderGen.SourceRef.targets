@@ -1,0 +1,23 @@
+<Project>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)Veldrid.ShaderGen.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ShaderGenPostTargets Include="_VeldridShaderGenPostTarget" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <ShaderProcessorAssembly>$(MSBuildThisFileDirectory)..\..\bin\$(Configuration)\Veldrid.ShaderGen\netstandard2.0\Veldrid.ShaderGen.dll</ShaderProcessorAssembly>
+    <ShaderProcessorArgs>$(ProcessedShaderSetDir)</ShaderProcessorArgs>
+  </PropertyGroup>
+
+  <Target Name="_VeldridShaderGenPostTarget">
+    <Error Condition="'$(ProcessedShaderSetDir)' == ''" Text="ProcessedShaderSetDir must be set." />
+    <ItemGroup>
+      <Compile Include="$(ProcessedShaderSetDir)\*.cs">
+      </Compile>
+    </ItemGroup>
+  </Target>
+
+</Project>

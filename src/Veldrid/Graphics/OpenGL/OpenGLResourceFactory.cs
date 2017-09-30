@@ -29,7 +29,7 @@ namespace Veldrid.Graphics.OpenGL
             return new OpenGLIndexBuffer(isDynamic, OpenGLFormats.MapIndexFormat(format));
         }
 
-        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode)
+        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode, string entryPoint)
         {
             return new OpenGLCompiledShaderCode(shaderCode);
         }

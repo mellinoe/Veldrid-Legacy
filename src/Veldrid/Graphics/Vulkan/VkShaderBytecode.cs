@@ -9,11 +9,14 @@ namespace Veldrid.Graphics.Vulkan
             ShaderBytes = shaderBytes;
         }
 
-        public VkShaderBytecode(ShaderStages type, string shaderCode)
+        public VkShaderBytecode(ShaderStages type, string shaderCode, string entryPoint)
         {
-            // TODO: Try to use glslangvalidator if it exists.
-            // glslangValidator -H -V -o <tempfile> <inputfile>
-            throw new NotImplementedException();
+            if (!GlslangValidatorTool.IsAvailable())
+            {
+                throw new VeldridException("glslangValidator is not available to compile GLSL to SPIR-V.");
+            }
+
+            ShaderBytes = GlslangValidatorTool.CompileBytecode(type, shaderCode, entryPoint);
         }
 
         public byte[] ShaderBytes { get; }

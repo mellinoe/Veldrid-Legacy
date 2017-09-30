@@ -156,9 +156,9 @@ namespace Veldrid.Graphics.Vulkan
             return new VkShaderBytecode(data);
         }
 
-        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode)
+        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode, string entryPoint)
         {
-            return new VkShaderBytecode(type, shaderCode);
+            return new VkShaderBytecode(type, shaderCode, entryPoint);
         }
 
         protected override BlendState CreateCustomBlendStateCore(

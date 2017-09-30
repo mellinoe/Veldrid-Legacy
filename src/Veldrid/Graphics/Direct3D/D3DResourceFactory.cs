@@ -40,30 +40,8 @@ namespace Veldrid.Graphics.Direct3D
             return new D3DIndexBuffer(_device, sizeInBytes, isDynamic, D3DFormats.VeldridToD3DIndexFormat(format));
         }
 
-        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode)
+        public override CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode, string entryPoint)
         {
-            string entryPoint;
-            switch (type)
-            {
-                case ShaderStages.Vertex:
-                    entryPoint = "VS";
-                    break;
-                case ShaderStages.TessellationControl:
-                    entryPoint = "HS";
-                    break;
-                case ShaderStages.TessellationEvaluation:
-                    entryPoint = "DS";
-                    break;
-                case ShaderStages.Geometry:
-                    entryPoint = "GS";
-                    break;
-                case ShaderStages.Fragment:
-                    entryPoint = "PS";
-                    break;
-                default:
-                    throw Illegal.Value<ShaderStages>();
-            }
-
             string profile;
             switch (type)
             {

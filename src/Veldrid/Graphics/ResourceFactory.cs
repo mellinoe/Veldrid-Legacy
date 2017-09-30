@@ -92,7 +92,10 @@ namespace Veldrid.Graphics
         /// <returns>A new <see cref="IndexBuffer"/></returns>
         public abstract IndexBuffer CreateIndexBuffer(int sizeInBytes, bool isDynamic, IndexFormat format);
 
-        public abstract CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode);
+        public CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode)
+            => ProcessShaderCode(type, shaderCode, GetDefaultEntryPoint(type));
+
+        public abstract CompiledShaderCode ProcessShaderCode(ShaderStages type, string shaderCode, string entryPoint);
 
         public abstract CompiledShaderCode LoadProcessedShader(byte[] data);
 
@@ -502,5 +505,23 @@ namespace Veldrid.Graphics
             bool isScissorTestEnabled);
 
         protected abstract GraphicsBackend PlatformGetGraphicsBackend();
+
+        private string GetDefaultEntryPoint(ShaderStages type)
+        {
+            switch (type)
+            {
+                case ShaderStages.Vertex:
+                    return "VS";
+                case ShaderStages.TessellationControl:
+                    return "TC";
+                case ShaderStages.TessellationEvaluation:
+                    return "TE";
+                case ShaderStages.Geometry:
+                    return "GS";
+                case ShaderStages.Fragment:
+                    return "FS";
+                default: throw Illegal.Value<ShaderStages>();
+            }
+        }
     }
 }

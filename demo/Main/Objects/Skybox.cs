@@ -47,19 +47,12 @@ namespace Veldrid.NeoDemo.Objects
             _ib = factory.CreateIndexBuffer(s_indices.Length * sizeof(int), false);
             _ib.SetIndices(s_indices);
 
-            Shader vs = ShaderHelper.LoadShader(factory, "Skybox", ShaderStages.Vertex);
-            Shader fs = ShaderHelper.LoadShader(factory, "Skybox", ShaderStages.Fragment);
-            VertexInputLayout inputLayout = factory.CreateInputLayout(
-                new VertexInputDescription(
-                    12,
-                    new VertexInputElement("Position", VertexSemanticType.Position, VertexElementFormat.Float3)));
-            _shaderSet = factory.CreateShaderSet(inputLayout, vs, fs);
-            _resourceSlots = factory.CreateShaderResourceBindingSlots(
-                _shaderSet,
-                new ShaderResourceDescription("ProjectionBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("ViewBuffer", ShaderConstantType.Matrix4x4),
-                new ShaderResourceDescription("CubeTexture", ShaderResourceType.Texture),
-                new ShaderResourceDescription("CubeSampler", ShaderResourceType.Sampler));
+            SkyboxSetInfo.CreateAll(
+                factory,
+                ShaderHelper.LoadBytecode(factory, "Skybox", ShaderStages.Vertex),
+                ShaderHelper.LoadBytecode(factory, "Skybox", ShaderStages.Fragment),
+                out _shaderSet,
+                out _resourceSlots);
 
             _viewMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
 
