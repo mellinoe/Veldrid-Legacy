@@ -65,7 +65,7 @@ namespace Veldrid.NeoDemo
             cube.CreateDeviceObjects(_rc);
             _scene.AddRenderable(cube);
 
-            Simple2DObject texDrawer = new Simple2DObject(texData);
+            Simple2DObject texDrawer = new Simple2DObject(texData, _window);
             texDrawer.CreateDeviceObjects(_rc);
             _scene.AddRenderable(texDrawer);
         }
