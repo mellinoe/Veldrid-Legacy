@@ -53,6 +53,16 @@ namespace Veldrid.NeoDemo
             }
         }
 
+        public void RenderAllStages(RenderContext rc, SceneContext sc)
+        {
+            rc.SetFramebuffer(sc.ShadowMapFramebuffer);
+            Render(rc, sc, RenderPasses.ShadowMap, null);
+            rc.SetDefaultFramebuffer();
+            Render(rc, sc, RenderPasses.Standard, null);
+            Render(rc, sc, RenderPasses.AlphaBlend, null);
+            Render(rc, sc, RenderPasses.Overlay, null);
+        }
+
         public void Render(
             RenderContext rc,
             SceneContext sc,
@@ -60,8 +70,9 @@ namespace Veldrid.NeoDemo
             Comparer<RenderItemIndex> comparer = null)
         {
             _renderQueue.Clear();
-            _cullableStage.Clear();
             BoundingFrustum frustum = new BoundingFrustum(_camera.ViewMatrix * _camera.ProjectionMatrix);
+
+            _cullableStage.Clear();
             CollectVisibleObjects(ref frustum, pass, _cullableStage);
             _renderQueue.AddRange(_cullableStage, _camera.Position);
 
@@ -85,6 +96,7 @@ namespace Veldrid.NeoDemo
         }
 
         private readonly RenderQueue _renderQueue = new RenderQueue();
+        private readonly List<CullRenderable> _shadowmapStage = new List<CullRenderable>();
         private readonly List<CullRenderable> _cullableStage = new List<CullRenderable>();
         private readonly List<Renderable> _renderableStage = new List<Renderable>();
 

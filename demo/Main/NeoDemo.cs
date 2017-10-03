@@ -1,6 +1,5 @@
 ﻿using ImGuiNET;
 using System;
-using System.Collections.Generic;
 using System.Numerics;
 using Veldrid.Graphics;
 using Veldrid.NeoDemo.Objects;
@@ -65,6 +64,10 @@ namespace Veldrid.NeoDemo
             cube.Transform.Scale = new Vector3(10);
             cube.CreateDeviceObjects(_rc);
             _scene.AddRenderable(cube);
+
+            Simple2DObject texDrawer = new Simple2DObject(texData);
+            texDrawer.CreateDeviceObjects(_rc);
+            _scene.AddRenderable(texDrawer);
         }
 
         public void Run()
@@ -129,9 +132,7 @@ namespace Veldrid.NeoDemo
             _rc.Viewport = new Viewport(0, 0, width, height);
             _rc.ClearBuffer(RgbaFloat.CornflowerBlue);
 
-            _scene.Render(_rc, _sc, RenderPasses.Standard, null);
-            _scene.Render(_rc, _sc, RenderPasses.AlphaBlend, null);
-            _scene.Render(_rc, _sc, RenderPasses.Overlay, null);
+            _scene.RenderAllStages(_rc, _sc);
 
             _rc.SwapBuffers();
         }
@@ -146,7 +147,7 @@ namespace Veldrid.NeoDemo
             WindowCreateInfo windowCI = new WindowCreateInfo
             {
                 X = _window.X,
-                Y  = _window.Y,
+                Y = _window.Y,
                 WindowWidth = _window.Width,
                 WindowHeight = _window.Height,
                 WindowInitialState = _window.WindowState,

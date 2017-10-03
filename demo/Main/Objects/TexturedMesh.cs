@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Veldrid.Graphics;
+using System;
 
 namespace Veldrid.NeoDemo.Objects
 {
@@ -21,6 +22,9 @@ namespace Veldrid.NeoDemo.Objects
         private ConstantBuffer _inverseTransposeWorldBuffer;
         private DeviceTexture _texture;
         private ShaderTextureBinding _textureBinding;
+
+        private ShaderSet _mapSet;
+        private ShaderResourceBindingSlots _mapSlots;
 
         public Transform Transform => _transform;
 
@@ -45,6 +49,12 @@ namespace Veldrid.NeoDemo.Objects
                 ShaderHelper.LoadBytecode(factory, "TexturedMesh", ShaderStages.Fragment),
                 out _shaderSet,
                 out _resourceSlots);
+            ShadowDepthSetInfo.CreateAll(
+                factory,
+                ShaderHelper.LoadBytecode(factory, "ShadowDepth", ShaderStages.Vertex),
+                ShaderHelper.LoadBytecode(factory, "ShadowDepth", ShaderStages.Fragment),
+                out _mapSet,
+                out _mapSlots);
 
             _worldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _inverseTransposeWorldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
@@ -69,6 +79,34 @@ namespace Veldrid.NeoDemo.Objects
         }
 
         public override void Render(RenderContext rc, SceneContext sc, RenderPasses renderPass)
+        {
+            if (renderPass == RenderPasses.ShadowMap)
+            {
+                RenderShadowMap(rc, sc);
+            }
+            else if (renderPass == RenderPasses.Standard)
+            {
+                RenderStandard(rc, sc);
+            }
+        }
+
+        private void RenderShadowMap(RenderContext rc, SceneContext sc)
+        {
+            Matrix4x4 world = _transform.GetTransformMatrix();
+            _worldBuffer.SetData(ref world);
+            _inverseTransposeWorldBuffer.SetData(Utilities.CalculateInverseTranspose(ref world));
+
+            rc.VertexBuffer = _vb;
+            rc.IndexBuffer = _ib;
+            rc.ShaderSet = _mapSet;
+            rc.ShaderResourceBindingSlots = _mapSlots;
+            rc.SetConstantBuffer(0, sc.LightProjectionBuffer);
+            rc.SetConstantBuffer(1, sc.LightViewBuffer);
+            rc.SetConstantBuffer(2, _worldBuffer);
+            rc.DrawIndexedPrimitives(_indexCount);
+        }
+
+        private void RenderStandard(RenderContext rc, SceneContext sc)
         {
             Matrix4x4 world = _transform.GetTransformMatrix();
             _worldBuffer.SetData(ref world);
