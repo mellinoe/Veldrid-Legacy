@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using Veldrid.Graphics;
 
 namespace Veldrid
@@ -9,7 +10,7 @@ namespace Veldrid
     /// <summary>
     /// An axis-aligned bounding-box (AABB).
     /// </summary>
-    public struct BoundingBox: IEquatable<BoundingBox>
+    public struct BoundingBox : IEquatable<BoundingBox>
     {
         public Vector3 Min;
         public Vector3 Max;
@@ -94,14 +95,30 @@ namespace Veldrid
             return new BoundingBox(min, max);
         }
 
-        public static unsafe BoundingBox CreateFromVertices(Vector3* vertices, int numVertices, Quaternion rotation, Vector3 offset, Vector3 scale)
+        public static unsafe BoundingBox CreateFromVertices(
+            Vector3* vertices,
+            int numVertices,
+            Quaternion rotation,
+            Vector3 offset,
+            Vector3 scale)
+            => CreateFromVertices(vertices, Unsafe.SizeOf<Vector3>(), numVertices, rotation, offset, scale);
+        public static unsafe BoundingBox CreateFromVertices(
+            Vector3* vertexPtr,
+            int numVertices,
+            int vertexStride,
+            Quaternion rotation,
+            Vector3 offset,
+            Vector3 scale)
         {
-            Vector3 min = Vector3.Transform(vertices[0], rotation);
-            Vector3 max = Vector3.Transform(vertices[0], rotation);
+            byte* bytePtr = (byte*)vertexPtr;
+            Vector3 min = Vector3.Transform(*vertexPtr, rotation);
+            Vector3 max = Vector3.Transform(*vertexPtr, rotation);
 
             for (int i = 1; i < numVertices; i++)
             {
-                Vector3 pos = Vector3.Transform(vertices[i], rotation);
+                bytePtr = bytePtr + vertexStride;
+                vertexPtr = (Vector3*)bytePtr;
+                Vector3 pos = Vector3.Transform(*vertexPtr, rotation);
 
                 if (min.X > pos.X) min.X = pos.X;
                 if (max.X < pos.X) max.X = pos.X;

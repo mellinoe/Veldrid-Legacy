@@ -71,5 +71,29 @@ namespace Veldrid
 
             return new BoundingSphere(center, (float)Math.Sqrt(maxDistanceSquared));
         }
+
+        public static unsafe BoundingSphere CreateFromPoints(Vector3* pointPtr, int numPoints, int stride)
+        {
+            Vector3 center = Vector3.Zero;
+            StrideHelper<Vector3> helper = new StrideHelper<Vector3>(pointPtr, numPoints, stride);
+            foreach (Vector3 pos in helper)
+            {
+                center += pos;
+            }
+
+            center /= numPoints;
+
+            float maxDistanceSquared = 0f;
+            foreach (Vector3 pos in helper)
+            {
+                float distSq = Vector3.DistanceSquared(center, pos);
+                if (distSq > maxDistanceSquared)
+                {
+                    maxDistanceSquared = distSq;
+                }
+            }
+
+            return new BoundingSphere(center, (float)Math.Sqrt(maxDistanceSquared));
+        }
     }
 }
