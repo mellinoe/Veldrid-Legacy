@@ -8,15 +8,14 @@ namespace Shaders
 {
     public class ShadowDepth
     {
-        public Matrix4x4 Projection;
-        public Matrix4x4 View;
+        public Matrix4x4 ViewProjection;
         public Matrix4x4 World;
 
         [VertexShader]
         public FragmentInput VS(VertexInput input)
         {
             FragmentInput output;
-            output.Position = Mul(Projection, Mul(View, Mul(World, new Vector4(input.Position, 1))));
+            output.Position = Mul(ViewProjection, Mul(World, new Vector4(input.Position, 1)));
             return output;
         }
 

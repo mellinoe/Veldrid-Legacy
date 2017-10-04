@@ -8,13 +8,13 @@ namespace Veldrid.NeoDemo
         public Vector3 Position;
         public float Range;
         public Vector3 Color;
-        public float __padding;
+        public float _padding;
     }
 
     public struct PointLightsInfo
     {
         public int NumActiveLights;
-        public Vector3 __padding;
+        public Vector3 _padding;
         [ArraySize(4)] public PointLightInfo[] PointLights;
 
         public Blittable GetBlittable()
@@ -32,7 +32,7 @@ namespace Veldrid.NeoDemo
         public struct Blittable
         {
             public int NumActiveLights;
-            public Vector3 __padding;
+            public Vector3 _padding;
             public PointLightInfo PointLights0;
             public PointLightInfo PointLights1;
             public PointLightInfo PointLights2;

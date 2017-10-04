@@ -138,9 +138,8 @@ namespace Veldrid.NeoDemo.Objects
             rc.IndexBuffer = _ib;
             rc.ShaderSet = _mapSet;
             rc.ShaderResourceBindingSlots = _mapSlots;
-            rc.SetConstantBuffer(0, sc.LightProjectionBuffer);
-            rc.SetConstantBuffer(1, sc.LightViewBuffer);
-            rc.SetConstantBuffer(2, _worldBuffer);
+            rc.SetConstantBuffer(0, sc.LightViewProjectionBuffer0);
+            rc.SetConstantBuffer(1, _worldBuffer);
             rc.DrawIndexedPrimitives(_indexCount);
         }
 
@@ -158,18 +157,24 @@ namespace Veldrid.NeoDemo.Objects
             rc.SetConstantBuffer(1, sc.ViewMatrixBuffer);
             rc.SetConstantBuffer(2, _worldBuffer);
             rc.SetConstantBuffer(3, _inverseTransposeWorldBuffer);
-            rc.SetConstantBuffer(4, sc.LightProjectionBuffer);
-            rc.SetConstantBuffer(5, sc.LightViewBuffer);
-            rc.SetConstantBuffer(6, sc.LightInfoBuffer);
-            rc.SetConstantBuffer(7, sc.CameraInfoBuffer);
-            rc.SetConstantBuffer(8, sc.PointLightsBuffer);
-            rc.SetConstantBuffer(9, _materialPropertiesBuffer);
-            rc.SetTexture(10, _textureBinding);
-            rc.SetSamplerState(11, rc.Anisox4Sampler);
-            rc.SetTexture(12, _alphamapBinding);
-            rc.SetSamplerState(13, rc.LinearSampler);
-            rc.SetTexture(14, sc.ShadowMapBinding);
-            rc.SetSamplerState(15, rc.PointSampler);
+
+            rc.SetConstantBuffer(4, sc.LightViewProjectionBuffer0);
+            rc.SetConstantBuffer(5, sc.LightViewProjectionBuffer0);
+            rc.SetConstantBuffer(6, sc.LightViewProjectionBuffer0);
+
+            rc.SetConstantBuffer(7, sc.LightInfoBuffer);
+
+            rc.SetConstantBuffer(8, sc.CameraInfoBuffer);
+            rc.SetConstantBuffer(9, sc.PointLightsBuffer);
+            rc.SetConstantBuffer(10, _materialPropertiesBuffer);
+            rc.SetTexture(11, _textureBinding);
+            rc.SetSamplerState(12, rc.Anisox4Sampler);
+            rc.SetTexture(13, _alphamapBinding);
+            rc.SetSamplerState(14, rc.LinearSampler);
+            rc.SetTexture(15, sc.ShadowMapBinding);
+            rc.SetTexture(16, sc.ShadowMapBinding);
+            rc.SetTexture(17, sc.ShadowMapBinding);
+            rc.SetSamplerState(18, rc.PointSampler);
 
             rc.DrawIndexedPrimitives(_indexCount);
         }

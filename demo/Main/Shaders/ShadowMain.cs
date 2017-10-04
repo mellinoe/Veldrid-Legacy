@@ -13,8 +13,9 @@ namespace Shaders
         public Matrix4x4 View;
         public Matrix4x4 World;
         public Matrix4x4 InverseTransposeWorld;
-        public Matrix4x4 LightProjection;
-        public Matrix4x4 LightView;
+        public Matrix4x4 LightViewProjection1;
+        public Matrix4x4 LightViewProjection2;
+        public Matrix4x4 LightViewProjection3;
         public DirectionalLightInfo LightInfo;
         public CameraInfo CameraInfo;
         public PointLightsInfo PointLights;
@@ -24,7 +25,9 @@ namespace Shaders
         public SamplerResource RegularSampler;
         public Texture2DResource AlphaMap;
         public SamplerResource AlphaMapSampler;
-        public Texture2DResource ShadowMap;
+        public Texture2DResource ShadowMapNear;
+        public Texture2DResource ShadowMapMid;
+        public Texture2DResource ShadowMapFar;
         public SamplerResource ShadowMapSampler;
 
         public struct VertexInput
@@ -38,7 +41,9 @@ namespace Shaders
         {
             [PositionSemantic] public Vector4 Position;
             [PositionSemantic] public Vector3 Position_WorldSpace;
-            [TextureCoordinateSemantic] public Vector4 LightPosition;
+            [TextureCoordinateSemantic] public Vector4 LightPosition1;
+            [TextureCoordinateSemantic] public Vector4 LightPosition2;
+            [TextureCoordinateSemantic] public Vector4 LightPosition3;
             [NormalSemantic] public Vector3 Normal;
             [TextureCoordinateSemantic] public Vector2 TexCoord;
         }
@@ -60,15 +65,113 @@ namespace Shaders
 
             //store worldspace projected to light clip space with
             //a texcoord semantic to be interpolated across the surface
-            output.LightPosition = Mul(World, new Vector4(input.Position, 1));
-            output.LightPosition = Mul(LightView, output.LightPosition);
-            output.LightPosition = Mul(LightProjection, output.LightPosition);
+            output.LightPosition1 = Mul(World, new Vector4(input.Position, 1));
+            output.LightPosition1 = Mul(LightViewProjection1, output.LightPosition1);
+
+            output.LightPosition2 = Mul(World, new Vector4(input.Position, 1));
+            output.LightPosition2 = Mul(LightViewProjection2, output.LightPosition2);
+
+            output.LightPosition3 = Mul(World, new Vector4(input.Position, 1));
+            output.LightPosition3 = Mul(LightViewProjection3, output.LightPosition3);
 
             return output;
         }
 
         [FragmentShader]
         public Vector4 FS(PixelInput input)
+        {
+            Vector3 depthBounds = new Vector3(20, 40, 60);
+            Vector3 lightDir = -LightInfo.Direction;
+            Vector4 color = new Vector4(0.3f, 0.3f, 0.3f, 1.0f); //you can use whatever color you want for shadows
+            float shadowBias = 0.0005f;
+            float lightIntensity;
+
+            float inputPositionInv = 1.0f / input.Position.W;
+            float lightPositionInv1 = 1.0f / input.LightPosition1.W;
+            float lightPositionInv2 = 1.0f / input.LightPosition2.W;
+            float lightPositionInv3 = 1.0f / input.LightPosition3.W;
+
+            float depthTest = input.Position.Z * inputPositionInv;
+
+            Vector2 shadowCoords_0 = new Vector2(input.LightPosition1.X * lightPositionInv1 * 0.5f + 0.5f, -input.LightPosition1.Y * lightPositionInv1 * 0.5f + 0.5f);
+            Vector2 shadowCoords_1 = new Vector2(input.LightPosition2.X * lightPositionInv2 * 0.5f + 0.5f, -input.LightPosition2.Y * lightPositionInv2 * 0.5f + 0.5f);
+            Vector2 shadowCoords_2 = new Vector2(input.LightPosition3.X * lightPositionInv3 * 0.5f + 0.5f, -input.LightPosition3.Y * lightPositionInv3 * 0.5f + 0.5f);
+
+            float lightDepthValues_0 = input.LightPosition1.Z * lightPositionInv1;
+            float lightDepthValues_1 = input.LightPosition2.Z * lightPositionInv2;
+            float lightDepthValues_2 = input.LightPosition3.Z * lightPositionInv3;
+
+            int shadowIndex = 3;
+
+            Vector2 shadowCoords = new Vector2(0, 0);
+            float lightDepthValue = 0;
+            if ((Saturate(shadowCoords_0.X) == shadowCoords_0.X) && (Saturate(shadowCoords_0.Y) == shadowCoords_0.Y) && (depthTest > (1.0f - (depthBounds.X * inputPositionInv))))
+            {
+                shadowIndex = 0;
+                shadowCoords = shadowCoords_0;
+                lightDepthValue = lightDepthValues_0;
+            }
+            else if ((Saturate(shadowCoords_1.X) == shadowCoords_1.X) && (Saturate(shadowCoords_1.Y) == shadowCoords_1.Y) && (depthTest > (1.0f - (depthBounds.Y * inputPositionInv))))
+            {
+                shadowIndex = 1;
+                shadowCoords = shadowCoords_1;
+                lightDepthValue = lightDepthValues_1;
+            }
+            else if ((Saturate(shadowCoords_2.X) == shadowCoords_2.X) && (Saturate(shadowCoords_2.Y) == shadowCoords_2.Y) && (depthTest > (1.0f - (depthBounds.Z * inputPositionInv))))
+            {
+                shadowIndex = 2;
+                shadowCoords = shadowCoords_2;
+                lightDepthValue = lightDepthValues_2;
+            }
+
+            if (shadowIndex != 3) //we are in a shadow map
+            {
+                float depthVal = SampleDepthMap(shadowIndex, shadowCoords);
+
+                if (shadowIndex == 0) color = new Vector4(1f, 0f, 0f, 1f);
+                if (shadowIndex == 1) color = new Vector4(0f, 1f, 0f, 1f);
+                if (shadowIndex == 2) color = new Vector4(0f, 0f, 1f, 1f);
+
+                //if ((lightDepthValue - shadowBias) < depthVal)
+                //{
+                //    lightIntensity = Saturate(Vector3.Dot(input.Normal, lightDir));
+                //    if (lightIntensity > 0.0f)
+                //    {
+                //        color = new Vector4(1.0f, 0, 0, 1.0f);
+                //    }
+                //}
+            }
+            else
+            {
+                lightIntensity = Saturate(Vector3.Dot(input.Normal, lightDir));
+                if (lightIntensity > 0.0f)
+                {
+                    color = new Vector4(1.0f, 1f, 1f, 1.0f); //not in any shadow map, but is facing the light, so we light it.
+                }
+            }
+
+            return color;
+        }
+
+        float SampleDepthMap(int index, Vector2 coord)
+        {
+            if (index == 0)
+            {
+                return Sample(ShadowMapNear, ShadowMapSampler, coord).X;
+            }
+            else if (index == 1)
+            {
+                return Sample(ShadowMapMid, ShadowMapSampler, coord).X;
+            }
+            else
+            {
+                return Sample(ShadowMapFar, ShadowMapSampler, coord).X;
+            }
+        }
+
+        /*
+        [FragmentShader]
+        public Vector4 FS_Old(PixelInput input)
         {
             float alphaMapSample = Sample(AlphaMap, AlphaMapSampler, input.TexCoord).X;
             if (alphaMapSample == 0)
@@ -137,7 +240,7 @@ namespace Shaders
             input.LightPosition.Z -= bias;
 
             //sample shadow map - point sampler
-            float ShadowMapDepth = Sample(ShadowMap, ShadowMapSampler, new Vector2(input.LightPosition.X, input.LightPosition.Y)).X;
+            float ShadowMapDepth = Sample(ShadowMapNear, ShadowMapSampler, new Vector2(input.LightPosition.X, input.LightPosition.Y)).X;
 
             //if clip space z value greater than shadow map value then pixel is in shadow
             if (ShadowMapDepth < input.LightPosition.Z)
@@ -164,6 +267,7 @@ namespace Shaders
             return WithAlpha(specularColor + (ambientLight * surfaceColor)
                 + (diffuseFactor * surfaceColor) + pointDiffuse + pointSpec, surfaceColor.X);
         }
+    */
 
         Vector4 WithAlpha(Vector4 baseColor, float alpha)
         {

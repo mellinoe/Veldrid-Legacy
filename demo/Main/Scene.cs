@@ -126,8 +126,8 @@ namespace Veldrid.NeoDemo
                 radius,
                 -radius * 4f,
                 radius * 4f);
-            sc.LightProjectionBuffer.SetData(lightProjection);
-            sc.LightViewBuffer.SetData(ref lightView);
+            Matrix4x4 viewProjectionMatrix = lightView * lightProjection;
+            sc.LightViewProjectionBuffer0.SetData(ref viewProjectionMatrix);
             sc.LightInfoBuffer.SetData(sc.DirectionalLight.GetInfo());
 
             lightFrustum = new BoundingFrustum(lightProjection);

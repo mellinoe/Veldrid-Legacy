@@ -9,8 +9,9 @@ namespace Veldrid.NeoDemo
         public ConstantBuffer ProjectionMatrixBuffer { get; private set; }
         public ConstantBuffer ViewMatrixBuffer { get; private set; }
         public ConstantBuffer LightInfoBuffer { get; private set; }
-        public ConstantBuffer LightProjectionBuffer { get; private set; }
-        public ConstantBuffer LightViewBuffer { get; private set; }
+        public ConstantBuffer LightViewProjectionBuffer0 { get; internal set; }
+        public ConstantBuffer LightViewProjectionBuffer1 { get; internal set; }
+        public ConstantBuffer LightViewProjectionBuffer2 { get; internal set; }
         public ConstantBuffer CameraInfoBuffer { get; private set; }
         public ConstantBuffer PointLightsBuffer { get; private set; }
 
@@ -26,9 +27,10 @@ namespace Veldrid.NeoDemo
             ResourceFactory factory = rc.ResourceFactory;
             ProjectionMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             ViewMatrixBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
+            LightViewProjectionBuffer0 = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
+            LightViewProjectionBuffer1 = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
+            LightViewProjectionBuffer2 = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             LightInfoBuffer = factory.CreateConstantBuffer(Unsafe.SizeOf<DirectionalLightInfo>());
-            LightProjectionBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
-            LightViewBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             CameraInfoBuffer = factory.CreateConstantBuffer(Unsafe.SizeOf<CameraInfo>());
             if (Camera != null)
             {
@@ -49,8 +51,9 @@ namespace Veldrid.NeoDemo
             ProjectionMatrixBuffer.Dispose();
             ViewMatrixBuffer.Dispose();
             LightInfoBuffer.Dispose();
-            LightProjectionBuffer.Dispose();
-            LightViewBuffer.Dispose();
+            LightViewProjectionBuffer0.Dispose();
+            LightViewProjectionBuffer1.Dispose();
+            LightViewProjectionBuffer2.Dispose();
             ShadowMapBinding.Dispose();
             ShadowMapFramebuffer.Dispose();
             ShadowMapTexture.Dispose();

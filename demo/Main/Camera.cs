@@ -136,8 +136,8 @@ namespace Veldrid.NeoDemo
     public struct CameraInfo
     {
         public Vector3 CameraPosition_WorldSpace;
-        private float __padding1;
+        private float _padding1;
         public Vector3 CameraLookDirection;
-        private float __padding2;
+        private float _padding2;
     }
 }
