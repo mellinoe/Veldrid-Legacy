@@ -7,7 +7,7 @@ namespace Veldrid
 {
     public static class Utilities
     {
-        public static Matrix4x4 CalculateInverseTranspose(Matrix4x4 m) => CalculateInverseTranspose(m);
+        public static Matrix4x4 CalculateInverseTranspose(Matrix4x4 m) => CalculateInverseTranspose(ref m);
         public static Matrix4x4 CalculateInverseTranspose(ref Matrix4x4 m)
         {
             Matrix4x4 inverted;
