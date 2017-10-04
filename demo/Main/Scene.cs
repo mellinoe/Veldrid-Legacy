@@ -124,8 +124,8 @@ namespace Veldrid.NeoDemo
                 radius,
                 -radius,
                 radius,
-                -radius * 2f,
-                radius * 2f);
+                -radius * 4f,
+                radius * 4f);
             sc.LightProjectionBuffer.SetData(lightProjection);
             sc.LightViewBuffer.SetData(ref lightView);
             sc.LightInfoBuffer.SetData(sc.DirectionalLight.GetInfo());

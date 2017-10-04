@@ -7,7 +7,7 @@ using Veldrid.NeoDemo;
 
 namespace Shaders
 {
-    public class ShadowMain
+    public partial class ShadowMain
     {
         public Matrix4x4 Projection;
         public Matrix4x4 View;
@@ -16,50 +16,16 @@ namespace Shaders
         public Matrix4x4 LightProjection;
         public Matrix4x4 LightView;
         public DirectionalLightInfo LightInfo;
-        public CameraInfoBuffer CameraInfo;
-        public PointLightsBuffer PointLights;
-        public MaterialPropertiesBuffer MaterialProperties;
+        public CameraInfo CameraInfo;
+        public PointLightsInfo PointLights;
+        public MaterialProperties MaterialProperties;
+
         public Texture2DResource SurfaceTexture;
         public SamplerResource RegularSampler;
         public Texture2DResource AlphaMap;
         public SamplerResource AlphaMapSampler;
         public Texture2DResource ShadowMap;
         public SamplerResource ShadowMapSampler;
-
-        public struct LightInfoBuffer
-        {
-            public Vector3 LightDir;
-            public float __padding;
-        }
-
-        public struct CameraInfoBuffer
-        {
-            public Vector3 CameraPosition_WorldSpace;
-            public float __padding1;
-            public Vector3 CameraLookDirection;
-            public float __padding2;
-        }
-
-        public struct PointLightInfo
-        {
-            public Vector3 Position;
-            public float Range;
-            public Vector3 Color;
-            public float __padding;
-        }
-
-        public struct PointLightsBuffer
-        {
-            public int NumActiveLights;
-            public Vector3 __padding;
-            [ArraySize(4)] public PointLightInfo[] PointLights;
-        }
-
-        public struct MaterialPropertiesBuffer
-        {
-            public Vector3 SpecularIntensity;
-            public float SpecularPower;
-        }
 
         public struct VertexInput
         {

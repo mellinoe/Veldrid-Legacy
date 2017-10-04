@@ -1,21 +1,22 @@
 ﻿using System;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Veldrid.Platform;
 
 namespace Veldrid.NeoDemo
 {
     public class Camera : IUpdateable
     {
-        private float _fov = 0.75f;
+        private float _fov = 1f;
         private float _near = 1f;
-        private float _far = 100f;
+        private float _far = 250f;
 
         private Matrix4x4 _viewMatrix;
         private Matrix4x4 _projectionMatrix;
 
         private Vector3 _position = new Vector3(0, 3, 0);
         private Vector3 _lookDirection = new Vector3(0, -.3f, -1f);
-        private float _moveSpeed = 1f;
+        private float _moveSpeed = 0.666f;
 
         private float _yaw;
         private float _pitch;
@@ -50,6 +51,11 @@ namespace Veldrid.NeoDemo
 
         public void Update(float deltaSeconds)
         {
+            float sprintFactor = InputTracker.GetKey(Key.ControlLeft)
+                ? 0.3f
+                : InputTracker.GetKey(Key.ShiftLeft)
+                    ? 2.5f
+                    : 1f;
             Vector3 motionDir = Vector3.Zero;
             if (InputTracker.GetKey(Key.A))
             {
@@ -80,7 +86,7 @@ namespace Veldrid.NeoDemo
             {
                 Quaternion lookRotation = Quaternion.CreateFromYawPitchRoll(_yaw, _pitch, 0f);
                 motionDir = Vector3.Transform(motionDir, lookRotation);
-                _position += motionDir * _moveSpeed * deltaSeconds;
+                _position += motionDir * _moveSpeed * sprintFactor * deltaSeconds;
                 UpdateViewMatrix();
             }
 
@@ -118,5 +124,20 @@ namespace Veldrid.NeoDemo
             _viewMatrix = Matrix4x4.CreateLookAt(_position, _position + _lookDirection, Vector3.UnitY);
             ViewChanged?.Invoke(_viewMatrix);
         }
+
+        public CameraInfo GetCameraInfo() => new CameraInfo
+        {
+            CameraPosition_WorldSpace = _position,
+            CameraLookDirection = _lookDirection
+        };
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct CameraInfo
+    {
+        public Vector3 CameraPosition_WorldSpace;
+        private float __padding1;
+        public Vector3 CameraLookDirection;
+        private float __padding2;
     }
 }

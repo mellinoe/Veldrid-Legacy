@@ -18,13 +18,17 @@ namespace Veldrid.NeoDemo.Objects
         private int _indexCount;
         private ShaderSet _shaderSet;
         private ShaderResourceBindingSlots _resourceSlots;
-        private ConstantBuffer _worldBuffer;
-        private ConstantBuffer _inverseTransposeWorldBuffer;
         private DeviceTexture _texture;
         private ShaderTextureBinding _textureBinding;
+        private DeviceTexture _alphamapTexture;
+        private ShaderTextureBinding _alphamapBinding;
 
         private ShaderSet _mapSet;
         private ShaderResourceBindingSlots _mapSlots;
+
+        private ConstantBuffer _worldBuffer;
+        private ConstantBuffer _inverseTransposeWorldBuffer;
+        private ConstantBuffer _materialPropertiesBuffer;
 
         public Transform Transform => _transform;
 
@@ -43,13 +47,13 @@ namespace Veldrid.NeoDemo.Objects
             _vb = _meshData.CreateVertexBuffer(factory);
             _ib = _meshData.CreateIndexBuffer(factory, out _indexCount);
 
-            TexturedMeshSetInfo.CreateAll(
+            ShadowMainSetInfo.CreateAll(
                 factory,
-                ShaderHelper.LoadBytecode(factory, "TexturedMesh", ShaderStages.Vertex),
-                ShaderHelper.LoadBytecode(factory, "TexturedMesh", ShaderStages.Fragment),
+                ShaderHelper.LoadBytecode(factory, "ShadowMain", ShaderStages.Vertex),
+                ShaderHelper.LoadBytecode(factory, "ShadowMain", ShaderStages.Fragment),
                 out _shaderSet,
                 out _resourceSlots);
-            ShadowDepthSetInfo.CreateAll(
+            ShadowMainSetInfo.CreateAll(
                 factory,
                 ShaderHelper.LoadBytecode(factory, "ShadowDepth", ShaderStages.Vertex),
                 ShaderHelper.LoadBytecode(factory, "ShadowDepth", ShaderStages.Fragment),
@@ -58,9 +62,11 @@ namespace Veldrid.NeoDemo.Objects
 
             _worldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _inverseTransposeWorldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
+            _materialPropertiesBuffer = factory.CreateConstantBuffer(Unsafe.SizeOf<MaterialProperties>());
             _texture = _textureData.CreateDeviceTexture(factory);
             _textureBinding = factory.CreateShaderTextureBinding(_texture);
-
+            _alphamapTexture = factory.CreateTexture(new RgbaByte[] { RgbaByte.White }, 1, 1, PixelFormat.R8_G8_B8_A8_UInt);
+            _alphamapBinding = factory.CreateShaderTextureBinding(_alphamapTexture);
             CreateRasterizerState(rc);
         }
 
@@ -74,6 +80,9 @@ namespace Veldrid.NeoDemo.Objects
             _texture.Dispose();
             _textureBinding.Dispose();
             _rasterizerState?.Dispose();
+            _materialPropertiesBuffer.Dispose();
+            _alphamapTexture.Dispose();
+            _alphamapBinding.Dispose();
         }
 
         public override RenderOrderKey GetRenderOrderKey(Vector3 cameraPosition)
@@ -86,6 +95,7 @@ namespace Veldrid.NeoDemo.Objects
         private RasterizerState _rasterizerState;
         private bool _faceCullingChanged = false;
         private FaceCullingMode _faceCullingMode = FaceCullingMode.Back;
+
         public FaceCullingMode FaceCulling { get => _faceCullingMode; set { _faceCullingMode = value; _faceCullingChanged = true; } }
 
         public override void Render(RenderContext rc, SceneContext sc, RenderPasses renderPass)
@@ -148,9 +158,19 @@ namespace Veldrid.NeoDemo.Objects
             rc.SetConstantBuffer(1, sc.ViewMatrixBuffer);
             rc.SetConstantBuffer(2, _worldBuffer);
             rc.SetConstantBuffer(3, _inverseTransposeWorldBuffer);
-            rc.SetConstantBuffer(4, sc.LightInfoBuffer);
-            rc.SetTexture(5, _textureBinding);
-            rc.SetSamplerState(6, rc.Anisox4Sampler);
+            rc.SetConstantBuffer(4, sc.LightProjectionBuffer);
+            rc.SetConstantBuffer(5, sc.LightViewBuffer);
+            rc.SetConstantBuffer(6, sc.LightInfoBuffer);
+            rc.SetConstantBuffer(7, sc.CameraInfoBuffer);
+            rc.SetConstantBuffer(8, sc.PointLightsBuffer);
+            rc.SetConstantBuffer(9, _materialPropertiesBuffer);
+            rc.SetTexture(10, _textureBinding);
+            rc.SetSamplerState(11, rc.Anisox4Sampler);
+            rc.SetTexture(12, _alphamapBinding);
+            rc.SetSamplerState(13, rc.LinearSampler);
+            rc.SetTexture(14, sc.ShadowMapBinding);
+            rc.SetSamplerState(15, rc.PointSampler);
+
             rc.DrawIndexedPrimitives(_indexCount);
         }
     }
