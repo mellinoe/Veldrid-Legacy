@@ -43,7 +43,7 @@ namespace Veldrid.Graphics.OpenGL
                         _constantBindings[i] = new OpenGLUniformBinding(programID, storageAdapter);
                     }
                 }
-                else if (resource.Type == ShaderResourceType.Texture )
+                else if (resource.Type == ShaderResourceType.Texture)
                 {
                     int location = GL.GetUniformLocation(shaderSet.ProgramID, resource.Name);
                     if (location == -1)
@@ -63,6 +63,17 @@ namespace Veldrid.Graphics.OpenGL
                         throw new VeldridException(
                             "OpenGL Shaders must specify at least one texture before a sampler. Samplers are implicity linked with the closest-previous texture resource in the binding list.");
                     }
+
+                    // TODO: Samplers should be able to bind to multiple texture slots
+                    // if multiple textures are declared without an intervening sampler. For example:
+                    //     Slot    Resource
+                    // -------------------------
+                    //     [0]     Texture0
+                    //     [1]     Sampler0
+                    //     [2]     Texture1
+                    //     [3]     Texture2
+                    //     [4]     Sampler1*
+                    // Sampler1 should be active for both Texture1 and Texture2.
 
                     _samplerBindings[i] = new OpenGLTextureBindingSlotInfo() { RelativeIndex = relativeTextureIndex, UniformLocation = lastTextureLocation };
                 }
