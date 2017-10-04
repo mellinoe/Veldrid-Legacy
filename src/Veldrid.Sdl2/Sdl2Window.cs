@@ -20,6 +20,7 @@ namespace Veldrid.Sdl2
 
         private SimpleInputSnapshot _publicSnapshot = new SimpleInputSnapshot();
         private SimpleInputSnapshot _privateSnapshot = new SimpleInputSnapshot();
+        private SimpleInputSnapshot _privateBackbuffer = new SimpleInputSnapshot();
 
         // Threaded window flags
         private readonly bool _threadedProcessing;
@@ -258,11 +259,9 @@ namespace Veldrid.Sdl2
         {
             if (_threadedProcessing)
             {
-                lock (_privateSnapshot)
-                {
-                    _privateSnapshot.CopyTo(_publicSnapshot);
-                    _privateSnapshot.Clear();
-                }
+                SimpleInputSnapshot snapshot = Interlocked.Exchange(ref _privateSnapshot, _privateBackbuffer);
+                snapshot.CopyTo(_publicSnapshot);
+                snapshot.Clear();
             }
             else
             {
