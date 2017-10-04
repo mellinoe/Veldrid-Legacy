@@ -6,18 +6,14 @@ using Veldrid.Platform;
 
 namespace Veldrid.NeoDemo.Objects
 {
-    public class Simple2DObject : Renderable
+    public class ShadowmapDrawer : Renderable
     {
-        private readonly TextureData _texData;
-
         private VertexBuffer _vb;
         private IndexBuffer _ib;
         private ShaderSet _shaderSet;
         private ShaderResourceBindingSlots _resourceSlots;
-        private DeviceTexture2D _tex;
-        private ShaderTextureBinding _texBinding;
-
         private ConstantBuffer _orthographicBuffer;
+        private DepthStencilState _dss;
         private ConstantBuffer _sizeInfoBuffer;
 
         private Vector2 _position;
@@ -33,9 +29,8 @@ namespace Veldrid.NeoDemo.Objects
             _sizeInfoBuffer.SetData(ref si);
         }
 
-        public Simple2DObject(TextureData texData, Window window)
+        public ShadowmapDrawer(Window window)
         {
-            _texData = texData;
             window.Resized += OnWindowResized;
             _window = window;
         }
@@ -50,15 +45,15 @@ namespace Veldrid.NeoDemo.Objects
             ResourceFactory factory = rc.ResourceFactory;
             _vb = factory.CreateVertexBuffer(s_quadVerts, new VertexDescriptor(16, 2), false);
             _ib = factory.CreateIndexBuffer(s_quadIndices, false);
-            Simple2DSetInfo.CreateAll(
+            ShadowmapPreviewShaderSetInfo.CreateAll(
                 factory,
-                ShaderHelper.LoadBytecode(factory, "Simple2D", ShaderStages.Vertex),
-                ShaderHelper.LoadBytecode(factory, "Simple2D", ShaderStages.Fragment),
+                ShaderHelper.LoadBytecode(factory, "ShadowmapPreviewShader", ShaderStages.Vertex),
+                ShaderHelper.LoadBytecode(factory, "ShadowmapPreviewShader", ShaderStages.Fragment),
                 out _shaderSet,
                 out _resourceSlots);
 
-            _tex = _texData.CreateDeviceTexture(factory);
-            _texBinding = factory.CreateShaderTextureBinding(_tex);
+            _dss = factory.CreateDepthStencilState(false, DepthComparison.Always);
+
             _sizeInfoBuffer = factory.CreateConstantBuffer(Unsafe.SizeOf<SizeInfo>());
             UpdateSizeInfoBuffer();
             _orthographicBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
@@ -70,8 +65,6 @@ namespace Veldrid.NeoDemo.Objects
             _vb.Dispose();
             _ib.Dispose();
             _shaderSet.Dispose();
-            _texBinding.Dispose();
-            _tex.Dispose();
             _sizeInfoBuffer.Dispose();
             _orthographicBuffer.Dispose();
         }
@@ -93,7 +86,10 @@ namespace Veldrid.NeoDemo.Objects
             rc.SetConstantBuffer(1, _sizeInfoBuffer);
             rc.SetTexture(2, sc.ShadowMapBinding);
             rc.SetSamplerState(3, rc.PointSampler);
+            DepthStencilState dss = rc.DepthStencilState;
+            rc.DepthStencilState = _dss;
             rc.DrawIndexedPrimitives(s_quadIndices.Length);
+            rc.DepthStencilState = dss;
         }
 
         private static float[] s_quadVerts = new float[]

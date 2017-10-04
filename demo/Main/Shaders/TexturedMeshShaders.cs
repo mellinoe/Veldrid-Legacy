@@ -17,7 +17,7 @@ namespace Shaders
         public Matrix4x4 View;
         public Matrix4x4 World;
         public Matrix4x4 InverseTransposeWorld;
-        public LightInfo LightInfo;
+        public DirectionalLightInfo LightInfo;
         public Texture2DResource SurfaceTexture;
         public SamplerResource SurfaceSampler;
 
@@ -49,7 +49,13 @@ namespace Shaders
         [FragmentShader]
         public Vector4 FS(FSInput input)
         {
-            return Sample(SurfaceTexture, SurfaceSampler, input.TexCoords);
+            float nDotL = Vector3.Dot(input.Normal, -LightInfo.Direction);
+            nDotL = Clamp(nDotL, 0, 1);
+            Vector4 lightContribution = nDotL * LightInfo.Color;
+            Vector4 textureColor = Sample(SurfaceTexture, SurfaceSampler, input.TexCoords);
+            Vector4 ambientLight = new Vector4(0.2f, 0.2f, 0.2f, 1f);
+            Vector4 total = (lightContribution + ambientLight) * textureColor;
+            return Saturate(total);
         }
     }
 }

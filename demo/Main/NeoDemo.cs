@@ -57,17 +57,49 @@ namespace Veldrid.NeoDemo
             skybox.CreateDeviceObjects(_rc);
             _scene.AddRenderable(skybox);
 
-            ImageSharpTexture texData = new ImageSharpTexture(AssetHelper.GetPath("Textures/cloudtop/cloudtop_up.png"));
-            TexturedMesh cube = new TexturedMesh(
-                new SimpleMeshDataProvider(CubeModel.Vertices, CubeModel.Indices),
-                texData);
-            cube.Transform.Scale = new Vector3(10);
-            cube.CreateDeviceObjects(_rc);
-            _scene.AddRenderable(cube);
+            AddTexturedMesh(
+                "Textures/spnza_bricks_a_diff.png", 
+                PrimitiveShapes.Box(10, 10, 10, 10),
+                new Vector3(0, 0, -5),
+                Quaternion.Identity,
+                Vector3.One);
 
-            Simple2DObject texDrawer = new Simple2DObject(texData, _window);
+            AddTexturedMesh(
+                "Textures/spnza_bricks_a_diff.png",
+                PrimitiveShapes.Box(5, 5, 5, 5f),
+                new Vector3(-3, -9, 2),
+                Quaternion.Identity,
+                Vector3.One);
+
+            AddTexturedMesh(
+                "Textures/spnza_bricks_a_diff.png",
+                PrimitiveShapes.Box(27, 3, 27, 27f),
+                new Vector3(-5, -16, 5),
+                Quaternion.Identity,
+                Vector3.One);
+
+            AddTexturedMesh(
+                "Textures/spnza_bricks_a_diff.png",
+                PrimitiveShapes.Plane(100, 100, 5),
+                new Vector3(0, -20, 0),
+                Quaternion.Identity,
+                Vector3.One);
+
+            ShadowmapDrawer texDrawer = new ShadowmapDrawer(_window);
             texDrawer.CreateDeviceObjects(_rc);
+            texDrawer.Position = new Vector2(10, 80);
             _scene.AddRenderable(texDrawer);
+        }
+
+        private void AddTexturedMesh(string texPath, MeshData meshData, Vector3 position, Quaternion rotation, Vector3 scale)
+        {
+            ImageSharpMipmapChain texData = new ImageSharpMipmapChain(AssetHelper.GetPath(texPath));
+            TexturedMesh mesh = new TexturedMesh(meshData, texData);
+            mesh.Transform.Position = position;
+            mesh.Transform.Rotation = rotation;
+            mesh.Transform.Scale = scale;
+            mesh.CreateDeviceObjects(_rc);
+            _scene.AddRenderable(mesh);
         }
 
         public void Run()
@@ -108,12 +140,29 @@ namespace Veldrid.NeoDemo
                         }
                         ImGui.EndMenu();
                     }
+                    bool isFullscreen = _window.WindowState == WindowState.BorderlessFullScreen;
+                    if (ImGui.MenuItem("Fullscreen", "F11", isFullscreen, true))
+                    {
+                        ToggleFullscreenState();
+                    }
+
                     ImGui.EndMenu();
                 }
                 ImGui.EndMainMenuBar();
             }
 
+            if (InputTracker.GetKeyDown(Key.F11))
+            {
+                ToggleFullscreenState();
+            }
+
             _window.Title = _rc.BackendType.ToString();
+        }
+
+        private void ToggleFullscreenState()
+        {
+            bool isFullscreen = _window.WindowState == WindowState.BorderlessFullScreen;
+            _window.WindowState = isFullscreen ? WindowState.Normal : WindowState.BorderlessFullScreen;
         }
 
         private void Draw()

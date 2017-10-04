@@ -6,9 +6,9 @@ namespace Veldrid.NeoDemo
 {
     public class Camera : IUpdateable
     {
-        private float _fov = 1f;
-        private float _near = 0.5f;
-        private float _far = 1000f;
+        private float _fov = 0.75f;
+        private float _near = 1f;
+        private float _far = 100f;
 
         private Matrix4x4 _viewMatrix;
         private Matrix4x4 _projectionMatrix;
@@ -21,12 +21,16 @@ namespace Veldrid.NeoDemo
         private float _pitch;
 
         private Vector2 _previousMousePos;
+        private float _windowWidth;
+        private float _windowHeight;
 
         public event Action<Matrix4x4> ProjectionChanged;
         public event Action<Matrix4x4> ViewChanged;
 
         public Camera(float width, float height)
         {
+            _windowWidth = width;
+            _windowHeight = height;
             UpdatePerspectiveMatrix(width, height);
             UpdateViewMatrix();
         }
@@ -36,6 +40,13 @@ namespace Veldrid.NeoDemo
 
         public Vector3 Position => _position;
         public Vector3 LookDirection => _lookDirection;
+
+        public float FarDistance => _far;
+
+        public float FieldOfView => _fov;
+        public float NearDistance => _near;
+
+        public float AspectRatio => _windowWidth / _windowHeight;
 
         public void Update(float deltaSeconds)
         {
@@ -91,6 +102,8 @@ namespace Veldrid.NeoDemo
 
         public void WindowResized(float width, float height)
         {
+            _windowWidth = width;
+            _windowHeight = height;
             UpdatePerspectiveMatrix(width, height);
         }
 

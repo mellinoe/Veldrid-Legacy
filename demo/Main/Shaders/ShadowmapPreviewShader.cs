@@ -3,11 +3,11 @@ using ShaderGen;
 using static ShaderGen.ShaderBuiltins;
 using Veldrid.NeoDemo.Objects;
 
-[assembly: ShaderSet("Simple2D", "Shaders.Simple2D.VS", "Shaders.Simple2D.FS")]
+[assembly: ShaderSet("ShadowmapPreviewShader", "Shaders.ShadowmapPreviewShader.VS", "Shaders.ShadowmapPreviewShader.FS")]
 
 namespace Shaders
 {
-    public class Simple2D
+    public class ShadowmapPreviewShader
     {
         public Matrix4x4 Projection;
         public ShadowmapDrawer.SizeInfo SizePos;
@@ -27,7 +27,8 @@ namespace Shaders
         [FragmentShader]
         Vector4 FS(FragmentIn input)
         {
-            return Sample(Tex, TexSampler, input.TexCoord);
+            float r = Sample(Tex, TexSampler, input.TexCoord).X;
+            return new Vector4(r, r, r, r);
         }
 
         public struct VertexIn

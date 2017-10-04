@@ -12,7 +12,7 @@ namespace Veldrid.NeoDemo
         public ConstantBuffer LightProjectionBuffer { get; private set; }
         public ConstantBuffer LightViewBuffer { get; private set; }
 
-        private DeviceTexture2D _shadowMapTexture;
+        public DeviceTexture2D ShadowMapTexture { get; private set; }
         public ShaderTextureBinding ShadowMapBinding { get; private set; }
         public Framebuffer ShadowMapFramebuffer { get; private set; }
 
@@ -37,15 +37,10 @@ namespace Veldrid.NeoDemo
                 ViewMatrixBuffer.SetData(Camera.ViewMatrix);
             }
 
-            Matrix4x4 lightProj = Matrix4x4.CreateOrthographic(100, 100, 5, 1000);
-            Matrix4x4 lightView = Matrix4x4.CreateLookAt(-DirectionalLight.Direction * 50, Vector3.Zero, Vector3.UnitY);
-            LightProjectionBuffer.SetData(ref lightProj);
-            LightViewBuffer.SetData(ref lightView);
-
-            _shadowMapTexture = factory.CreateTexture(1, 2048, 2048, PixelFormat.R16_UInt, DeviceTextureCreateOptions.DepthStencil);
-            ShadowMapBinding = factory.CreateShaderTextureBinding(_shadowMapTexture);
+            ShadowMapTexture = factory.CreateTexture(1, 2048, 2048, PixelFormat.R16_UInt, DeviceTextureCreateOptions.DepthStencil);
+            ShadowMapBinding = factory.CreateShaderTextureBinding(ShadowMapTexture);
             ShadowMapFramebuffer = factory.CreateFramebuffer();
-            ShadowMapFramebuffer.DepthTexture = _shadowMapTexture;
+            ShadowMapFramebuffer.DepthTexture = ShadowMapTexture;
         }
 
         public virtual void DestroyDeviceObjects()
@@ -57,7 +52,7 @@ namespace Veldrid.NeoDemo
             LightViewBuffer.Dispose();
             ShadowMapBinding.Dispose();
             ShadowMapFramebuffer.Dispose();
-            _shadowMapTexture.Dispose();
+            ShadowMapTexture.Dispose();
         }
 
         public void SetCurrentScene(Scene scene)

@@ -55,22 +55,92 @@ namespace Veldrid.NeoDemo
 
         public void RenderAllStages(RenderContext rc, SceneContext sc)
         {
+            UpdateDirectionalLightMatrices(sc, out BoundingFrustum lightFrustum);
+
             rc.SetFramebuffer(sc.ShadowMapFramebuffer);
-            Render(rc, sc, RenderPasses.ShadowMap, null);
+            rc.SetViewport(0, 0, sc.ShadowMapTexture.Width, sc.ShadowMapTexture.Height);
+            rc.ClearBuffer();
+            Render(rc, sc, RenderPasses.ShadowMap, lightFrustum, null);
             rc.SetDefaultFramebuffer();
-            Render(rc, sc, RenderPasses.Standard, null);
-            Render(rc, sc, RenderPasses.AlphaBlend, null);
-            Render(rc, sc, RenderPasses.Overlay, null);
+            rc.SetViewport(0, 0, rc.CurrentFramebuffer.Width, rc.CurrentFramebuffer.Height);
+
+            BoundingFrustum cameraFrustum = new BoundingFrustum(_camera.ViewMatrix * _camera.ProjectionMatrix);
+            Render(rc, sc, RenderPasses.Standard, cameraFrustum, null);
+            Render(rc, sc, RenderPasses.AlphaBlend, cameraFrustum, null);
+            Render(rc, sc, RenderPasses.Overlay, cameraFrustum, null);
+        }
+
+        private void UpdateDirectionalLightMatrices(SceneContext sc, out BoundingFrustum lightFrustum)
+        {
+            Vector3 lightDir = sc.DirectionalLight.Direction;
+            Vector3 viewDir = sc.Camera.LookDirection;
+            Vector3 viewPos = sc.Camera.Position;
+            Vector3 unitY = Vector3.UnitY;
+            FrustumHelpers.ComputePerspectiveFrustumCorners(
+                ref viewPos,
+                ref viewDir,
+                ref unitY,
+                sc.Camera.FieldOfView,
+                sc.Camera.NearDistance,
+                sc.Camera.FarDistance,
+                sc.Camera.AspectRatio,
+                out FrustumCorners cameraCorners);
+
+            // Approach used: http://alextardif.com/ShadowMapping.html
+
+            Vector3 frustumCenter = Vector3.Zero;
+            frustumCenter += cameraCorners.NearTopLeft;
+            frustumCenter += cameraCorners.NearTopRight;
+            frustumCenter += cameraCorners.NearBottomLeft;
+            frustumCenter += cameraCorners.NearBottomRight;
+            frustumCenter += cameraCorners.FarTopLeft;
+            frustumCenter += cameraCorners.FarTopRight;
+            frustumCenter += cameraCorners.FarBottomLeft;
+            frustumCenter += cameraCorners.FarBottomRight;
+            frustumCenter /= 8f;
+
+            float radius = (cameraCorners.NearTopLeft - cameraCorners.FarBottomRight).Length() / 2.0f;
+            float texelsPerUnit = sc.ShadowMapTexture.Width / (radius * 2.0f);
+
+            Matrix4x4 scalar = Matrix4x4.CreateScale(texelsPerUnit, texelsPerUnit, texelsPerUnit);
+
+            Vector3 baseLookAt = -lightDir;
+
+            Matrix4x4 lookat = Matrix4x4.CreateLookAt(Vector3.Zero, baseLookAt, Vector3.UnitY);
+            lookat = scalar * lookat;
+            Matrix4x4.Invert(lookat, out Matrix4x4 lookatInv);
+
+            frustumCenter = Vector3.Transform(frustumCenter, lookat);
+            frustumCenter.X = (int)frustumCenter.X;
+            frustumCenter.Y = (int)frustumCenter.Y;
+            frustumCenter = Vector3.Transform(frustumCenter, lookatInv);
+
+            Vector3 lightPos = frustumCenter - (lightDir * radius * 2f);
+
+            Matrix4x4 lightView = Matrix4x4.CreateLookAt(lightPos, frustumCenter, Vector3.UnitY);
+
+            Matrix4x4 lightProjection = Matrix4x4.CreateOrthographicOffCenter(
+                -radius,
+                radius,
+                -radius,
+                radius,
+                -radius * 2f,
+                radius * 2f);
+            sc.LightProjectionBuffer.SetData(lightProjection);
+            sc.LightViewBuffer.SetData(ref lightView);
+            sc.LightInfoBuffer.SetData(sc.DirectionalLight.GetInfo());
+
+            lightFrustum = new BoundingFrustum(lightProjection);
         }
 
         public void Render(
             RenderContext rc,
             SceneContext sc,
             RenderPasses pass,
+            BoundingFrustum frustum,
             Comparer<RenderItemIndex> comparer = null)
         {
             _renderQueue.Clear();
-            BoundingFrustum frustum = new BoundingFrustum(_camera.ViewMatrix * _camera.ProjectionMatrix);
 
             _cullableStage.Clear();
             CollectVisibleObjects(ref frustum, pass, _cullableStage);

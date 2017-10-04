@@ -60,6 +60,8 @@ namespace Veldrid.NeoDemo.Objects
             _inverseTransposeWorldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _texture = _textureData.CreateDeviceTexture(factory);
             _textureBinding = factory.CreateShaderTextureBinding(_texture);
+
+            CreateRasterizerState(rc);
         }
 
         public override void DestroyDeviceObjects()
@@ -71,6 +73,7 @@ namespace Veldrid.NeoDemo.Objects
             _inverseTransposeWorldBuffer.Dispose();
             _texture.Dispose();
             _textureBinding.Dispose();
+            _rasterizerState?.Dispose();
         }
 
         public override RenderOrderKey GetRenderOrderKey(Vector3 cameraPosition)
@@ -78,8 +81,24 @@ namespace Veldrid.NeoDemo.Objects
             return RenderOrderKey.Create(_shaderSet.GetHashCode(), Vector3.Distance(_transform.Position, cameraPosition));
         }
 
+        public override RenderPasses RenderPasses => RenderPasses.ShadowMap | RenderPasses.Standard;
+
+        private RasterizerState _rasterizerState;
+        private bool _faceCullingChanged = false;
+        private FaceCullingMode _faceCullingMode = FaceCullingMode.Back;
+        public FaceCullingMode FaceCulling { get => _faceCullingMode; set { _faceCullingMode = value; _faceCullingChanged = true; } }
+
         public override void Render(RenderContext rc, SceneContext sc, RenderPasses renderPass)
         {
+            if (_faceCullingChanged)
+            {
+                _faceCullingChanged = false;
+                _rasterizerState?.Dispose();
+                CreateRasterizerState(rc);
+            }
+
+            rc.SetRasterizerState(_rasterizerState ?? rc.DefaultRasterizerState);
+
             if (renderPass == RenderPasses.ShadowMap)
             {
                 RenderShadowMap(rc, sc);
@@ -88,6 +107,15 @@ namespace Veldrid.NeoDemo.Objects
             {
                 RenderStandard(rc, sc);
             }
+        }
+
+        private void CreateRasterizerState(RenderContext rc)
+        {
+            _rasterizerState = rc.ResourceFactory.CreateRasterizerState(
+                _faceCullingMode,
+                rc.DefaultRasterizerState.FillMode,
+                rc.DefaultRasterizerState.IsDepthClipEnabled,
+                rc.DefaultRasterizerState.IsScissorTestEnabled);
         }
 
         private void RenderShadowMap(RenderContext rc, SceneContext sc)
@@ -122,7 +150,7 @@ namespace Veldrid.NeoDemo.Objects
             rc.SetConstantBuffer(3, _inverseTransposeWorldBuffer);
             rc.SetConstantBuffer(4, sc.LightInfoBuffer);
             rc.SetTexture(5, _textureBinding);
-            rc.SetSamplerState(6, rc.PointSampler);
+            rc.SetSamplerState(6, rc.Anisox4Sampler);
             rc.DrawIndexedPrimitives(_indexCount);
         }
     }
