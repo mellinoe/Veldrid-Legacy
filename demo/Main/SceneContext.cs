@@ -12,6 +12,7 @@ namespace Veldrid.NeoDemo
         public ConstantBuffer LightViewProjectionBuffer0 { get; internal set; }
         public ConstantBuffer LightViewProjectionBuffer1 { get; internal set; }
         public ConstantBuffer LightViewProjectionBuffer2 { get; internal set; }
+        public ConstantBuffer DepthLimitsBuffer { get; internal set; }
         public ConstantBuffer CameraInfoBuffer { get; private set; }
         public ConstantBuffer PointLightsBuffer { get; private set; }
 
@@ -30,6 +31,7 @@ namespace Veldrid.NeoDemo
             LightViewProjectionBuffer0 = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             LightViewProjectionBuffer1 = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             LightViewProjectionBuffer2 = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
+            DepthLimitsBuffer = factory.CreateConstantBuffer(Unsafe.SizeOf<DepthCascadeLimits>());
             LightInfoBuffer = factory.CreateConstantBuffer(Unsafe.SizeOf<DirectionalLightInfo>());
             CameraInfoBuffer = factory.CreateConstantBuffer(Unsafe.SizeOf<CameraInfo>());
             if (Camera != null)

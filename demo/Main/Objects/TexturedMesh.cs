@@ -53,7 +53,7 @@ namespace Veldrid.NeoDemo.Objects
                 ShaderHelper.LoadBytecode(factory, "ShadowMain", ShaderStages.Fragment),
                 out _shaderSet,
                 out _resourceSlots);
-            ShadowMainSetInfo.CreateAll(
+            ShadowDepthSetInfo.CreateAll(
                 factory,
                 ShaderHelper.LoadBytecode(factory, "ShadowDepth", ShaderStages.Vertex),
                 ShaderHelper.LoadBytecode(factory, "ShadowDepth", ShaderStages.Fragment),
@@ -153,28 +153,27 @@ namespace Veldrid.NeoDemo.Objects
             rc.IndexBuffer = _ib;
             rc.ShaderSet = _shaderSet;
             rc.ShaderResourceBindingSlots = _resourceSlots;
-            rc.SetConstantBuffer(0, sc.ProjectionMatrixBuffer);
-            rc.SetConstantBuffer(1, sc.ViewMatrixBuffer);
-            rc.SetConstantBuffer(2, _worldBuffer);
-            rc.SetConstantBuffer(3, _inverseTransposeWorldBuffer);
-
-            rc.SetConstantBuffer(4, sc.LightViewProjectionBuffer0);
-            rc.SetConstantBuffer(5, sc.LightViewProjectionBuffer0);
-            rc.SetConstantBuffer(6, sc.LightViewProjectionBuffer0);
-
-            rc.SetConstantBuffer(7, sc.LightInfoBuffer);
-
-            rc.SetConstantBuffer(8, sc.CameraInfoBuffer);
-            rc.SetConstantBuffer(9, sc.PointLightsBuffer);
-            rc.SetConstantBuffer(10, _materialPropertiesBuffer);
-            rc.SetTexture(11, _textureBinding);
-            rc.SetSamplerState(12, rc.Anisox4Sampler);
-            rc.SetTexture(13, _alphamapBinding);
-            rc.SetSamplerState(14, rc.LinearSampler);
-            rc.SetTexture(15, sc.ShadowMapBinding);
-            rc.SetTexture(16, sc.ShadowMapBinding);
-            rc.SetTexture(17, sc.ShadowMapBinding);
-            rc.SetSamplerState(18, rc.PointSampler);
+            int index = 0;
+            rc.SetConstantBuffer(index++, sc.ProjectionMatrixBuffer);
+            rc.SetConstantBuffer(index++, sc.ViewMatrixBuffer);
+            rc.SetConstantBuffer(index++, _worldBuffer);
+            rc.SetConstantBuffer(index++, _inverseTransposeWorldBuffer);
+            rc.SetConstantBuffer(index++, sc.LightViewProjectionBuffer0);
+            rc.SetConstantBuffer(index++, sc.LightViewProjectionBuffer0);
+            rc.SetConstantBuffer(index++, sc.LightViewProjectionBuffer0);
+            rc.SetConstantBuffer(index++, sc.DepthLimitsBuffer);
+            rc.SetConstantBuffer(index++, sc.LightInfoBuffer);
+            rc.SetConstantBuffer(index++, sc.CameraInfoBuffer);
+            rc.SetConstantBuffer(index++, sc.PointLightsBuffer);
+            rc.SetConstantBuffer(index++, _materialPropertiesBuffer);
+            rc.SetTexture(index++, _textureBinding);
+            rc.SetSamplerState(index++, rc.Anisox4Sampler);
+            rc.SetTexture(index++, _alphamapBinding);
+            rc.SetSamplerState(index++, rc.LinearSampler);
+            rc.SetTexture(index++, sc.ShadowMapBinding);
+            rc.SetTexture(index++, sc.ShadowMapBinding);
+            rc.SetTexture(index++, sc.ShadowMapBinding);
+            rc.SetSamplerState(index++, rc.PointSampler);
 
             rc.DrawIndexedPrimitives(_indexCount);
         }

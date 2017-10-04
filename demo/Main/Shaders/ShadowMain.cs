@@ -16,6 +16,7 @@ namespace Shaders
         public Matrix4x4 LightViewProjection1;
         public Matrix4x4 LightViewProjection2;
         public Matrix4x4 LightViewProjection3;
+        public DepthCascadeLimits DepthLimits;
         public DirectionalLightInfo LightInfo;
         public CameraInfo CameraInfo;
         public PointLightsInfo PointLights;
@@ -80,7 +81,7 @@ namespace Shaders
         [FragmentShader]
         public Vector4 FS(PixelInput input)
         {
-            Vector3 depthBounds = new Vector3(20, 40, 60);
+            Vector3 depthBounds = new Vector3(30, 60, 90);
             Vector3 lightDir = -LightInfo.Direction;
             Vector4 color = new Vector4(0.3f, 0.3f, 0.3f, 1.0f); //you can use whatever color you want for shadows
             float shadowBias = 0.0005f;
