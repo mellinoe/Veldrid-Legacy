@@ -95,7 +95,7 @@ namespace Veldrid.Graphics
             while (currentWidth != 1 || currentHeight != 1)
             {
                 int newWidth = Math.Max(1, currentWidth / 2);
-                int newHeight = Math.Max(1, currentWidth / 2);
+                int newHeight = Math.Max(1, currentHeight / 2);
                 Image<T> newImage = baseImage.Clone(context => context.Resize(newWidth, newHeight, s_resampler));
                 Debug.Assert(i < mipLevelCount);
                 mipLevels[i] = newImage;
