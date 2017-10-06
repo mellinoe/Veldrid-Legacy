@@ -20,7 +20,7 @@ namespace Veldrid.NeoDemo
             {
                 string bytecodeExtension = GetBytecodeExtension(backend);
                 string bytecodePath = AssetHelper.GetPath(Path.Combine("Shaders.Generated", name + bytecodeExtension));
-                if (File.Exists(bytecodePath))
+                if (File.Exists(bytecodePath) && false)
                 {
                     return factory.LoadProcessedShader(File.ReadAllBytes(bytecodePath));
                 }

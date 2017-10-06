@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImGuiNET;
+using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Veldrid.Platform;
@@ -16,7 +17,7 @@ namespace Veldrid.NeoDemo
 
         private Vector3 _position = new Vector3(0, 3, 0);
         private Vector3 _lookDirection = new Vector3(0, -.3f, -1f);
-        private float _moveSpeed = 0.666f;
+        private float _moveSpeed = 1.5f;
 
         private float _yaw;
         private float _pitch;
@@ -52,7 +53,7 @@ namespace Veldrid.NeoDemo
         public void Update(float deltaSeconds)
         {
             float sprintFactor = InputTracker.GetKey(Key.ControlLeft)
-                ? 0.3f
+                ? 0.1f
                 : InputTracker.GetKey(Key.ShiftLeft)
                     ? 2.5f
                     : 1f;
@@ -93,7 +94,7 @@ namespace Veldrid.NeoDemo
             Vector2 mouseDelta = InputTracker.MousePosition - _previousMousePos;
             _previousMousePos = InputTracker.MousePosition;
 
-            if (InputTracker.GetMouseButton(MouseButton.Left) || InputTracker.GetMouseButton(MouseButton.Right))
+            if (!ImGui.IsMouseHoveringAnyWindow() && (InputTracker.GetMouseButton(MouseButton.Left) || InputTracker.GetMouseButton(MouseButton.Right)))
             {
                 _yaw += -mouseDelta.X * 0.01f;
                 _pitch += -mouseDelta.Y * 0.01f;

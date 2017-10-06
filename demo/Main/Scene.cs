@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImGuiNET;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
@@ -20,6 +21,17 @@ namespace Veldrid.NeoDemo
         private readonly Camera _camera;
 
         public Camera Camera => _camera;
+
+        float _lScale = 2f;
+        float _rScale = 2f;
+        float _tScale = 2f;
+        float _bScale = 2f;
+        float _nScale = 4f;
+        float _fScale = 4f;
+
+        float _nearCascadeLimit = 15;
+        float _midCascadeLimit = 30;
+        float _farCascadeLimit = 45;
 
         public Scene(int viewWidth, int viewHeight)
         {
@@ -55,16 +67,28 @@ namespace Veldrid.NeoDemo
 
         public void RenderAllStages(RenderContext rc, SceneContext sc)
         {
+            ImGui.DragFloat("Ortho left scale", ref _lScale, 0.1f, 10f);
+            ImGui.DragFloat("Ortho right scale", ref _rScale, 0.1f, 10f);
+            ImGui.DragFloat("Ortho bottom scale", ref _bScale, 0.1f, 10f);
+            ImGui.DragFloat("Ortho top scale", ref _tScale, 0.1f, 10f);
+            ImGui.DragFloat("Ortho near scale", ref _nScale, 0.1f, 10f);
+            ImGui.DragFloat("Ortho far scale", ref _fScale, 0.1f, 10f);
+
+            ImGui.DragFloat("Near Cascade", ref _nearCascadeLimit, 3f, _midCascadeLimit - 1);
+            ImGui.DragFloat("Mid Cascade", ref _midCascadeLimit, _nearCascadeLimit + 1f, _farCascadeLimit - 1);
+            ImGui.DragFloat("Far Cascade", ref _farCascadeLimit, _midCascadeLimit + 1, 1000f);
+
             // Total guesses.
-            float nearCascadeLimit = 15;
-            float midCascadeLimit = 30;
-            float farCascadeLimit = 45;
+
+            Vector4 nearLimitCS = Vector4.Transform(new Vector3(0, 0, _nearCascadeLimit), Camera.ProjectionMatrix);
+            Vector4 midLimitCS = Vector4.Transform(new Vector3(0, 0, _midCascadeLimit), Camera.ProjectionMatrix);
+            Vector4 farLimitCS = Vector4.Transform(new Vector3(0, 0, _farCascadeLimit), Camera.ProjectionMatrix);
 
             sc.DepthLimitsBuffer.SetData(new DepthCascadeLimits
             {
-                NearLimit = nearCascadeLimit,
-                MidLimit = midCascadeLimit,
-                FarLimit = farCascadeLimit
+                NearLimit = nearLimitCS.Z / nearLimitCS.W,
+                MidLimit = midLimitCS.Z / midLimitCS.W,
+                FarLimit = farLimitCS.Z / farLimitCS.W
             });
 
             sc.LightInfoBuffer.SetData(sc.DirectionalLight.GetInfo());
@@ -73,7 +97,7 @@ namespace Veldrid.NeoDemo
             Matrix4x4 viewProj0 = UpdateDirectionalLightMatrices(
                 sc,
                 Camera.NearDistance,
-                nearCascadeLimit,
+                _nearCascadeLimit,
                 sc.NearShadowMapTexture.Width,
                 out BoundingFrustum lightFrustum);
             sc.LightViewProjectionBuffer0.SetData(ref viewProj0);
@@ -88,8 +112,8 @@ namespace Veldrid.NeoDemo
             // Mid
             Matrix4x4 viewProj1 = UpdateDirectionalLightMatrices(
                 sc,
-                nearCascadeLimit,
-                midCascadeLimit,
+                _nearCascadeLimit,
+                _midCascadeLimit,
                 sc.MidShadowMapTexture.Width,
                 out lightFrustum);
             sc.LightViewProjectionBuffer1.SetData(ref viewProj1);
@@ -104,8 +128,8 @@ namespace Veldrid.NeoDemo
             // Far
             Matrix4x4 viewProj2 = UpdateDirectionalLightMatrices(
                 sc,
-                midCascadeLimit,
-                farCascadeLimit,
+                _midCascadeLimit,
+                _farCascadeLimit,
                 sc.FarShadowMapTexture.Width,
                 out lightFrustum);
             sc.LightViewProjectionBuffer2.SetData(ref viewProj2);
@@ -114,9 +138,10 @@ namespace Veldrid.NeoDemo
             rc.SetViewport(0, 0, sc.FarShadowMapTexture.Width, sc.FarShadowMapTexture.Height);
             rc.ClearBuffer();
             Render(rc, sc, RenderPasses.ShadowMap, lightFrustum, null);
+
+
             rc.SetDefaultFramebuffer();
             rc.SetViewport(0, 0, rc.CurrentFramebuffer.Width, rc.CurrentFramebuffer.Height);
-
             BoundingFrustum cameraFrustum = new BoundingFrustum(_camera.ViewMatrix * _camera.ProjectionMatrix);
             Render(rc, sc, RenderPasses.Standard, cameraFrustum, null);
             Render(rc, sc, RenderPasses.AlphaBlend, cameraFrustum, null);
@@ -178,12 +203,12 @@ namespace Veldrid.NeoDemo
             Matrix4x4 lightView = Matrix4x4.CreateLookAt(lightPos, frustumCenter, Vector3.UnitY);
 
             Matrix4x4 lightProjection = Matrix4x4.CreateOrthographicOffCenter(
-                -radius,
-                radius,
-                -radius,
-                radius,
-                -radius * 6f,
-                radius * 6f);
+                -radius * _lScale,
+                radius * _rScale,
+                -radius * _bScale,
+                radius * _tScale,
+                -radius * _nScale,
+                radius * _fScale);
             Matrix4x4 viewProjectionMatrix = lightView * lightProjection;
 
             lightFrustum = new BoundingFrustum(lightProjection);

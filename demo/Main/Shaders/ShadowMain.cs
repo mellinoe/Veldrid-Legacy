@@ -49,6 +49,7 @@ namespace Shaders
             [NormalSemantic] public Vector3 Normal;
             [TextureCoordinateSemantic] public Vector2 TexCoord;
             [PositionSemantic] public float CameraDepth;
+            [PositionSemantic] public Vector4 DepthPosition;
         }
 
         [VertexShader]
@@ -75,13 +76,31 @@ namespace Shaders
             output.LightPosition3 = Mul(World, new Vector4(input.Position, 1));
             output.LightPosition3 = Mul(LightViewProjection3, output.LightPosition3);
 
-            output.CameraDepth = output.Position.Z;
+            output.DepthPosition = output.Position / output.Position.W;
+            output.CameraDepth = -viewPosition.Z;
             return output;
         }
 
         [FragmentShader]
         public Vector4 FS(PixelInput input)
         {
+            if (Mod(input.DepthPosition.Z, DepthLimits.NearLimit) <= 0.1f)
+            {
+                return new Vector4(0.5f, 0.1f, 0.1f, 1);
+            }
+            if (Mod(input.DepthPosition.Z / input.DepthPosition.W, DepthLimits.MidLimit) <= 0.1f)
+            {
+                return new Vector4(0.1f, 0.5f, 0.1f, 1);
+            }
+            if (Mod(input.DepthPosition.Z / input.DepthPosition.W, DepthLimits.FarLimit) <= 0.1f)
+            {
+                return new Vector4(0.1f, 0.1f, 0.5f, 1);
+            }
+            if (Mod(input.CameraDepth, 2f) <= 0.1f)
+            {
+                return new Vector4(1, 1, 1, 1);
+            }
+
             Vector4 surfaceColor = Sample(SurfaceTexture, RegularSampler, input.TexCoord);
             Vector4 ambientLight = new Vector4(0.3f, 0.3f, 0.3f, 1f);
             Vector3 lightDir = -LightInfo.Direction;
@@ -95,11 +114,6 @@ namespace Shaders
             float lightPositionInv3 = 1.0f / input.LightPosition3.W;
 
             float depthTest = input.CameraDepth;
-
-            if (depthTest > DepthLimits.FarLimit)
-            {
-                return new Vector4(1, 0, 1, 0);
-            }
 
             Vector2 shadowCoords_0 = new Vector2(input.LightPosition1.X * lightPositionInv1 * 0.5f + 0.5f, -input.LightPosition1.Y * lightPositionInv1 * 0.5f + 0.5f);
             Vector2 shadowCoords_1 = new Vector2(input.LightPosition2.X * lightPositionInv2 * 0.5f + 0.5f, -input.LightPosition2.Y * lightPositionInv2 * 0.5f + 0.5f);
@@ -122,7 +136,6 @@ namespace Shaders
                     shadowCoords = shadowCoords_0;
                     lightDepthValue = lightDepthValues_0;
                 }
-                else return new Vector4(1f, 0f, 0f, 1f);
             }
             else if ((depthTest < DepthLimits.MidLimit))
             {
@@ -132,7 +145,6 @@ namespace Shaders
                     shadowCoords = shadowCoords_1;
                     lightDepthValue = lightDepthValues_1;
                 }
-                else return new Vector4(0f, 1f, 0f, 1f);
             }
             else if (depthTest < DepthLimits.FarLimit)
             {
@@ -142,7 +154,6 @@ namespace Shaders
                     shadowCoords = shadowCoords_2;
                     lightDepthValue = lightDepthValues_2;
                 }
-                else return new Vector4(0f, 0f, 1f, 1f);
             }
 
             if (shadowIndex != 3) //we are in a shadow map
@@ -159,12 +170,11 @@ namespace Shaders
                 }
                 else
                 {
-                    color = new Vector4(0, 0, 0.3f, 1f);
+                    return new Vector4(0, 0, 0, 1);
                 }
             }
             else
             {
-                return new Vector4(depthTest / 100f, depthTest / 100f, depthTest / 100f, 1);
                 lightIntensity = Saturate(Vector3.Dot(input.Normal, lightDir));
                 if (lightIntensity > 0.0f)
                 {
