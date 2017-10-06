@@ -1,5 +1,8 @@
-﻿namespace Veldrid.NeoDemo
+﻿using System;
+
+namespace Veldrid.NeoDemo
 {
+    [Flags]
     public enum RenderPasses : byte
     {
         Standard = 1 << 0,

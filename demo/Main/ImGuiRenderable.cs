@@ -39,7 +39,7 @@ namespace Veldrid.NeoDemo
 
         public override RenderOrderKey GetRenderOrderKey(Vector3 cameraPosition)
         {
-            return new RenderOrderKey();
+            return new RenderOrderKey(ulong.MaxValue);
         }
 
         public override void Render(RenderContext rc, SceneContext sc, RenderPasses renderPass)

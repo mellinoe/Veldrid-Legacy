@@ -17,7 +17,7 @@ namespace Veldrid.NeoDemo.Objects
         private ConstantBuffer _sizeInfoBuffer;
 
         private Vector2 _position;
-        private Vector2 _size = new Vector2(200, 200);
+        private Vector2 _size = new Vector2(100, 100);
 
         public Vector2 Position { get => _position; set { _position = value; UpdateSizeInfoBuffer(); } }
 
@@ -29,10 +29,11 @@ namespace Veldrid.NeoDemo.Objects
             _sizeInfoBuffer.SetData(ref si);
         }
 
-        public ShadowmapDrawer(Window window)
+        public ShadowmapDrawer(Window window, Func<ShaderTextureBinding> bindingGetter)
         {
             window.Resized += OnWindowResized;
             _window = window;
+            _bindingGetter = bindingGetter;
         }
 
         private void OnWindowResized()
@@ -84,7 +85,7 @@ namespace Veldrid.NeoDemo.Objects
             rc.ShaderResourceBindingSlots = _resourceSlots;
             rc.SetConstantBuffer(0, _orthographicBuffer);
             rc.SetConstantBuffer(1, _sizeInfoBuffer);
-            rc.SetTexture(2, sc.ShadowMapBinding);
+            rc.SetTexture(2, _bindingGetter());
             rc.SetSamplerState(3, rc.PointSampler);
             DepthStencilState dss = rc.DepthStencilState;
             rc.DepthStencilState = _dss;
@@ -102,6 +103,7 @@ namespace Veldrid.NeoDemo.Objects
 
         private static ushort[] s_quadIndices = new ushort[] { 0, 1, 2, 0, 2, 3 };
         private readonly Window _window;
+        private readonly Func<ShaderTextureBinding> _bindingGetter;
 
         public struct SizeInfo
         {

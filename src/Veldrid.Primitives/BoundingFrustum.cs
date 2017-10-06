@@ -5,8 +5,6 @@ namespace Veldrid
 {
     public unsafe struct BoundingFrustum
     {
-        private readonly Matrix4x4 _projectionMatrix;
-
         private SixPlane _planes;
 
         private struct SixPlane
@@ -21,8 +19,6 @@ namespace Veldrid
 
         public BoundingFrustum(Matrix4x4 m)
         {
-            _projectionMatrix = m;
-
             // Plane computations: http://gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf
             _planes.Left = Plane.Normalize(
                 new Plane(

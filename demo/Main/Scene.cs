@@ -55,10 +55,63 @@ namespace Veldrid.NeoDemo
 
         public void RenderAllStages(RenderContext rc, SceneContext sc)
         {
-            UpdateDirectionalLightMatrices(sc, out BoundingFrustum lightFrustum);
+            // Total guesses.
+            float nearCascadeLimit = 15;
+            float midCascadeLimit = 30;
+            float farCascadeLimit = 45;
 
-            rc.SetFramebuffer(sc.ShadowMapFramebuffer);
-            rc.SetViewport(0, 0, sc.ShadowMapTexture.Width, sc.ShadowMapTexture.Height);
+            sc.DepthLimitsBuffer.SetData(new DepthCascadeLimits
+            {
+                NearLimit = nearCascadeLimit,
+                MidLimit = midCascadeLimit,
+                FarLimit = farCascadeLimit
+            });
+
+            sc.LightInfoBuffer.SetData(sc.DirectionalLight.GetInfo());
+
+            // Near
+            Matrix4x4 viewProj0 = UpdateDirectionalLightMatrices(
+                sc,
+                Camera.NearDistance,
+                nearCascadeLimit,
+                sc.NearShadowMapTexture.Width,
+                out BoundingFrustum lightFrustum);
+            sc.LightViewProjectionBuffer0.SetData(ref viewProj0);
+            sc.CurrentLightViewProjectionBuffer = sc.LightViewProjectionBuffer0;
+            rc.SetFramebuffer(sc.NearShadowMapFramebuffer);
+            rc.SetViewport(0, 0, sc.NearShadowMapTexture.Width, sc.NearShadowMapTexture.Height);
+            rc.ClearBuffer();
+            Render(rc, sc, RenderPasses.ShadowMap, lightFrustum, null);
+            rc.SetDefaultFramebuffer();
+            rc.SetViewport(0, 0, rc.CurrentFramebuffer.Width, rc.CurrentFramebuffer.Height);
+
+            // Mid
+            Matrix4x4 viewProj1 = UpdateDirectionalLightMatrices(
+                sc,
+                nearCascadeLimit,
+                midCascadeLimit,
+                sc.MidShadowMapTexture.Width,
+                out lightFrustum);
+            sc.LightViewProjectionBuffer1.SetData(ref viewProj1);
+            sc.CurrentLightViewProjectionBuffer = sc.LightViewProjectionBuffer1;
+            rc.SetFramebuffer(sc.MidShadowMapFramebuffer);
+            rc.SetViewport(0, 0, sc.MidShadowMapTexture.Width, sc.MidShadowMapTexture.Height);
+            rc.ClearBuffer();
+            Render(rc, sc, RenderPasses.ShadowMap, lightFrustum, null);
+            rc.SetDefaultFramebuffer();
+            rc.SetViewport(0, 0, rc.CurrentFramebuffer.Width, rc.CurrentFramebuffer.Height);
+
+            // Far
+            Matrix4x4 viewProj2 = UpdateDirectionalLightMatrices(
+                sc,
+                midCascadeLimit,
+                farCascadeLimit,
+                sc.FarShadowMapTexture.Width,
+                out lightFrustum);
+            sc.LightViewProjectionBuffer2.SetData(ref viewProj2);
+            sc.CurrentLightViewProjectionBuffer = sc.LightViewProjectionBuffer2;
+            rc.SetFramebuffer(sc.FarShadowMapFramebuffer);
+            rc.SetViewport(0, 0, sc.FarShadowMapTexture.Width, sc.FarShadowMapTexture.Height);
             rc.ClearBuffer();
             Render(rc, sc, RenderPasses.ShadowMap, lightFrustum, null);
             rc.SetDefaultFramebuffer();
@@ -70,7 +123,12 @@ namespace Veldrid.NeoDemo
             Render(rc, sc, RenderPasses.Overlay, cameraFrustum, null);
         }
 
-        private void UpdateDirectionalLightMatrices(SceneContext sc, out BoundingFrustum lightFrustum)
+        private Matrix4x4 UpdateDirectionalLightMatrices(
+            SceneContext sc,
+            float near,
+            float far,
+            int shadowMapWidth,
+            out BoundingFrustum lightFrustum)
         {
             Vector3 lightDir = sc.DirectionalLight.Direction;
             Vector3 viewDir = sc.Camera.LookDirection;
@@ -81,8 +139,8 @@ namespace Veldrid.NeoDemo
                 ref viewDir,
                 ref unitY,
                 sc.Camera.FieldOfView,
-                sc.Camera.NearDistance,
-                sc.Camera.FarDistance,
+                near,
+                far,
                 sc.Camera.AspectRatio,
                 out FrustumCorners cameraCorners);
 
@@ -100,7 +158,7 @@ namespace Veldrid.NeoDemo
             frustumCenter /= 8f;
 
             float radius = (cameraCorners.NearTopLeft - cameraCorners.FarBottomRight).Length() / 2.0f;
-            float texelsPerUnit = sc.ShadowMapTexture.Width / (radius * 2.0f);
+            float texelsPerUnit = shadowMapWidth / (radius * 2.0f);
 
             Matrix4x4 scalar = Matrix4x4.CreateScale(texelsPerUnit, texelsPerUnit, texelsPerUnit);
 
@@ -124,13 +182,12 @@ namespace Veldrid.NeoDemo
                 radius,
                 -radius,
                 radius,
-                -radius * 4f,
-                radius * 4f);
+                -radius * 6f,
+                radius * 6f);
             Matrix4x4 viewProjectionMatrix = lightView * lightProjection;
-            sc.LightViewProjectionBuffer0.SetData(ref viewProjectionMatrix);
-            sc.LightInfoBuffer.SetData(sc.DirectionalLight.GetInfo());
 
             lightFrustum = new BoundingFrustum(lightProjection);
+            return viewProjectionMatrix;
         }
 
         public void Render(
@@ -175,7 +232,8 @@ namespace Veldrid.NeoDemo
             RenderPasses renderPass,
             List<CullRenderable> renderables)
         {
-            _octree.GetContainedObjects(frustum, renderables, GetFilter(renderPass));
+            _octree.GetAllContainedObjects(renderables, GetFilter(renderPass));
+            //_octree.GetContainedObjects(frustum, renderables, GetFilter(renderPass));
         }
 
         private void CollectFreeObjects(RenderPasses renderPass, List<Renderable> renderables)

@@ -470,8 +470,9 @@ namespace Veldrid.Sdl2
 
         private void HandleKeyboardEvent(SDL_KeyboardEvent keyboardEvent)
         {
+            SimpleInputSnapshot snapshot = _privateSnapshot;
             KeyEvent keyEvent = new KeyEvent(MapKey(keyboardEvent.keysym), keyboardEvent.state == 1, MapModifierKeys(keyboardEvent.keysym.mod));
-            _privateSnapshot.KeyEventsList.Add(keyEvent);
+            snapshot.KeyEventsList.Add(keyEvent);
             if (keyboardEvent.state == 1)
             {
                 KeyDown?.Invoke(keyEvent);
@@ -891,6 +892,8 @@ namespace Veldrid.Sdl2
 
             public void CopyTo(SimpleInputSnapshot other)
             {
+                Debug.Assert(this != other);
+
                 other.MouseEventsList.Clear();
                 foreach (var me in MouseEventsList) { other.MouseEventsList.Add(me); }
 

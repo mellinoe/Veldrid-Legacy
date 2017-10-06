@@ -1,6 +1,7 @@
 ﻿using ImGuiNET;
 using System;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Veldrid.Graphics;
 using Veldrid.NeoDemo.Objects;
 using Veldrid.Platform;
@@ -33,6 +34,7 @@ namespace Veldrid.NeoDemo
                 WindowTitle = "Veldrid NeoDemo"
             };
             RenderContextCreateInfo rcCI = new RenderContextCreateInfo();
+            rcCI.DebugContext = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
             VeldridStartup.CreateWindowAndRenderContext(ref windowCI, ref rcCI, out _window, out _rc);
             _window.Resized += () => _windowResized = true;
@@ -58,7 +60,7 @@ namespace Veldrid.NeoDemo
             _scene.AddRenderable(skybox);
 
             AddTexturedMesh(
-                "Textures/spnza_bricks_a_diff.png", 
+                "Textures/spnza_bricks_a_diff.png",
                 PrimitiveShapes.Box(10, 10, 10, 10),
                 new Vector3(0, 0, -5),
                 Quaternion.Identity,
@@ -85,9 +87,19 @@ namespace Veldrid.NeoDemo
                 Quaternion.Identity,
                 Vector3.One);
 
-            ShadowmapDrawer texDrawer = new ShadowmapDrawer(_window);
+            ShadowmapDrawer texDrawer = new ShadowmapDrawer(_window, () => _sc.NearShadowMapBinding);
             texDrawer.CreateDeviceObjects(_rc);
-            texDrawer.Position = new Vector2(10, 80);
+            texDrawer.Position = new Vector2(10, 25);
+            _scene.AddRenderable(texDrawer);
+
+            texDrawer = new ShadowmapDrawer(_window, () => _sc.MidShadowMapBinding);
+            texDrawer.CreateDeviceObjects(_rc);
+            texDrawer.Position = new Vector2(20 + texDrawer.Size.X, 25);
+            _scene.AddRenderable(texDrawer);
+
+            texDrawer = new ShadowmapDrawer(_window, () => _sc.FarShadowMapBinding);
+            texDrawer.CreateDeviceObjects(_rc);
+            texDrawer.Position = new Vector2(30 + (texDrawer.Size.X * 2), 25);
             _scene.AddRenderable(texDrawer);
         }
 

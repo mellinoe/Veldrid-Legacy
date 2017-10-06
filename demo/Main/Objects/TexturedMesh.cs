@@ -138,7 +138,7 @@ namespace Veldrid.NeoDemo.Objects
             rc.IndexBuffer = _ib;
             rc.ShaderSet = _mapSet;
             rc.ShaderResourceBindingSlots = _mapSlots;
-            rc.SetConstantBuffer(0, sc.LightViewProjectionBuffer0);
+            rc.SetConstantBuffer(0, sc.CurrentLightViewProjectionBuffer);
             rc.SetConstantBuffer(1, _worldBuffer);
             rc.DrawIndexedPrimitives(_indexCount);
         }
@@ -159,8 +159,8 @@ namespace Veldrid.NeoDemo.Objects
             rc.SetConstantBuffer(index++, _worldBuffer);
             rc.SetConstantBuffer(index++, _inverseTransposeWorldBuffer);
             rc.SetConstantBuffer(index++, sc.LightViewProjectionBuffer0);
-            rc.SetConstantBuffer(index++, sc.LightViewProjectionBuffer0);
-            rc.SetConstantBuffer(index++, sc.LightViewProjectionBuffer0);
+            rc.SetConstantBuffer(index++, sc.LightViewProjectionBuffer1);
+            rc.SetConstantBuffer(index++, sc.LightViewProjectionBuffer2);
             rc.SetConstantBuffer(index++, sc.DepthLimitsBuffer);
             rc.SetConstantBuffer(index++, sc.LightInfoBuffer);
             rc.SetConstantBuffer(index++, sc.CameraInfoBuffer);
@@ -170,9 +170,9 @@ namespace Veldrid.NeoDemo.Objects
             rc.SetSamplerState(index++, rc.Anisox4Sampler);
             rc.SetTexture(index++, _alphamapBinding);
             rc.SetSamplerState(index++, rc.LinearSampler);
-            rc.SetTexture(index++, sc.ShadowMapBinding);
-            rc.SetTexture(index++, sc.ShadowMapBinding);
-            rc.SetTexture(index++, sc.ShadowMapBinding);
+            rc.SetTexture(index++, sc.NearShadowMapBinding);
+            rc.SetTexture(index++, sc.MidShadowMapBinding);
+            rc.SetTexture(index++, sc.FarShadowMapBinding);
             rc.SetSamplerState(index++, rc.PointSampler);
 
             rc.DrawIndexedPrimitives(_indexCount);

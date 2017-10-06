@@ -33,7 +33,7 @@ namespace Veldrid.StartupUtilities
                 windowCI.WindowHeight,
                 SDL_WindowFlags.OpenGL | SDL_WindowFlags.Shown | SDL_WindowFlags.Resizable
                     | GetWindowFlags(windowCI.WindowInitialState),
-                RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
+                false);
 
             return window;
         }
