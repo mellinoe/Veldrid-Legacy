@@ -22,20 +22,21 @@ namespace Veldrid.NeoDemo
 
         public Camera Camera => _camera;
 
-        float _lScale = 2f;
-        float _rScale = 2f;
-        float _tScale = 2f;
-        float _bScale = 2f;
+        float _lScale = 1f;
+        float _rScale = 1f;
+        float _tScale = 1f;
+        float _bScale = 1f;
         float _nScale = 4f;
         float _fScale = 4f;
 
-        float _nearCascadeLimit = 15;
-        float _midCascadeLimit = 30;
-        float _farCascadeLimit = 45;
+        float _nearCascadeLimit = 100;
+        float _midCascadeLimit = 300;
+        float _farCascadeLimit;
 
         public Scene(int viewWidth, int viewHeight)
         {
             _camera = new Camera(viewWidth, viewHeight);
+            _farCascadeLimit = _camera.FarDistance;
             _updateables.Add(_camera);
         }
 
@@ -67,28 +68,16 @@ namespace Veldrid.NeoDemo
 
         public void RenderAllStages(RenderContext rc, SceneContext sc)
         {
-            ImGui.DragFloat("Ortho left scale", ref _lScale, 0.1f, 10f);
-            ImGui.DragFloat("Ortho right scale", ref _rScale, 0.1f, 10f);
-            ImGui.DragFloat("Ortho bottom scale", ref _bScale, 0.1f, 10f);
-            ImGui.DragFloat("Ortho top scale", ref _tScale, 0.1f, 10f);
-            ImGui.DragFloat("Ortho near scale", ref _nScale, 0.1f, 10f);
-            ImGui.DragFloat("Ortho far scale", ref _fScale, 0.1f, 10f);
-
-            ImGui.DragFloat("Near Cascade", ref _nearCascadeLimit, 3f, _midCascadeLimit - 1);
-            ImGui.DragFloat("Mid Cascade", ref _midCascadeLimit, _nearCascadeLimit + 1f, _farCascadeLimit - 1);
-            ImGui.DragFloat("Far Cascade", ref _farCascadeLimit, _midCascadeLimit + 1, 1000f);
-
-            // Total guesses.
-
-            Vector4 nearLimitCS = Vector4.Transform(new Vector3(0, 0, _nearCascadeLimit), Camera.ProjectionMatrix);
-            Vector4 midLimitCS = Vector4.Transform(new Vector3(0, 0, _midCascadeLimit), Camera.ProjectionMatrix);
-            Vector4 farLimitCS = Vector4.Transform(new Vector3(0, 0, _farCascadeLimit), Camera.ProjectionMatrix);
+            Matrix4x4 cameraProj = Camera.ProjectionMatrix;
+            Vector4 nearLimitCS = Vector4.Transform(new Vector3(0, 0, -_nearCascadeLimit), cameraProj);
+            Vector4 midLimitCS = Vector4.Transform(new Vector3(0, 0, -_midCascadeLimit), cameraProj);
+            Vector4 farLimitCS = Vector4.Transform(new Vector3(0, 0, -_farCascadeLimit), cameraProj);
 
             sc.DepthLimitsBuffer.SetData(new DepthCascadeLimits
             {
-                NearLimit = nearLimitCS.Z / nearLimitCS.W,
-                MidLimit = midLimitCS.Z / midLimitCS.W,
-                FarLimit = farLimitCS.Z / farLimitCS.W
+                NearLimit = nearLimitCS.Z,
+                MidLimit = midLimitCS.Z,
+                FarLimit = farLimitCS.Z
             });
 
             sc.LightInfoBuffer.SetData(sc.DirectionalLight.GetInfo());
@@ -106,8 +95,6 @@ namespace Veldrid.NeoDemo
             rc.SetViewport(0, 0, sc.NearShadowMapTexture.Width, sc.NearShadowMapTexture.Height);
             rc.ClearBuffer();
             Render(rc, sc, RenderPasses.ShadowMap, lightFrustum, null);
-            rc.SetDefaultFramebuffer();
-            rc.SetViewport(0, 0, rc.CurrentFramebuffer.Width, rc.CurrentFramebuffer.Height);
 
             // Mid
             Matrix4x4 viewProj1 = UpdateDirectionalLightMatrices(
@@ -122,8 +109,6 @@ namespace Veldrid.NeoDemo
             rc.SetViewport(0, 0, sc.MidShadowMapTexture.Width, sc.MidShadowMapTexture.Height);
             rc.ClearBuffer();
             Render(rc, sc, RenderPasses.ShadowMap, lightFrustum, null);
-            rc.SetDefaultFramebuffer();
-            rc.SetViewport(0, 0, rc.CurrentFramebuffer.Width, rc.CurrentFramebuffer.Height);
 
             // Far
             Matrix4x4 viewProj2 = UpdateDirectionalLightMatrices(
@@ -138,7 +123,6 @@ namespace Veldrid.NeoDemo
             rc.SetViewport(0, 0, sc.FarShadowMapTexture.Width, sc.FarShadowMapTexture.Height);
             rc.ClearBuffer();
             Render(rc, sc, RenderPasses.ShadowMap, lightFrustum, null);
-
 
             rc.SetDefaultFramebuffer();
             rc.SetViewport(0, 0, rc.CurrentFramebuffer.Width, rc.CurrentFramebuffer.Height);

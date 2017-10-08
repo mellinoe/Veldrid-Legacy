@@ -10,7 +10,7 @@ namespace Veldrid.NeoDemo
     {
         private float _fov = 1f;
         private float _near = 1f;
-        private float _far = 250f;
+        private float _far = 1000f;
 
         private Matrix4x4 _viewMatrix;
         private Matrix4x4 _projectionMatrix;

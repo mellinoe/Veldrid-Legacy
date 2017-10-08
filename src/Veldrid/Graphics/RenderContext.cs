@@ -420,6 +420,8 @@ namespace Veldrid.Graphics
 
         protected void OnWindowResized(int width, int height)
         {
+            width = Math.Max(1, width);
+            height = Math.Max(1, height);
             PlatformResize(width, height);
             WindowResized?.Invoke(width, height);
         }
