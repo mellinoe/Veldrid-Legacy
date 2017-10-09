@@ -30,6 +30,10 @@ namespace Veldrid.NeoDemo.Objects
         private ConstantBuffer _inverseTransposeWorldBuffer;
         private ConstantBuffer _materialPropertiesBuffer;
 
+        private readonly DynamicDataProvider<MaterialProperties> _materialProperties;
+
+        public MaterialProperties MaterialProperties { get => _materialProperties.Data; set { _materialProperties.Data = value; } }
+
         public Transform Transform => _transform;
 
         public TexturedMesh(MeshData meshData, TextureData textureData)
@@ -37,6 +41,14 @@ namespace Veldrid.NeoDemo.Objects
             _meshData = meshData;
             _centeredBounds = meshData.GetBoundingBox();
             _textureData = textureData;
+            MaterialProperties defaultProps = new MaterialProperties { SpecularIntensity = new Vector3(0.3f), SpecularPower = 10f };
+            _materialProperties = new DynamicDataProvider<MaterialProperties>(defaultProps);
+            _materialProperties.DataChangedByRef += OnMaterialDataChanged;
+        }
+
+        private void OnMaterialDataChanged(ref MaterialProperties mp)
+        {
+            _materialPropertiesBuffer?.SetData(ref mp);
         }
 
         public override BoundingBox BoundingBox => BoundingBox.Transform(_centeredBounds, _transform.GetTransformMatrix());
@@ -63,6 +75,7 @@ namespace Veldrid.NeoDemo.Objects
             _worldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _inverseTransposeWorldBuffer = factory.CreateConstantBuffer(ShaderConstantType.Matrix4x4);
             _materialPropertiesBuffer = factory.CreateConstantBuffer(Unsafe.SizeOf<MaterialProperties>());
+            _materialProperties.SetData(_materialPropertiesBuffer);
             _texture = _textureData.CreateDeviceTexture(factory);
             _textureBinding = factory.CreateShaderTextureBinding(_texture);
             _alphamapTexture = factory.CreateTexture(new RgbaByte[] { RgbaByte.White }, 1, 1, PixelFormat.R8_G8_B8_A8_UInt);

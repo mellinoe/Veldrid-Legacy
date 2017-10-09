@@ -87,7 +87,22 @@ namespace Shaders
             Vector3 lightDir = -LightInfo.Direction;
             Vector4 color = ambientLight * surfaceColor;
             float shadowBias = 0.0005f;
-            float lightIntensity;
+            float lightIntensity = 0f;
+
+            // Specular color
+            Vector4 specularColor = new Vector4(0, 0, 0, 0);
+
+            Vector3 vertexToEye = Vector3.Normalize(CameraInfo.CameraPosition_WorldSpace - input.Position_WorldSpace);
+            Vector3 lightReflect = Vector3.Normalize(Vector3.Reflect(LightInfo.Direction, input.Normal));
+
+            float specularFactor = Vector3.Dot(vertexToEye, lightReflect);
+            if (specularFactor > 0)
+            {
+                specularFactor = Pow(Abs(specularFactor), MaterialProperties.SpecularPower);
+                specularColor = new Vector4(LightInfo.Color.XYZ() * MaterialProperties.SpecularIntensity * specularFactor, 1.0f);
+            }
+
+            // Directional light influence
 
             float depthTest = input.FragDepth;
 
@@ -143,6 +158,7 @@ namespace Shaders
                 {
                     // In shadow.
                     color = ambientLight * surfaceColor;
+                    specularColor = new Vector4(0, 0, 0, 0);
                 }
             }
             else
@@ -155,7 +171,7 @@ namespace Shaders
                 }
             }
 
-            return color;
+            return Saturate(specularColor + color);
         }
 
         private bool InRange(float val, float min, float max)
