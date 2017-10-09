@@ -19,6 +19,7 @@ namespace Veldrid.NeoDemo
         private readonly SceneContext _sc = new SceneContext();
         private bool _windowResized;
         private RenderOrderKeyComparer _renderOrderKeyComparer = new RenderOrderKeyComparer();
+        private bool _recreateWindow = true;
 
         private event Action<int, int> _resizeHandled;
 
@@ -158,6 +159,16 @@ namespace Veldrid.NeoDemo
                         ToggleFullscreenState();
                     }
 
+                    if (ImGui.MenuItem("Always Recreate Window", string.Empty, _recreateWindow, true))
+                    {
+                        _recreateWindow = !_recreateWindow;
+                    }
+                    if (ImGui.IsLastItemHovered())
+                    {
+                        ImGui.SetTooltip(
+                            "Causes a new OS window to be created whenever the RenderContext is switched. This is much safer, and is the default.");
+                    }
+
                     ImGui.EndMenu();
                 }
                 ImGui.EndMainMenuBar();
@@ -195,7 +206,10 @@ namespace Veldrid.NeoDemo
 
             _scene.RenderAllStages(_rc, _sc);
 
-            _rc.SwapBuffers();
+            if (_window.Exists)
+            {
+                _rc.SwapBuffers();
+            }
         }
 
         private void ChangeRenderContext(GraphicsBackend backend)
@@ -205,24 +219,32 @@ namespace Veldrid.NeoDemo
 
             _rc.Dispose();
 
-            WindowCreateInfo windowCI = new WindowCreateInfo
+            bool recreateWindow = false;
+            if (recreateWindow)
             {
-                X = _window.X,
-                Y = _window.Y,
-                WindowWidth = _window.Width,
-                WindowHeight = _window.Height,
-                WindowInitialState = _window.WindowState,
-                WindowTitle = "Veldrid NeoDemo"
-            };
 
-            _window.Close();
+                WindowCreateInfo windowCI = new WindowCreateInfo
+                {
+                    X = _window.X,
+                    Y = _window.Y,
+                    WindowWidth = _window.Width,
+                    WindowHeight = _window.Height,
+                    WindowInitialState = _window.WindowState,
+                    WindowTitle = "Veldrid NeoDemo"
+                };
+
+                _window.Close();
+
+                _window = VeldridStartup.CreateWindow(ref windowCI);
+                _window.Resized += () => _windowResized = true;
+            }
 
             RenderContextCreateInfo rcCI = new RenderContextCreateInfo
             {
                 Backend = backend
             };
-            VeldridStartup.CreateWindowAndRenderContext(ref windowCI, ref rcCI, out _window, out _rc);
-            _window.Resized += () => _windowResized = true;
+
+            _rc = VeldridStartup.CreateRenderContext(ref rcCI, _window);
 
             _sc.CreateDeviceObjects(_rc);
             _scene.CreateAllDeviceObjects(_rc);
