@@ -22,6 +22,8 @@ namespace Veldrid.Graphics
         /// </summary>
         public event Action DataChanged;
 
+        public event RefDataChanged DataChangedByRef;
+
         /// <summary>
         /// Gets or sets the data provided by this <see cref="DynamicDataProvider{T}"/>.
         /// </summary>
@@ -39,6 +41,7 @@ namespace Veldrid.Graphics
                     {
                         _data = value;
                         DataChanged?.Invoke();
+                        DataChangedByRef?.Invoke(ref value);
                     }
                 }
             }
@@ -105,5 +108,7 @@ namespace Veldrid.Graphics
                 };
             }
         }
+
+        public delegate void RefDataChanged(ref T data);
     }
 }
