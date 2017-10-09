@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Veldrid.Graphics
 {
@@ -7,8 +10,10 @@ namespace Veldrid.Graphics
     /// A data provider with dynamically and manually controllable data.
     /// </summary>
     /// <typeparam name="T">The type of data to provide.</typeparam>
-    public class DynamicDataProvider<T> : ConstantBufferDataProvider<T> where T : struct, IEquatable<T>
+    public class DynamicDataProvider<T> : ConstantBufferDataProvider<T> where T : struct
     {
+        private static readonly Func<T, T, bool> s_equalityFunc = GetEqualityFunc();
+
         private readonly int _dataSizeInBytes;
         private T _data;
 
@@ -28,10 +33,13 @@ namespace Veldrid.Graphics
             }
             set
             {
-                if (!_data.Equals(value))
+                if (!s_equalityFunc(_data, value))
                 {
-                    _data = value;
-                    DataChanged?.Invoke();
+                    if (!_data.Equals(value))
+                    {
+                        _data = value;
+                        DataChanged?.Invoke();
+                    }
                 }
             }
         }
@@ -66,6 +74,36 @@ namespace Veldrid.Graphics
         public void SetData(ConstantBuffer buffer)
         {
             buffer.SetData(ref _data, _dataSizeInBytes);
+        }
+
+        private static Func<T, T, bool> GetEqualityFunc()
+        {
+            if (typeof(IEquatable<T>).IsAssignableFrom(typeof(T)))
+            {
+                return EqualityComparer<T>.Default.Equals;
+            }
+            else
+            {
+                return (a, b) =>
+                {
+                    unsafe
+                    {
+                        byte* aPtr = (byte*)Unsafe.AsPointer(ref a);
+                        byte* bPtr = (byte*)Unsafe.AsPointer(ref b);
+
+                        int length = Unsafe.SizeOf<T>();
+                        for (int i = 0; i < length; i++)
+                        {
+                            if (aPtr[i] != bPtr[i])
+                            {
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    }
+                };
+            }
         }
     }
 }
