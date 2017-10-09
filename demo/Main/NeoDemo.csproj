@@ -19,8 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ShaderGen.Primitives" Version="1.0.6" />
-    <PackageReference Include="ShaderGen.Build" Version="1.0.14" PrivateAssets="All" />
+    <PackageReference Include="ShaderGen.Primitives" Version="1.0.7" />
+    <PackageReference Include="ShaderGen.Build" Version="1.0.16" PrivateAssets="All" />
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid\Veldrid.csproj" />
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.ImGui\Veldrid.ImGui.csproj" />
     <ProjectReference Include="$(RepositoryRootDirectory)\src\Veldrid.Sdl2\Veldrid.Sdl2.csproj" />

@@ -89,20 +89,15 @@ namespace Shaders
             float shadowBias = 0.0005f;
             float lightIntensity;
 
-            float inputPositionInv = 1.0f / input.Position.W;
-            float lightPositionInv1 = 1.0f / input.LightPosition1.W;
-            float lightPositionInv2 = 1.0f / input.LightPosition2.W;
-            float lightPositionInv3 = 1.0f / input.LightPosition3.W;
-
             float depthTest = input.FragDepth;
 
-            Vector2 shadowCoords_0 = new Vector2(input.LightPosition1.X * lightPositionInv1 * 0.5f + 0.5f, -input.LightPosition1.Y * lightPositionInv1 * 0.5f + 0.5f);
-            Vector2 shadowCoords_1 = new Vector2(input.LightPosition2.X * lightPositionInv2 * 0.5f + 0.5f, -input.LightPosition2.Y * lightPositionInv2 * 0.5f + 0.5f);
-            Vector2 shadowCoords_2 = new Vector2(input.LightPosition3.X * lightPositionInv3 * 0.5f + 0.5f, -input.LightPosition3.Y * lightPositionInv3 * 0.5f + 0.5f);
+            Vector2 shadowCoords_0 = ClipToTextureCoordinates(input.LightPosition1);
+            Vector2 shadowCoords_1 = ClipToTextureCoordinates(input.LightPosition2);
+            Vector2 shadowCoords_2 = ClipToTextureCoordinates(input.LightPosition3);
 
-            float lightDepthValues_0 = input.LightPosition1.Z * lightPositionInv1;
-            float lightDepthValues_1 = input.LightPosition2.Z * lightPositionInv2;
-            float lightDepthValues_2 = input.LightPosition3.Z * lightPositionInv3;
+            float lightDepthValues_0 = input.LightPosition1.Z / input.LightPosition1.W;
+            float lightDepthValues_1 = input.LightPosition2.Z / input.LightPosition2.W;
+            float lightDepthValues_2 = input.LightPosition3.Z / input.LightPosition3.W;
 
             int shadowIndex = 3;
 
@@ -130,10 +125,11 @@ namespace Shaders
 
             if (shadowIndex != 3)
             {
-                // We are within one the shadow maps.
+                // We are within one of the shadow maps.
                 float shadowMapDepth = SampleDepthMap(shadowIndex, shadowCoords);
 
                 float biasedDistToLight = (lightDepthValue - shadowBias);
+
                 if (biasedDistToLight < shadowMapDepth)
                 {
                     // In light (no occluders between light and fragment).
