@@ -34,10 +34,6 @@ namespace Veldrid.Graphics.OpenGL
                     else
                     {
                         int uniformLocation = GL.GetUniformLocation(programID, resource.Name);
-                        if (uniformLocation == -1)
-                        {
-                            throw new VeldridException($"No uniform or uniform block with name {resource.Name} was found.");
-                        }
 
                         OpenGLUniformStorageAdapter storageAdapter = new OpenGLUniformStorageAdapter(programID, uniformLocation);
                         _constantBindings[i] = new OpenGLUniformBinding(programID, storageAdapter);
@@ -46,11 +42,6 @@ namespace Veldrid.Graphics.OpenGL
                 else if (resource.Type == ShaderResourceType.Texture)
                 {
                     int location = GL.GetUniformLocation(shaderSet.ProgramID, resource.Name);
-                    if (location == -1)
-                    {
-                        throw new VeldridException($"No sampler was found with the name {resource.Name}");
-                    }
-
                     relativeTextureIndex += 1;
                     _textureBindings[i] = new OpenGLTextureBindingSlotInfo() { RelativeIndex = relativeTextureIndex, UniformLocation = location };
                     lastTextureLocation = location;
@@ -58,11 +49,6 @@ namespace Veldrid.Graphics.OpenGL
                 else
                 {
                     Debug.Assert(resource.Type == ShaderResourceType.Sampler);
-                    if (lastTextureLocation == -1)
-                    {
-                        throw new VeldridException(
-                            "OpenGL Shaders must specify at least one texture before a sampler. Samplers are implicity linked with the closest-previous texture resource in the binding list.");
-                    }
 
                     // TODO: Samplers should be able to bind to multiple texture slots
                     // if multiple textures are declared without an intervening sampler. For example:
@@ -117,7 +103,7 @@ namespace Veldrid.Graphics.OpenGL
             int blockSize;
             GL.GetActiveUniformBlock(programID, blockIndex, ActiveUniformBlockParameter.UniformBlockDataSize, out blockSize);
 
-            bool sizeMismatched = (blockSize != providerSize);
+            bool sizeMismatched = (blockSize < providerSize);
 
             if (sizeMismatched)
             {
