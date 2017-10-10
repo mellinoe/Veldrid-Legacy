@@ -41,6 +41,7 @@ namespace Veldrid.NeoDemo
             _window.Resized += () => _windowResized = true;
 
             _sc.CreateDeviceObjects(_rc);
+            CommonMaterials.CreateAllDeviceObjects(_rc);
 
             _scene = new Scene(_window.Width, _window.Height);
 
@@ -107,7 +108,7 @@ namespace Veldrid.NeoDemo
         private void AddTexturedMesh(string texPath, MeshData meshData, Vector3 position, Quaternion rotation, Vector3 scale)
         {
             ImageSharpMipmapChain texData = new ImageSharpMipmapChain(AssetHelper.GetPath(texPath));
-            TexturedMesh mesh = new TexturedMesh(meshData, texData);
+            TexturedMesh mesh = new TexturedMesh(meshData, texData, CommonMaterials.Brick);
             mesh.Transform.Position = position;
             mesh.Transform.Rotation = rotation;
             mesh.Transform.Scale = scale;
@@ -171,6 +172,16 @@ namespace Veldrid.NeoDemo
 
                     ImGui.EndMenu();
                 }
+                if (ImGui.BeginMenu("Materials"))
+                {
+                    if (ImGui.BeginMenu("Brick"))
+                    {
+                        DrawMaterialMenu(CommonMaterials.Brick);
+                        ImGui.EndMenu();
+                    }
+                    ImGui.EndMenu();
+                }
+
                 ImGui.EndMainMenuBar();
             }
 
@@ -180,6 +191,18 @@ namespace Veldrid.NeoDemo
             }
 
             _window.Title = _rc.BackendType.ToString();
+        }
+
+        private void DrawMaterialMenu(MaterialPropsAndBuffer brick)
+        {
+            MaterialProperties props = brick.Properties.Data;
+            float intensity = props.SpecularIntensity.X;
+            if (ImGui.SliderFloat("Intensity", ref intensity, 0f, 10f, intensity.ToString(), 1f)
+                | ImGui.SliderFloat("Power", ref props.SpecularPower, 0f, 1000f, props.SpecularPower.ToString(), 1f))
+            {
+                props.SpecularIntensity = new Vector3(intensity);
+                brick.Properties.Data = props;
+            }
         }
 
         private void ToggleFullscreenState()
@@ -216,6 +239,7 @@ namespace Veldrid.NeoDemo
         {
             _sc.DestroyDeviceObjects();
             _scene.DestroyAllDeviceObjects();
+            CommonMaterials.DestroyAllDeviceObjects();
 
             _rc.Dispose();
 
@@ -248,6 +272,7 @@ namespace Veldrid.NeoDemo
 
             _sc.CreateDeviceObjects(_rc);
             _scene.CreateAllDeviceObjects(_rc);
+            CommonMaterials.CreateAllDeviceObjects(_rc);
         }
     }
 }

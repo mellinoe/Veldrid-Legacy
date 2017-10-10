@@ -85,12 +85,12 @@ namespace Shaders
             Vector4 surfaceColor = Sample(SurfaceTexture, RegularSampler, input.TexCoord);
             Vector4 ambientLight = new Vector4(0.3f, 0.3f, 0.3f, 1f);
             Vector3 lightDir = -LightInfo.Direction;
-            Vector4 color = ambientLight * surfaceColor;
+            Vector4 directionalColor = ambientLight * surfaceColor;
             float shadowBias = 0.0005f;
             float lightIntensity = 0f;
 
             // Specular color
-            Vector4 specularColor = new Vector4(0, 0, 0, 0);
+            Vector4 directionalSpecColor = new Vector4(0, 0, 0, 0);
 
             Vector3 vertexToEye = Vector3.Normalize(CameraInfo.CameraPosition_WorldSpace - input.Position_WorldSpace);
             Vector3 lightReflect = Vector3.Normalize(Vector3.Reflect(LightInfo.Direction, input.Normal));
@@ -99,7 +99,7 @@ namespace Shaders
             if (specularFactor > 0)
             {
                 specularFactor = Pow(Abs(specularFactor), MaterialProperties.SpecularPower);
-                specularColor = new Vector4(LightInfo.Color.XYZ() * MaterialProperties.SpecularIntensity * specularFactor, 1.0f);
+                directionalSpecColor = new Vector4(LightInfo.Color.XYZ() * MaterialProperties.SpecularIntensity * specularFactor, 1.0f);
             }
 
             // Directional light influence
@@ -151,14 +151,14 @@ namespace Shaders
                     lightIntensity = Saturate(Vector3.Dot(input.Normal, lightDir));
                     if (lightIntensity > 0.0f)
                     {
-                        color = surfaceColor * (lightIntensity * LightInfo.Color);
+                        directionalColor = surfaceColor * (lightIntensity * LightInfo.Color);
                     }
                 }
                 else
                 {
                     // In shadow.
-                    color = ambientLight * surfaceColor;
-                    specularColor = new Vector4(0, 0, 0, 0);
+                    directionalColor = ambientLight * surfaceColor;
+                    directionalSpecColor = new Vector4(0, 0, 0, 0);
                 }
             }
             else
@@ -167,11 +167,37 @@ namespace Shaders
                 lightIntensity = Saturate(Vector3.Dot(input.Normal, lightDir));
                 if (lightIntensity > 0.0f)
                 {
-                    color = surfaceColor * lightIntensity * LightInfo.Color;
+                    directionalColor = surfaceColor * lightIntensity * LightInfo.Color;
                 }
             }
 
-            return Saturate(specularColor + color);
+            // Point lights
+
+            Vector4 pointDiffuse = new Vector4(0, 0, 0, 1);
+            Vector4 pointSpec = new Vector4(0, 0, 0, 1);
+            for (int i = 0; i < PointLights.NumActiveLights; i++)
+            {
+                PointLightInfo pli = PointLights.PointLights[i];
+                Vector3 ptLightDir = Vector3.Normalize(pli.Position - input.Position_WorldSpace);
+                float intensity = Saturate(Vector3.Dot(input.Normal, ptLightDir));
+                float lightDistance = Vector3.Distance(pli.Position, input.Position_WorldSpace);
+                intensity = Saturate(intensity * (1 - (lightDistance / pli.Range)));
+
+                pointDiffuse += intensity * new Vector4(pli.Color, 1) * surfaceColor;
+
+                // Specular
+                Vector3 vertexToEye0 = Vector3.Normalize(CameraInfo.CameraPosition_WorldSpace - input.Position_WorldSpace);
+                Vector3 lightReflect0 = Vector3.Normalize(Vector3.Reflect(ptLightDir, input.Normal));
+
+                float specularFactor0 = Vector3.Dot(vertexToEye0, lightReflect0);
+                if (specularFactor0 > 0)
+                {
+                    specularFactor0 = Pow(Abs(specularFactor0), MaterialProperties.SpecularPower);
+                    pointSpec += (1 - (lightDistance / pli.Range)) * (new Vector4(pli.Color * MaterialProperties.SpecularIntensity * specularFactor0, 1.0f));
+                }
+            }
+
+            return Saturate(directionalSpecColor + directionalColor + pointSpec + pointDiffuse);
         }
 
         private bool InRange(float val, float min, float max)
