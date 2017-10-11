@@ -59,10 +59,10 @@ namespace Shaders
             Vector4 viewPosition = Mul(View, worldPosition);
             output.Position = Mul(Projection, viewPosition);
 
-            output.Position_WorldSpace = new Vector3(worldPosition.X, worldPosition.Y, worldPosition.Z);
+            output.Position_WorldSpace = worldPosition.XYZ();
 
             Vector4 outNormal = Mul(InverseTransposeWorld, new Vector4(input.Normal, 1));
-            output.Normal = Vector3.Normalize(new Vector3(outNormal.X, outNormal.Y, outNormal.Z));
+            output.Normal = Vector3.Normalize(outNormal.XYZ());
 
             output.TexCoord = input.TexCoord;
 
@@ -90,7 +90,7 @@ namespace Shaders
             float lightIntensity = 0f;
 
             // Specular color
-            Vector4 directionalSpecColor = new Vector4(0, 0, 0, 0);
+            Vector4 directionalSpecColor = new Vector4();
 
             Vector3 vertexToEye = Vector3.Normalize(CameraInfo.CameraPosition_WorldSpace - input.Position_WorldSpace);
             Vector3 lightReflect = Vector3.Normalize(Vector3.Reflect(LightInfo.Direction, input.Normal));
@@ -116,7 +116,7 @@ namespace Shaders
 
             int shadowIndex = 3;
 
-            Vector2 shadowCoords = new Vector2(0, 0);
+            Vector2 shadowCoords = new Vector2();
             float lightDepthValue = 0;
 
             if ((depthTest < DepthLimits.NearLimit) && InRange(shadowCoords_0.X, 0, 1) && InRange(shadowCoords_0.Y, 0, 1))
@@ -158,7 +158,7 @@ namespace Shaders
                 {
                     // In shadow.
                     directionalColor = ambientLight * surfaceColor;
-                    directionalSpecColor = new Vector4(0, 0, 0, 0);
+                    directionalSpecColor = new Vector4();
                 }
             }
             else
