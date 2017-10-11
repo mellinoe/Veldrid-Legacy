@@ -243,8 +243,7 @@ namespace Veldrid.NeoDemo
 
             _rc.Dispose();
 
-            bool recreateWindow = false;
-            if (recreateWindow)
+            if (_recreateWindow)
             {
 
                 WindowCreateInfo windowCI = new WindowCreateInfo
