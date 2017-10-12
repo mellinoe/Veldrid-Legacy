@@ -116,7 +116,7 @@ namespace Shaders
 
             int shadowIndex = 3;
 
-            Vector2 shadowCoords = new Vector2();
+            Vector2 shadowCoords = Vector2.Zero;
             float lightDepthValue = 0;
 
             if ((depthTest < DepthLimits.NearLimit) && InRange(shadowCoords_0.X, 0, 1) && InRange(shadowCoords_0.Y, 0, 1))
@@ -158,7 +158,7 @@ namespace Shaders
                 {
                     // In shadow.
                     directionalColor = ambientLight * surfaceColor;
-                    directionalSpecColor = new Vector4();
+                    directionalSpecColor = Vector4.Zero;
                 }
             }
             else
