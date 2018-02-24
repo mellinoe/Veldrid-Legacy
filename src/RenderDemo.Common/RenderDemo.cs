@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using SharpDX.DXGI;
 using System.Threading.Tasks;
 using Veldrid.Graphics.OpenGLES;
+using SixLabors.ImageSharp;
 
 namespace Veldrid.RenderDemo
 {
@@ -1146,18 +1147,7 @@ https://github.com/mellinoe/veldrid.");
 
             if (_takeScreenshot)
             {
-                _takeScreenshot = false;
-                _rc.SetDefaultFramebuffer();
-                int width = _rc.Window.Width;
-                int height = _rc.Window.Height;
-                var cpuDepthTexture = new RawTextureDataArray<ushort>(width, height, sizeof(ushort), Graphics.PixelFormat.Alpha_UInt16);
-                _screenshotFramebuffer.DepthTexture.CopyTo(cpuDepthTexture);
-
-                ImageSharp.Image image = new ImageSharp.Image(width, height);
-                PixelFormatConversion.ConvertPixelsUInt16DepthToRgbaFloat(width * height, cpuDepthTexture.PixelData, image.Pixels);
-                ImageSharpTexture rgbaDepthTexture = new ImageSharpTexture(image);
-                Console.WriteLine($"Saving file: {width} x {height}, ratio:{(double)width / height}");
-                rgbaDepthTexture.SaveToFile(Environment.TickCount + ".png");
+                throw new NotImplementedException();
             }
         }
 

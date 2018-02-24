@@ -1,5 +1,4 @@
-﻿using ImageSharp;
-using ImageSharp.PixelFormats;
+﻿using SixLabors.ImageSharp;
 
 namespace Veldrid.RenderDemo
 {

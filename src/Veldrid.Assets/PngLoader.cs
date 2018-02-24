@@ -1,7 +1,6 @@
-﻿using ImageSharp;
+﻿using SixLabors.ImageSharp;
 using System.IO;
 using Veldrid.Graphics;
-using System;
 
 namespace Veldrid.Assets
 {
@@ -11,7 +10,7 @@ namespace Veldrid.Assets
 
         public override ImageSharpTexture Load(Stream s)
         {
-            return new ImageSharpTexture(Image.Load(s));
+            return new ImageSharpTexture(Image.Load<Rgba32>(s));
         }
     }
 }

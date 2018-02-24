@@ -1,5 +1,4 @@
-﻿using ImageSharp;
-using ImageSharp.PixelFormats;
+﻿using SixLabors.ImageSharp;
 using System.IO;
 
 namespace Veldrid.Graphics
@@ -12,21 +11,21 @@ namespace Veldrid.Graphics
         /// <summary>
         /// The ImageSharp image.
         /// </summary>
-        public Image Image { get; }
+        public Image<Rgba32> ISImage { get; }
 
         /// <summary>
         /// The raw pixel data, stored in RGBA format, where each element is a byte (32 bits per pixel).
         /// </summary>
-        public Rgba32[] Pixels => Image.Pixels;
+        public Rgba32[] Pixels { get; }
 
         /// <summary>
         /// The width of the texture.
         /// </summary>
-        public int Width => Image.Width;
+        public int Width => ISImage.Width;
         /// <summary>
         /// The height of the iamge.
         /// </summary>
-        public int Height => Image.Height;
+        public int Height => ISImage.Height;
 
         /// <summary>
         /// The <see cref="PixelFormat"/> of the data.
@@ -46,7 +45,9 @@ namespace Veldrid.Graphics
         {
             using (FileStream fs = File.OpenRead(filePath))
             {
-                Image = Image.Load(fs);
+                ISImage = Image.Load(fs);
+                Pixels = new Rgba32[ISImage.Width * ISImage.Height];
+                ISImage.SavePixelData(Pixels);
             }
         }
 
@@ -54,21 +55,20 @@ namespace Veldrid.Graphics
         /// Constructs an ImageSharpTexture from the existing ImageProcessor image.
         /// </summary>
         /// <param name="image">The existing image.</param>
-        public ImageSharpTexture(Image image)
+        public ImageSharpTexture(Image<Rgba32> image)
         {
-            Image = image;
+            ISImage = image;
+            Pixels = new Rgba32[ISImage.Width * ISImage.Height];
+            ISImage.SavePixelData(Pixels);
         }
-        
+
         /// <summary>
         /// Saves the image to disk.
         /// </summary>
         /// <param name="path">The target path on disk.</param>
         public void SaveToFile(string path)
         {
-            using (FileStream fs = File.OpenWrite(path))
-            {
-                Image.Save(fs);
-            }
+            ISImage.Save(path);
         }
 
         /// <summary>
